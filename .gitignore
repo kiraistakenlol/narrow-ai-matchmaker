@@ -1,0 +1,4 @@
+# Environment variables
+.env
+# OS specific
+.DS_Store 
