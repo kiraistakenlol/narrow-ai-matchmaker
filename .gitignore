@@ -2,3 +2,16 @@
 .env
 # OS specific
 .DS_Store 
+
+# Python specific (if any python elsewhere)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Test Data Generator Specific (Located in generator/ subdirectory)
+matching/playground/test_data/generator/.env
+matching/playground/test_data/generator/node_modules/
+matching/playground/test_data/generator/dist/
+# Generated data goes into test_data/, not generator/
+matching/playground/test_data/generated_*.json 
+matching/playground/test_data/my_*.json 

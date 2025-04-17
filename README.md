@@ -16,7 +16,10 @@ A platform leveraging AI and LLMs to facilitate connections between people based
 
 ## Setup
 
-1.  **Environment Variables:** Configuration, including the required `ANTHROPIC_API_KEY`, is managed via an `.env` file in the project root. 
-    *   **Important:** Ensure `.env` is added to your `.gitignore` file.
+1.  **Environment Variables:** Core application configuration might use a root `.env` file.
+    *   See specific component READMEs (like the Test Data Generator) for component-specific `.env` requirements.
+    *   **Important:** Ensure relevant `.env` files are added to your `.gitignore` file.
 
-(Add further setup steps like dependencies installation later)
+## Test Data Generation
+
+A script for generating synthetic test data using the Anthropic API is located in `matching/playground/test_data/generator/`. See the [Test Data Generator README](matching/playground/test_data/generator/README.md) for setup and usage instructions.
