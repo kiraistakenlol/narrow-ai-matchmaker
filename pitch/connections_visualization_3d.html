@@ -47,6 +47,8 @@
 
         #profileDetails {
             position: absolute;
+            top: 10px;
+            right: 10px;
             width: 250px;
             background-color: rgba(40, 40, 45, 0.95);
             padding: 15px;
@@ -58,7 +60,6 @@
             border: 1px solid #495057;
             box-shadow: 0 2px 10px rgba(0,0,0,0.5);
             pointer-events: auto;
-            transform: translate(15px, -50%);
         }
         #profileDetails h3 {
             margin-top: 0; margin-bottom: 10px; color: #E0A800;
@@ -76,15 +77,10 @@
 <div id="container"></div> <!-- Container for renderer -->
 
 <div id="controls">
-    <div>
-        <label for="speedSlider">Rotation Speed:</label>
-        <input type="range" id="speedSlider" name="speedSlider" min="-10" max="10" value="1" step="0.5">
-        <span id="speedValue">1</span>
-    </div>
     <div id="legend">
-        <div><span style="background-color: #FFA500;"></span> Strong (Orange)</div>
-        <div><span style="background-color: #28A745;"></span> Medium (Green)</div>
-        <div><span style="background-color: #0D6EFD;"></span> Weak (Blue)</div>
+        <div><span style="background-color: #FFA500;"></span> Strong</div>
+        <div><span style="background-color: #28A745;"></span> Medium</div>
+        <div><span style="background-color: #0D6EFD;"></span> Weak</div>
     </div>
 </div>
 
@@ -163,7 +159,7 @@
     // --- Physics Parameters ---
     const REPULSION_STRENGTH = 2500;
     const SPRING_CONSTANT = 0.06;
-    const RESTING_DISTANCE_BASE = 50;
+    const RESTING_DISTANCE_BASE = 45; // *** Slightly reduced base ***
     const CENTERING_STRENGTH = 0.015;
     const DAMPING = 0.94;
     const TIME_STEP = 0.02;
@@ -172,8 +168,10 @@
     // --- Styling --- (Adjust sizes for Sprites and Text)
     const nodeSizeBase = 8.0; // Base size for sprite scale
     const nodeSizeHover = 11.0; // Hover size for sprite scale (slightly smaller hover)
+    const nodeSizeSelected = 13.0; // *** Selected node size ***
     const textHeightBase = 2.5; // Size for SpriteText
-    const borderSize = 0.6; // Width of the border
+    const textHeightHover = 3.0; // Text height for hover/selected
+    const borderSize = 0.6;
     const borderColor = '#6C757D';
     const borderYouColor = '#E0A800';
     const defaultTextColor = '#E9ECEF';
@@ -188,9 +186,12 @@
     const strongBaseWidth = 3.5;
     const mediumBaseWidth = 2.5;
     const weakBaseWidth = 1.5;
-    const selectedStrongWidth = 5.5; // Thicker when selected
+    const selectedStrongWidth = 5.5;
     const selectedMediumWidth = 4.5;
     const selectedWeakWidth = 3.5;
+    const dimmedOpacity = 0.4; // *** Increased dimmed opacity further ***
+    const dimmedLineWidth = 1.5; // *** Increased dimmed width further ***
+    // const dimmedColor = '#555555'; // *** Removed dimmed color ***
 
     // --- Initialization ---
     init();
@@ -215,7 +216,9 @@
         controls.enableDamping = true;
         controls.dampingFactor = 0.1;
         controls.autoRotate = true;
-        controls.autoRotateSpeed = 1.0;
+        // *** Set Zoom Limits ***
+        controls.minDistance = 20; // Min distance camera can approach center
+        controls.maxDistance = 300; // Max distance camera can move away
 
         // Lighting
         const ambientLight = new THREE.AmbientLight(0xcccccc, 0.8); // Slightly adjusted ambient intensity
@@ -231,10 +234,8 @@
         window.addEventListener('resize', onWindowResize, false);
         document.addEventListener('mousemove', onDocumentMouseMove, false);
         document.addEventListener('click', onDocumentMouseClick, false); // Add click listener
-        controls.addEventListener('start', () => { physicsActive = false; /* Pause physics on drag */ });
+        controls.addEventListener('start', () => { physicsActive = false; });
         controls.addEventListener('end', () => { physicsActive = true; });
-
-        setupControls();
     }
 
     function createGraphObjects() {
@@ -371,9 +372,10 @@
             const delta = new THREE.Vector3().subVectors(sourceUser.position, targetUser.position);
             const distance = delta.length();
 
-            let strengthFactor = 1.0;
-            if (link.strength === 'medium') strengthFactor = 1.5;
-            if (link.strength === 'strong') strengthFactor = 2.0;
+            // *** Increased strengthFactor variation ***
+            let strengthFactor = 1.0; // Weak
+            if (link.strength === 'medium') strengthFactor = 2.0; // Medium x2
+            if (link.strength === 'strong') strengthFactor = 4.0; // Strong x4
             const restingDistance = RESTING_DISTANCE_BASE / strengthFactor;
 
             if (distance > 0) {
@@ -422,22 +424,34 @@
             if (user.threeObj) {
                 user.threeObj.position.copy(user.position);
                 const isHovered = user === hoverNode;
+                const isSelected = user === selectedNode;
                 const combinedSprite = user.threeObj.children[0]; // Get combined sprite
                 const nameSprite = user.threeObj.children[1]; // Get name sprite
 
-                // Efficiently update scale only if needed (for combined sprite)
-                const targetScaleBase = isHovered ? nodeSizeHover : nodeSizeBase;
+                // Efficiently update scale only if needed (Selected > Hover > Default)
+                let targetScaleBase;
+                if (isSelected) {
+                    targetScaleBase = nodeSizeSelected;
+                } else if (isHovered) {
+                    targetScaleBase = nodeSizeHover;
+                } else {
+                    targetScaleBase = nodeSizeBase;
+                }
 
                 if (combinedSprite.scale.x !== targetScaleBase) {
                     combinedSprite.scale.set(targetScaleBase, targetScaleBase, 1);
                 }
 
-                // Update text color on hover
-                const targetTextColor = isHovered ? hoverTextColor : defaultTextColor;
+                // Update text color and height on hover or select
+                const targetTextColor = (isHovered || isSelected) ? hoverTextColor : defaultTextColor;
+                const targetTextHeight = (isHovered || isSelected) ? textHeightHover : textHeightBase;
+
                 if(nameSprite.color !== targetTextColor) nameSprite.color = targetTextColor;
+                if(nameSprite.textHeight !== targetTextHeight) nameSprite.textHeight = targetTextHeight;
 
                 // Recalculate and update name position based on current combined sprite scale
-                const currentNameOffsetY = -(targetScaleBase * 0.5 + textHeightBase * 0.6 + borderSize * 0.5);
+                // Use the actual targetScaleBase determined above for correct offset
+                const currentNameOffsetY = -(targetScaleBase * 0.5 + targetTextHeight * 0.6 + borderSize * 0.5); 
                 if (nameSprite.position.y !== currentNameOffsetY) {
                     nameSprite.position.y = currentNameOffsetY;
                 }
@@ -466,8 +480,16 @@
                 let targetOpacity;
                 let targetLineWidth;
 
-                if (isSelectedLink) {
-                    targetColor = style.selectedHighlightColor; 
+                // Check if a node is selected and this link is NOT connected to it
+                if (selectedNode && !isSelectedLink) {
+                    targetColor = style.color;      // *** Keep original color ***
+                    targetOpacity = dimmedOpacity;
+                    targetLineWidth = dimmedLineWidth;
+                }
+                // Otherwise, apply normal logic (Selected > Hover > Default)
+                else if (isSelectedLink) {
+                    // *** Use BASE color, but full opacity and selected thickness ***
+                    targetColor = style.color; 
                     targetOpacity = selectedLinkOpacity;
                     // Select width based on strength for selected links
                     switch(link.strength) {
@@ -551,45 +573,34 @@
     }
 
     function getLinkStyle(strength) {
-         // *** New Color Scheme & Styles ***
-         let color, highlightColor, selectedHighlightColor, opacity;
+         // Updated Link Styles (Removed selectedHighlightColor)
+         let color, highlightColor, opacity; // Removed selectedHighlightColor
         switch (strength) {
-            // Strong: Orange -> Lighter Orange -> Brightest Orange
+            // Strong: Orange -> Lighter Orange 
             case 'strong': 
                 color = '#FFA500'; // Orange
                 highlightColor = '#FFB733'; // Lighter Orange
-                selectedHighlightColor = '#FFC866'; // Brightest Orange
-                opacity = 0.85; // Slightly higher base opacity
+                // selectedHighlightColor = '#FFC866'; // Removed
+                opacity = 0.85; 
                 break; 
-            // Medium: Green -> Lighter Green -> Brightest Green
+            // Medium: Green -> Lighter Green
             case 'medium': 
                 color = '#28A745'; // Bootstrap Green
                 highlightColor = '#34D399'; // Lighter Green
-                selectedHighlightColor = '#6EE7B7'; // Brightest Green
+                // selectedHighlightColor = '#6EE7B7'; // Removed
                 opacity = 0.75; 
                 break; 
-            // Weak: Blue -> Lighter Blue -> Brightest Blue
+            // Weak: Blue -> Lighter Blue
             case 'weak':
             default:       
                 color = '#0D6EFD'; // Bootstrap Blue
                 highlightColor = '#3B82F6'; // Lighter Blue
-                selectedHighlightColor = '#60A5FA'; // Brightest Blue
+                // selectedHighlightColor = '#60A5FA'; // Removed
                 opacity = 0.6; 
                 break; 
         }
         // Base opacity slightly increased for better default visibility with thickness
-        return { color, highlightColor, selectedHighlightColor, opacity }; 
-    }
-
-    function setupControls() {
-        const speedSlider = document.getElementById('speedSlider');
-        const speedValueSpan = document.getElementById('speedValue');
-    speedSlider.oninput = function() {
-        const speed = parseFloat(this.value);
-        speedValueSpan.textContent = speed.toFixed(1);
-            if (controls) { controls.autoRotateSpeed = speed; }
-        }
-        speedSlider.dispatchEvent(new Event('input'));
+        return { color, highlightColor, opacity }; // Removed selectedHighlightColor
     }
 
     function onWindowResize() {
@@ -670,33 +681,11 @@
         // Stop auto-rotation
         if (controls) controls.autoRotate = false;
 
-        // Calculate screen position
-        const screenPosition = getScreenPosition(node.threeObj, camera);
-
-        displayProfileDetails(node, screenPosition.x, screenPosition.y);
+        displayProfileDetails(node);
     }
 
-    // --- Helper to get screen position --- //
-    function getScreenPosition(object3D, camera) {
-        const vector = new THREE.Vector3();
-
-        // Get world position
-        object3D.updateMatrixWorld();
-        vector.setFromMatrixPosition(object3D.matrixWorld);
-
-        // Project to NDC space
-        vector.project(camera);
-
-        // Convert to screen coordinates (pixels)
-        const screenX = Math.round(((vector.x + 1) / 2) * window.innerWidth);
-        const screenY = Math.round(((-vector.y + 1) / 2) * window.innerHeight);
-
-        return { x: screenX, y: screenY };
-    }
-    // --- End Helper --- //
-
-    function displayProfileDetails(user, x, y) {
-        console.log("Displaying details for:", user.name, `at (${x}, ${y})`); // Log 5: Check display function is called
+    function displayProfileDetails(user) {
+        console.log("Displaying details for:", user.name); 
         document.getElementById('detailsName').textContent = user.name;
         document.getElementById('detailsSummary').textContent = user.summary;
         const skillsList = document.getElementById('detailsSkills');
@@ -707,40 +696,9 @@
             skillsList.appendChild(li);
         });
         profileDetailsDiv.style.display = 'block';
-
-        // Position the popup
-        const popupWidth = profileDetailsDiv.offsetWidth;
-        const popupHeight = profileDetailsDiv.offsetHeight;
-        const offsetX = 15; // Offset defined in transform: translate(15px,...)
-        const verticalOffset = -popupHeight / 2; // Center vertically due to transform: translate(..., -50%)
-
-        let finalX = x + offsetX;
-        let finalY = y + verticalOffset;
-
-        // Adjust if going off-screen horizontally
-        if (finalX + popupWidth > window.innerWidth) {
-            finalX = x - popupWidth - offsetX; // Flip to the left side
-             profileDetailsDiv.style.transform = `translate(${-popupWidth - offsetX}px, -50%)`;
-        } else {
-             profileDetailsDiv.style.transform = `translate(${offsetX}px, -50%)`;
-        }
-
-         // Adjust if going off-screen vertically
-        if (finalY < 0) {
-            finalY = 10; // Push down from top edge
-            profileDetailsDiv.style.transform = `translate(${offsetX}px, 0)`; // Adjust transform if needed
-        } else if (finalY + popupHeight > window.innerHeight) {
-             finalY = window.innerHeight - popupHeight - 10; // Push up from bottom edge
-             profileDetailsDiv.style.transform = `translate(${offsetX}px, ${-popupHeight}px)`; // Adjust transform if needed
-        }
-
-        profileDetailsDiv.style.left = `${x}px`;
-        profileDetailsDiv.style.top = `${y}px`;
-        console.log("Final popup position (style.left, style.top):", profileDetailsDiv.style.left, profileDetailsDiv.style.top);
-
     }
 
-    // Attach to window to make it accessible from onclick attribute
+    // Attach to window again to make it accessible from onclick attribute
     window.hideProfileDetails = function() {
         // Revert selected node's border before clearing
         if (selectedNode) {
@@ -752,8 +710,6 @@
         // Resume auto-rotation
         if (controls) controls.autoRotate = true;
     }
-
-    // --- End New Click Handling --- //
 
     // --- New Function to Redraw Node Texture --- //
     function updateNodeTexture(user, isSelected) {
