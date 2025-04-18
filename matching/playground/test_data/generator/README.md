@@ -11,28 +11,24 @@ Generates synthetic user profiles and evaluates expected matches using the Anthr
 
 ## Usage
 
-Run from within this directory (`matching/playground/test_data/generator/`):
+First, configure your desired audience profile using the `index.html` page in this directory. Open it in your browser, adjust the settings (context, total profiles, attendee type distribution, response style examples), and use the "Generate Config File" button. Download the resulting `test_audience_config.json` file and save it in *this* directory (`generator/`).
+
+Then, run the generator script from within this directory (`matching/playground/test_data/generator/`), providing the path to your config file (optional, defaults to `./test_audience_config.json`) and specifying the output file path:
 
 ```bash
-# Example generating 20 profiles for a 'Tech Conference' context with specific parameters:
-npm run generate -- \
-  --numProfiles 20 \
-  --output ../conference_data.json \
-  --avgMatches 4 \
-  --verbosity 7 \
-  --context "Tech Conference 2025" \
-  --prompt "Briefly introduce yourself, your main area of expertise, and what connections you hope to make at this conference." 
+# Example using the default config file name and specifying an output path:
+npm run generate -- --output ../conference_data_v2.json
+
+# Example explicitly specifying a different config file and output path:
+npm run generate -- --config my_special_config.json --output ../my_special_data.json
 ```
 
 ### Command-line Options
 
-| Option                         | Description                                                                                       | Default                                                                          |
-| ------------------------------ | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `-n, --numProfiles <number>` | Specifies the number of user profiles to generate.                                              | `10`                                                                             |
-| `-o, --output <path>`        | Sets the path for the output JSON file (relative to this `generator` dir).                      | `../generated_test_data.json`                                                  |
-| `-a, --avgMatches <number>`  | Target average number of generated matches per profile (approximate).                           | `3`                                                                              |
-| `-v, --verbosity <number>`   | Controls profile length, detail, and creativity (0=brief/direct, 10=detailed/creative).        | `5`                                                                              |
-| `-c, --context <string>`     | The context/setting for profile generation (e.g., conference, hackathon).                       | `general networking`                                                             |
-| `-p, --prompt <string>`      | The prompt/instruction given to users for their introduction.                                     | `Introduce yourself, mention your skills, goals, and what you are looking for.` |
+| Option                         | Description                                                                                       | Default                               |
+| ------------------------------ | ------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `-c, --config <path>`          | Path to the audience configuration JSON file.                                                    | `./test_audience_config.json`       |
+| `-o, --output <path>`        | Sets the path for the output JSON file containing generated profiles (relative to this `generator` dir). | `../generated_profiles.json`     |
 
-**Note:** Requires API key in `./.env` and may incur costs. 
+
+**Note:** Requires API key in `./.env` and may incur costs based on the number of profiles generated. 

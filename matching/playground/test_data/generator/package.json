@@ -4,7 +4,7 @@
   "description": "Test data generator for AI Matchmaking Platform",
   "main": "generate_test_data.js",
   "scripts": {
-    "generate": "ts-node generate_test_data.ts",
+    "generate": "ts-node test_audience_data_generator.ts",
     "build": "tsc"
   },
   "keywords": [],
