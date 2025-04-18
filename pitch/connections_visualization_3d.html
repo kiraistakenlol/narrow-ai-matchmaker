@@ -70,6 +70,24 @@
         #profileDetails ul { list-style: none; padding-left: 0; margin-top: 5px; font-size: 0.9em; }
         #profileDetails li { display: inline-block; background-color: #495057; color: #E9ECEF; padding: 2px 6px; margin: 2px; border-radius: 3px; font-size: 0.85em; }
         #closeDetails { position: absolute; top: 5px; right: 8px; cursor: pointer; font-weight: bold; color: #adb5bd; font-size: 1.2em; }
+
+        /* Button Style */
+        #findMeButton {
+            display: block;
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+            background-color: #0D6EFD; /* Use weak link color */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            text-align: center;
+        }
+        #findMeButton:hover {
+            background-color: #3B82F6; /* Use weak link highlight color */
+        }
     </style>
 </head>
 <body>
@@ -82,6 +100,8 @@
         <div><span style="background-color: #28A745;"></span> Medium</div>
         <div><span style="background-color: #0D6EFD;"></span> Weak</div>
     </div>
+    <!-- Added Find Me Button -->
+    <button id="findMeButton">Find Me</button>
 </div>
 
 <!-- Added Profile Details Panel -->
@@ -112,24 +132,38 @@
     let textureLoader; // Define texture loader globally
 
     // --- Simulation Data & Objects ---
-    const N_USERS = 10;
+    const N_USERS = 50; // *** Increased user count ***
+    const connectionProbability = 0.15; // *** Probability of a link existing ***
 
-    // Enhanced User Data
-    const userProfiles = [
-        { id: 0, name: 'You', summary: 'Seeking Connections', skills: ['Networking', 'Curiosity'], photoUrl: 'https://api.dicebear.com/9.x/lorelei/png?seed=0&size=150' },
-        { id: 1, name: 'Alice', summary: 'Software Engineer', skills: ['JavaScript', 'React', 'Node.js', 'Cloud'], photoUrl: 'https://api.dicebear.com/9.x/lorelei/png?seed=1&size=150' },
-        { id: 2, name: 'Bob', summary: 'Product Manager', skills: ['Roadmap', 'Agile', 'UX', 'Market Research'], photoUrl: 'https://api.dicebear.com/9.x/lorelei/png?seed=2&size=150' },
-        { id: 3, name: 'Charlie', summary: 'Data Scientist', skills: ['Python', 'ML', 'SQL', 'Statistics'], photoUrl: 'https://api.dicebear.com/9.x/lorelei/png?seed=3&size=150' },
-        { id: 4, name: 'Diana', summary: 'UX Designer', skills: ['Figma', 'Prototyping', 'User Research', 'Accessibility'], photoUrl: 'https://api.dicebear.com/9.x/lorelei/png?seed=4&size=150' },
-        { id: 5, name: 'Ethan', summary: 'Marketing Specialist', skills: ['SEO', 'Content Strategy', 'Social Media', 'Analytics'], photoUrl: 'https://api.dicebear.com/9.x/lorelei/png?seed=5&size=150' },
-        { id: 6, name: 'Fiona', summary: 'Journalist', skills: ['Writing', 'Interviewing', 'Research', 'Storytelling'], photoUrl: 'https://api.dicebear.com/9.x/lorelei/png?seed=6&size=150' },
-        { id: 7, name: 'George', summary: 'Hardware Engineer', skills: ['PCB Design', 'Embedded Systems', 'VHDL'], photoUrl: 'https://api.dicebear.com/9.x/lorelei/png?seed=7&size=150' },
-        { id: 8, name: 'Hannah', summary: 'Investor', skills: ['VC', 'Startups', 'Finance', 'Due Diligence'], photoUrl: 'https://api.dicebear.com/9.x/lorelei/png?seed=8&size=150' },
-        { id: 9, name: 'Ian', summary: 'DevOps Engineer', skills: ['Kubernetes', 'AWS', 'CI/CD', 'Terraform'], photoUrl: 'https://api.dicebear.com/9.x/lorelei/png?seed=9&size=150' }
-    ];
+    // Enhanced User Data (Generated for N_USERS)
+    const firstNames = ["Alex", "Beth", "Chris", "Dana", "Evan", "Fran", "Gabe", "Holly", "Ian", "Jill", "Kyle", "Liam", "Mia", "Noah", "Olga", "Paul", "Quinn", "Riley", "Sam", "Tara", "Uma", "Vic", "Will", "Xena", "Yara", "Zane"];
+    const lastNames = ["Smith", "Jones", "Lee", "Chen", "Roy", "Kim", "Shah", "Ali", "Khan", "Patel", "Singh", "Davis", "Garcia", "Miller", "Rossi", "Ando", "Silva", "Weber", "Ivanov", "Zhu"];
+    const summaries = ['Engineer', 'Designer', 'Manager', 'Scientist', 'Artist', 'Writer', 'Consultant', 'Developer', 'Analyst', 'Architect'];
+    const skillsPool = ['JS', 'Python', 'React', 'UX', 'Cloud', 'Data', 'Agile', 'Strategy', 'Design', 'ML', 'Node', 'SQL', 'Security', 'Mobile', 'DevOps', 'Marketing', 'Sales', 'Finance', 'Research', 'Testing'];
+    const userProfiles = Array.from({ length: N_USERS }, (_, i) => {
+        // Generate realistic name
+        const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+        const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+        const name = i === 0 ? 'You' : `${firstName} ${lastName}`;
+
+        const summary = summaries[i % summaries.length];
+        const numSkills = Math.floor(Math.random() * 4) + 2; // 2-5 skills
+        const skills = [...skillsPool].sort(() => 0.5 - Math.random()).slice(0, numSkills);
+        const photoUrl = `https://picsum.photos/seed/${i}/150`;
+
+        return {
+            id: i,
+            name: name,
+            summary: summary,
+            skills: skills,
+            photoUrl: photoUrl
+        };
+    });
+    // Ensure 'You' always has the same profile for consistency if needed
+    userProfiles[0] = { id: 0, name: 'You', summary: 'Seeking Connections', skills: ['Networking', 'Curiosity'], photoUrl: 'https://picsum.photos/seed/0/150' };
 
     const users = userProfiles.map(profile => ({
-        ...profile, // Spread existing profile data
+        ...profile,
         isYou: profile.id === 0,
         position: new THREE.Vector3(
             (Math.random() - 0.5) * 80,
@@ -148,16 +182,19 @@
 
     for (let i = 0; i < users.length; i++) {
         for (let j = i + 1; j < users.length; j++) {
-            const strength = STRENGTH_LEVELS[Math.floor(Math.random() * STRENGTH_LEVELS.length)];
-            const link = { source: users[i].id, target: users[j].id, strength: strength };
-            connectionLinks.push(link);
-            // Use a consistent key for the map
-            lineObjects.set(`${Math.min(link.source, link.target)}-${Math.max(link.source, link.target)}`, null);
+            // *** Create link only based on probability ***
+            if (Math.random() < connectionProbability) {
+                const strength = STRENGTH_LEVELS[Math.floor(Math.random() * STRENGTH_LEVELS.length)];
+                const link = { source: users[i].id, target: users[j].id, strength: strength };
+                connectionLinks.push(link);
+                lineObjects.set(`${Math.min(link.source, link.target)}-${Math.max(link.source, link.target)}`, null);
+            }
         }
     }
+    console.log(`Generated ${connectionLinks.length} links for ${N_USERS} users.`); // Log number of links
 
-    // --- Physics Parameters ---
-    const REPULSION_STRENGTH = 2500;
+    // --- Physics Parameters --- (May need adjustment for more nodes)
+    const REPULSION_STRENGTH = 3500; // Slightly increased repulsion for more nodes
     const SPRING_CONSTANT = 0.06;
     const RESTING_DISTANCE_BASE = 45; // *** Slightly reduced base ***
     const CENTERING_STRENGTH = 0.015;
@@ -167,17 +204,18 @@
 
     // --- Styling --- (Adjust sizes for Sprites and Text)
     const nodeSizeBase = 8.0; // Base size for sprite scale
-    const nodeSizeHover = 11.0; // Hover size for sprite scale (slightly smaller hover)
-    const nodeSizeSelected = 13.0; // *** Selected node size ***
-    const textHeightBase = 2.5; // Size for SpriteText
-    const textHeightHover = 3.0; // Text height for hover/selected
+    const nodeSizeHover = 11.0;
+    const nodeSizeSelected = 13.0;
+    const textHeightBase = 3.0; // *** Increased base text size ***
+    const textHeightHover = 3.5; // *** Increased hover/selected text size ***
     const borderSize = 0.6;
+    const selectedBorderSize = 1.2; // *** Thicker border for selected node ***
     const borderColor = '#6C757D';
     const borderYouColor = '#E0A800';
     const defaultTextColor = '#E9ECEF';
     const hoverTextColor = '#FFFFFF';
     const canvasSize = 256; // Resolution for combined texture canvas
-    const selectedBorderColor = '#28A745'; // Green for selected node border
+    const selectedBorderColor = '#FFD700'; // *** Gold for selected node border ***
     const selectedLinkOpacity = 1.0;
     // const baseLineWidth = 3.0; // Removed uniform width
     // const selectedLineWidth = 5.0; // Removed uniform width
@@ -216,9 +254,10 @@
         controls.enableDamping = true;
         controls.dampingFactor = 0.1;
         controls.autoRotate = true;
-        // *** Set Zoom Limits ***
-        controls.minDistance = 20; // Min distance camera can approach center
-        controls.maxDistance = 300; // Max distance camera can move away
+        controls.autoRotateSpeed = 2.0; // *** Set rotation speed ***
+        // Set Zoom Limits
+        controls.minDistance = 20;
+        controls.maxDistance = 300;
 
         // Lighting
         const ambientLight = new THREE.AmbientLight(0xcccccc, 0.8); // Slightly adjusted ambient intensity
@@ -236,6 +275,24 @@
         document.addEventListener('click', onDocumentMouseClick, false); // Add click listener
         controls.addEventListener('start', () => { physicsActive = false; });
         controls.addEventListener('end', () => { physicsActive = true; });
+
+        // Add listener for Find Me button
+        document.getElementById('findMeButton').addEventListener('click', (event) => {
+            event.stopPropagation(); // *** Prevent click from bubbling to document ***
+            findMe();
+        });
+
+        // *** Initial Selection of "You" Node ***
+        const initialNode = userMap.get(0);
+        if (initialNode) {
+            // Use setTimeout to ensure textures might be ready after initial load/draw cycle
+            setTimeout(() => {
+                 console.log("Applying initial selection...");
+                 onNodeClick(initialNode);
+            }, 100); // Small delay
+        } else {
+             console.warn("Could not find initial node (ID 0) to select.");
+        }
     }
 
     function createGraphObjects() {
@@ -254,7 +311,7 @@
             user.texture = texture; // Store texture for updates
 
             const img = new Image();
-            img.crossOrigin = "Anonymous"; 
+            img.crossOrigin = "Anonymous"; // *** Ensure crossOrigin is set for external domain ***
             user.loadedImg = img; // Store image for redraws
 
             img.onload = () => {
@@ -281,11 +338,16 @@
             // Create Name Label (SpriteText)
             const nameSprite = new SpriteText(user.name);
             nameSprite.material.depthWrite = false;
-            nameSprite.renderOrder = 1; // Render text on top
+            nameSprite.renderOrder = 2; // *** Increased renderOrder ***
             nameSprite.color = defaultTextColor;
-            nameSprite.textHeight = textHeightBase;
+            nameSprite.textHeight = textHeightBase; // Set directly
+            // Add stroke for boldness
+            nameSprite.strokeWidth = 0.15; // *** Increased strokeWidth ***
+            nameSprite.strokeColor = '#000000'; 
+
             // Position name below the combined sprite
-            const nameOffsetY = -(nodeSizeBase * 0.5 + textHeightBase * 0.6 + borderSize * 0.5); // Offset based on nodeSize + border
+            const visualTextHeight = textHeightBase; // Use base visual height for initial offset
+            const nameOffsetY = -(nodeSizeBase * 0.5 + visualTextHeight * 0.6 + borderSize * 0.5);
             nameSprite.position.set(0, nameOffsetY, 0);
 
             // Create Group
@@ -447,11 +509,14 @@
                 const targetTextHeight = (isHovered || isSelected) ? textHeightHover : textHeightBase;
 
                 if(nameSprite.color !== targetTextColor) nameSprite.color = targetTextColor;
+                // Set text height directly to visual target
                 if(nameSprite.textHeight !== targetTextHeight) nameSprite.textHeight = targetTextHeight;
+                // Ensure scale remains correct (removed explicit setting)
+                // if(nameSprite.scale.x !== (1 / textResolutionFactor)) nameSprite.scale.setScalar(1 / textResolutionFactor);
 
-                // Recalculate and update name position based on current combined sprite scale
-                // Use the actual targetScaleBase determined above for correct offset
-                const currentNameOffsetY = -(targetScaleBase * 0.5 + targetTextHeight * 0.6 + borderSize * 0.5); 
+                // Recalculate and update name position based on current combined sprite scale and VISUAL text height
+                const currentVisualTextHeight = targetTextHeight; // Use the target visual height
+                const currentNameOffsetY = -(targetScaleBase * 0.5 + currentVisualTextHeight * 0.6 + borderSize * 0.5);
                 if (nameSprite.position.y !== currentNameOffsetY) {
                     nameSprite.position.y = currentNameOffsetY;
                 }
@@ -468,62 +533,55 @@
             if (line && sourceUser && targetUser) {
                 // Update positions for LineSegmentsGeometry
                 line.geometry.setPositions([ sourceUser.position.x, sourceUser.position.y, sourceUser.position.z, targetUser.position.x, targetUser.position.y, targetUser.position.z ]);
-                line.geometry.attributes.position.needsUpdate = true; // May not be strictly needed with setPositions
-                // line.computeLineDistances(); // Recalculating might impact performance if many lines update
+                // line.computeLineDistances(); // Not needed every frame
 
-                // Prioritize Selected > Hovered > Default
-                const isSelectedLink = selectedLinkSet.has(lineKey);
-                const isHighlightedLink = !isSelectedLink && highlightLinkSet.has(lineKey);
+                // Determine link state and styles
                 const style = getLinkStyle(link.strength);
-
-                let targetColor;
-                let targetOpacity;
+                let targetColor = style.color; // Default
+                let targetOpacity = style.opacity;
                 let targetLineWidth;
-
-                // Check if a node is selected and this link is NOT connected to it
-                if (selectedNode && !isSelectedLink) {
-                    targetColor = style.color;      // *** Keep original color ***
-                    targetOpacity = dimmedOpacity;
-                    targetLineWidth = dimmedLineWidth;
+                switch(link.strength) { // Default width
+                     case 'strong': targetLineWidth = strongBaseWidth; break;
+                     case 'medium': targetLineWidth = mediumBaseWidth; break;
+                     default: targetLineWidth = weakBaseWidth; break;
                 }
-                // Otherwise, apply normal logic (Selected > Hover > Default)
-                else if (isSelectedLink) {
-                    // *** Use BASE color, but full opacity and selected thickness ***
-                    targetColor = style.color; 
-                    targetOpacity = selectedLinkOpacity;
-                    // Select width based on strength for selected links
-                    switch(link.strength) {
-                        case 'strong': targetLineWidth = selectedStrongWidth; break;
-                        case 'medium': targetLineWidth = selectedMediumWidth; break;
-                        case 'weak':
-                        default: targetLineWidth = selectedWeakWidth; break;
-                    }
-                } else if (isHighlightedLink) {
-                    targetColor = style.highlightColor;
-                    targetOpacity = 0.95;
-                    // Hover keeps base width for that strength
-                    switch(link.strength) {
-                        case 'strong': targetLineWidth = strongBaseWidth; break;
-                        case 'medium': targetLineWidth = mediumBaseWidth; break;
-                        case 'weak':
-                        default: targetLineWidth = weakBaseWidth; break;
+
+                if (selectedNode) {
+                    const isSelectedLink = (link.source === selectedNode.id || link.target === selectedNode.id);
+                    if (isSelectedLink) {
+                        // Style for selected node's links
+                        line.visible = true;
+                        targetColor = style.color; // Keep base color
+                        targetOpacity = selectedLinkOpacity;
+                        switch(link.strength) {
+                            case 'strong': targetLineWidth = selectedStrongWidth; break;
+                            case 'medium': targetLineWidth = selectedMediumWidth; break;
+                            default: targetLineWidth = selectedWeakWidth; break;
+                        }
+                    } else {
+                        // Hide links not connected to selected node
+                        line.visible = false;
                     }
                 } else {
-                    targetColor = style.color;
-                    targetOpacity = style.opacity;
-                    // Default uses base width for that strength
-                    switch(link.strength) {
-                        case 'strong': targetLineWidth = strongBaseWidth; break;
-                        case 'medium': targetLineWidth = mediumBaseWidth; break;
-                        case 'weak':
-                        default: targetLineWidth = weakBaseWidth; break;
+                    // Fallback / Default state (no node selected - currently shouldn't occur)
+                    line.visible = true;
+                    const isHighlightedLink = highlightLinkSet.has(lineKey);
+                    if (isHighlightedLink) {
+                        targetColor = style.highlightColor;
+                        targetOpacity = 0.95; 
+                        // Keep base width on hover
                     }
+                    // Defaults for color/opacity/width already set above
                 }
-
-                // Update material properties
-                if (line.material.color.getHexString() !== targetColor.substring(1)) line.material.color.set(targetColor);
-                if (line.material.opacity !== targetOpacity) line.material.opacity = targetOpacity;
-                if (line.material.linewidth !== targetLineWidth) line.material.linewidth = targetLineWidth;
+                
+                // Update material properties only if visible (optimization)
+                if (line.visible) { 
+                    if (line.material.color.getHexString() !== targetColor.substring(1)) line.material.color.set(targetColor);
+                    if (line.material.opacity !== targetOpacity) line.material.opacity = targetOpacity;
+                    if (line.material.linewidth !== targetLineWidth) line.material.linewidth = targetLineWidth;
+                } 
+                // Ensure material reflects invisibility if needed (can help performance)
+                // else if (line.material.opacity !== 0) { line.material.opacity = 0; }
 
                 // Update material resolution on resize (handled in onWindowResize)
             }
@@ -655,11 +713,6 @@
 
         if (clickedNode) {
             onNodeClick(clickedNode);
-        } else {
-             // Check if click was outside the details panel
-            if (profileDetailsDiv.style.display !== 'none' && !profileDetailsDiv.contains(event.target)) {
-                hideProfileDetails();
-            }
         }
     }
 
@@ -678,8 +731,8 @@
         updateNodeTexture(node, true);
         selectedNode = node; // Update selectedNode *after* potential revert
 
-        // Stop auto-rotation
-        if (controls) controls.autoRotate = false;
+        // Stop auto-rotation - REMOVED
+        // if (controls) controls.autoRotate = false;
 
         displayProfileDetails(node);
     }
@@ -700,21 +753,28 @@
 
     // Attach to window again to make it accessible from onclick attribute
     window.hideProfileDetails = function() {
-        // Revert selected node's border before clearing
-        if (selectedNode) {
-            updateNodeTexture(selectedNode, false);
-        }
-        selectedNode = null;
+        // *** Only hide the panel, don't deselect node or resume rotation ***
+        // // Revert selected node's border before clearing
+        // if (selectedNode) {
+        //     updateNodeTexture(selectedNode, false);
+        // }
+        // selectedNode = null;
         profileDetailsDiv.style.display = 'none';
 
-        // Resume auto-rotation
-        if (controls) controls.autoRotate = true;
+        // // Resume auto-rotation - REMOVED
+        // if (controls) controls.autoRotate = true;
     }
 
     // --- New Function to Redraw Node Texture --- //
     function updateNodeTexture(user, isSelected) {
         if (!user || !user.texture || !user.loadedImg || !user.loadedImg.complete || user.loadedImg.naturalWidth === 0) {
-            // console.warn("Cannot update texture, image not ready for:", user?.name);
+            console.warn(`Cannot update texture for ${user?.name}. Reason:`, // Debug Log 2
+                !user && "No user", 
+                !user?.texture && "No texture", 
+                !user?.loadedImg && "No image element", 
+                user?.loadedImg && !user.loadedImg.complete && "Image not complete", 
+                user?.loadedImg?.complete && user.loadedImg.naturalWidth === 0 && "Image naturalWidth is 0"
+            );
             return; // Image not loaded or ready yet
         }
 
@@ -731,13 +791,17 @@
             currentBorderColor = borderYouColor;
         }
         if (isSelected) {
-            currentBorderColor = selectedBorderColor;
+            currentBorderColor = selectedBorderColor; // Use gold if selected
         }
+
+        // *** Determine border size for drawing ***
+        const currentBorderSize = isSelected ? selectedBorderSize : borderSize;
 
         // 1. Draw Border Circle
         const center = canvasSize / 2;
         const outerRadius = canvasSize / 2;
-        const innerRadius = outerRadius - (borderSize * (canvasSize / (nodeSizeBase * 2)));
+        // *** Use currentBorderSize for inner radius calculation ***
+        const innerRadius = outerRadius - (currentBorderSize * (canvasSize / (nodeSizeBase * 2)));
         
         ctx.fillStyle = currentBorderColor;
         ctx.beginPath();
@@ -750,25 +814,36 @@
         ctx.arc(center, center, innerRadius, 0, Math.PI * 2);
         ctx.clip();
 
-        // 3. Draw Image
-        // Ensure the image is fully loaded before drawing
-        try {
-             if (img.complete && img.naturalWidth > 0) {
-                 ctx.drawImage(img, 0, 0, canvasSize, canvasSize);
-             } else {
-                 console.warn("Image not ready for drawing on canvas for", user.name);
-             }
-        } catch (e) {
-             console.error("Error drawing image to canvas for", user.name, e);
-        }
-       
+        // 3. Draw Image inside clipped area
+        ctx.drawImage(img, 0, 0, canvasSize, canvasSize);
         ctx.restore();
 
         // 4. Update the texture
         texture.needsUpdate = true;
-        // console.log(`Updated texture for ${user.name}, selected: ${isSelected}, border: ${currentBorderColor}`); // Debug log
+        // console.log(`Texture updated via onload for ${user.name}`); // Debug Log 1
     }
     // --- End Redraw Function --- //
+
+    // --- New Function to Find "You" Node --- //
+    function findMe() {
+        const youNode = userMap.get(0);
+        if (youNode && youNode.threeObj) {
+            console.log("Finding 'You' node...");
+            // Trigger selection visuals and logic
+            onNodeClick(youNode);
+            // Set controls target to focus camera rotation/pan on the node
+            /* // Temporarily comment out camera target change for debugging
+            if (controls) {
+                controls.target.copy(youNode.position);
+                controls.update(); // Necessary after changing target
+                // Optional: Gently nudge camera closer? Requires more complex animation.
+            }
+            */
+        } else {
+            console.warn("'You' node (ID 0) not found or its 3D object doesn't exist.");
+        }
+    }
+    // --- End Find Me Function --- //
 
 </script>
 
