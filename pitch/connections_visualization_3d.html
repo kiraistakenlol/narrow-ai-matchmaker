@@ -4,23 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interconnected Network Visualization (Custom 3D)</title>
-    <!-- Load THREE, OrbitControls, and SpriteText -->
+    <!-- Load THREE Core -->
     <script src="//unpkg.com/three@0.140.0/build/three.min.js"></script>
-    <script src="//unpkg.com/three@0.140.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- JSM Imports for Controls and Lines - Requires type="module" below -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "//unpkg.com/three@0.140.0/build/three.module.js",
+                "three/addons/": "//unpkg.com/three@0.140.0/examples/jsm/"
+            }
+        }
+    </script>
+    <!-- SpriteText still loaded normally -->
     <script src="//unpkg.com/three-spritetext@1.9.6"></script>
     <style>
-        body { margin: 0; background-color: #111; color: #fff; overflow: hidden; }
+        body { margin: 0; background-color: #1A1A1D; color: #E9ECEF; overflow: hidden; }
         #controls {
              position: absolute;
              top: 10px;
              left: 10px;
-             background-color: rgba(50, 50, 50, 0.85);
+             background-color: rgba(40, 40, 45, 0.9);
              padding: 10px;
              border-radius: 5px;
              font-family: sans-serif;
              z-index: 10;
-             color: #eee;
-             max-width: 180px; /* Adjust width */
+             color: #E9ECEF;
+             max-width: 180px;
+             border: 1px solid #495057;
         }
         #controls > div { margin-bottom: 8px; }
         #controls label, #controls span {
@@ -32,33 +42,33 @@
             width: 100%; margin-bottom: 5px;
         }
         #legend { margin-top: 10px; font-size: 0.8em; }
-        #legend div { margin-bottom: 2px; }
-        #legend span { display: inline-block; width: 10px; height: 10px; margin-right: 5px; border: 1px solid #555; vertical-align: middle; }
+        #legend div { margin-bottom: 3px; }
+        #legend span { display: inline-block; width: 10px; height: 10px; margin-right: 5px; border: 1px solid #495057; vertical-align: middle; }
 
         #profileDetails {
             position: absolute;
             width: 250px;
-            background-color: rgba(40, 40, 40, 0.95);
+            background-color: rgba(40, 40, 45, 0.95);
             padding: 15px;
             border-radius: 5px;
             font-family: sans-serif;
             z-index: 10;
-            color: #eee;
+            color: #E9ECEF;
             display: none;
-            border: 1px solid #555;
+            border: 1px solid #495057;
             box-shadow: 0 2px 10px rgba(0,0,0,0.5);
             pointer-events: auto;
             transform: translate(15px, -50%);
         }
         #profileDetails h3 {
-            margin-top: 0; margin-bottom: 10px; color: #ffa500;
-             border-bottom: 1px solid #555; padding-bottom: 5px;
+            margin-top: 0; margin-bottom: 10px; color: #E0A800;
+             border-bottom: 1px solid #495057; padding-bottom: 5px;
         }
          #profileDetails p { margin: 5px 0; font-size: 0.9em; }
-        #profileDetails strong { color: #bbb; }
+        #profileDetails strong { color: #adb5bd; }
         #profileDetails ul { list-style: none; padding-left: 0; margin-top: 5px; font-size: 0.9em; }
-        #profileDetails li { display: inline-block; background-color: #555; color: #eee; padding: 2px 6px; margin: 2px; border-radius: 3px; font-size: 0.85em; }
-        #closeDetails { position: absolute; top: 5px; right: 8px; cursor: pointer; font-weight: bold; color: #aaa; font-size: 1.2em; }
+        #profileDetails li { display: inline-block; background-color: #495057; color: #E9ECEF; padding: 2px 6px; margin: 2px; border-radius: 3px; font-size: 0.85em; }
+        #closeDetails { position: absolute; top: 5px; right: 8px; cursor: pointer; font-weight: bold; color: #adb5bd; font-size: 1.2em; }
     </style>
 </head>
 <body>
@@ -72,9 +82,9 @@
         <span id="speedValue">1</span>
     </div>
     <div id="legend">
-        <div><span style="background-color: #ff6347;"></span> Strong</div>
-        <div><span style="background-color: #ffd700;"></span> Medium</div>
-        <div><span style="background-color: #aec6cf;"></span> Weak</div>
+        <div><span style="background-color: #FFA500;"></span> Strong (Orange)</div>
+        <div><span style="background-color: #28A745;"></span> Medium (Green)</div>
+        <div><span style="background-color: #0D6EFD;"></span> Weak (Blue)</div>
     </div>
 </div>
 
@@ -87,7 +97,13 @@
     <ul id="detailsSkills"></ul>
 </div>
 
-<script>
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+    import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
+    import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
+
     // --- Basic Three.js Setup ---
     let scene, camera, renderer, controls;
     let container = document.getElementById('container');
@@ -97,22 +113,23 @@
     const highlightLinks = new Set(); // Keep track of links connected to hoverNode
     let selectedNode = null; // Keep track of clicked node
     const profileDetailsDiv = document.getElementById('profileDetails');
+    let textureLoader; // Define texture loader globally
 
     // --- Simulation Data & Objects ---
     const N_USERS = 10;
 
     // Enhanced User Data
     const userProfiles = [
-        { id: 0, name: 'You', summary: 'Seeking Connections', skills: ['Networking', 'Curiosity'] },
-        { id: 1, name: 'Alice', summary: 'Software Engineer', skills: ['JavaScript', 'React', 'Node.js', 'Cloud'] },
-        { id: 2, name: 'Bob', summary: 'Product Manager', skills: ['Roadmap', 'Agile', 'UX', 'Market Research'] },
-        { id: 3, name: 'Charlie', summary: 'Data Scientist', skills: ['Python', 'ML', 'SQL', 'Statistics'] },
-        { id: 4, name: 'Diana', summary: 'UX Designer', skills: ['Figma', 'Prototyping', 'User Research', 'Accessibility'] },
-        { id: 5, name: 'Ethan', summary: 'Marketing Specialist', skills: ['SEO', 'Content Strategy', 'Social Media', 'Analytics'] },
-        { id: 6, name: 'Fiona', summary: 'Journalist', skills: ['Writing', 'Interviewing', 'Research', 'Storytelling'] },
-        { id: 7, name: 'George', summary: 'Hardware Engineer', skills: ['PCB Design', 'Embedded Systems', 'VHDL'] },
-        { id: 8, name: 'Hannah', summary: 'Investor', skills: ['VC', 'Startups', 'Finance', 'Due Diligence'] },
-        { id: 9, name: 'Ian', summary: 'DevOps Engineer', skills: ['Kubernetes', 'AWS', 'CI/CD', 'Terraform'] }
+        { id: 0, name: 'You', summary: 'Seeking Connections', skills: ['Networking', 'Curiosity'], photoUrl: 'https://picsum.photos/seed/0/150' },
+        { id: 1, name: 'Alice', summary: 'Software Engineer', skills: ['JavaScript', 'React', 'Node.js', 'Cloud'], photoUrl: 'https://picsum.photos/seed/1/150' },
+        { id: 2, name: 'Bob', summary: 'Product Manager', skills: ['Roadmap', 'Agile', 'UX', 'Market Research'], photoUrl: 'https://picsum.photos/seed/2/150' },
+        { id: 3, name: 'Charlie', summary: 'Data Scientist', skills: ['Python', 'ML', 'SQL', 'Statistics'], photoUrl: 'https://picsum.photos/seed/3/150' },
+        { id: 4, name: 'Diana', summary: 'UX Designer', skills: ['Figma', 'Prototyping', 'User Research', 'Accessibility'], photoUrl: 'https://picsum.photos/seed/4/150' },
+        { id: 5, name: 'Ethan', summary: 'Marketing Specialist', skills: ['SEO', 'Content Strategy', 'Social Media', 'Analytics'], photoUrl: 'https://picsum.photos/seed/5/150' },
+        { id: 6, name: 'Fiona', summary: 'Journalist', skills: ['Writing', 'Interviewing', 'Research', 'Storytelling'], photoUrl: 'https://picsum.photos/seed/6/150' },
+        { id: 7, name: 'George', summary: 'Hardware Engineer', skills: ['PCB Design', 'Embedded Systems', 'VHDL'], photoUrl: 'https://picsum.photos/seed/7/150' },
+        { id: 8, name: 'Hannah', summary: 'Investor', skills: ['VC', 'Startups', 'Finance', 'Due Diligence'], photoUrl: 'https://picsum.photos/seed/8/150' },
+        { id: 9, name: 'Ian', summary: 'DevOps Engineer', skills: ['Kubernetes', 'AWS', 'CI/CD', 'Terraform'], photoUrl: 'https://picsum.photos/seed/9/150' }
     ];
 
     const users = userProfiles.map(profile => ({
@@ -152,11 +169,28 @@
     const TIME_STEP = 0.02;
     let physicsActive = true;
 
-    // --- Styling ---
-    const nodeSizeBase = 3.0;
-    const nodeSizeHover = 5.0;
-    const textHeightBase = 3.5;
-    const textHeightHover = 5.5;
+    // --- Styling --- (Adjust sizes for Sprites and Text)
+    const nodeSizeBase = 8.0; // Base size for sprite scale
+    const nodeSizeHover = 11.0; // Hover size for sprite scale (slightly smaller hover)
+    const textHeightBase = 2.5; // Size for SpriteText
+    const borderSize = 0.6; // Width of the border
+    const borderColor = '#6C757D';
+    const borderYouColor = '#E0A800';
+    const defaultTextColor = '#E9ECEF';
+    const hoverTextColor = '#FFFFFF';
+    const canvasSize = 256; // Resolution for combined texture canvas
+    const selectedBorderColor = '#28A745'; // Green for selected node border
+    const selectedLinkOpacity = 1.0;
+    // const baseLineWidth = 3.0; // Removed uniform width
+    // const selectedLineWidth = 5.0; // Removed uniform width
+
+    // *** Strength-based line widths ***
+    const strongBaseWidth = 3.5;
+    const mediumBaseWidth = 2.5;
+    const weakBaseWidth = 1.5;
+    const selectedStrongWidth = 5.5; // Thicker when selected
+    const selectedMediumWidth = 4.5;
+    const selectedWeakWidth = 3.5;
 
     // --- Initialization ---
     init();
@@ -165,7 +199,7 @@
     function init() {
         // Scene
         scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x111111);
+        scene.background = new THREE.Color(0x1A1A1D); // *** Updated background color ***
 
         // Camera
         camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -177,16 +211,16 @@
         container.appendChild(renderer.domElement);
 
         // Controls
-        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.1;
         controls.autoRotate = true;
         controls.autoRotateSpeed = 1.0;
 
         // Lighting
-        const ambientLight = new THREE.AmbientLight(0xcccccc); // Slightly brighter ambient
+        const ambientLight = new THREE.AmbientLight(0xcccccc, 0.8); // Slightly adjusted ambient intensity
         scene.add(ambientLight);
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6); // Slightly adjusted directional intensity
         directionalLight.position.set(1, 1.5, 1).normalize();
         scene.add(directionalLight);
 
@@ -204,34 +238,63 @@
     }
 
     function createGraphObjects() {
-        // Nodes (Spheres + Labels)
+        textureLoader = new THREE.TextureLoader(); // Initialize texture loader
+
+        // Nodes (Group: Combined Sprite + Text)
         users.forEach(user => {
-            const nodeSize = nodeSizeBase;
-            const nodeColor = user.isYou ? '#9c27b0' : '#6baed6'; // Purple for You, blue for others
+            // --- Texture Creation with Canvas --- >
+            const canvas = document.createElement('canvas');
+            canvas.width = canvasSize;
+            canvas.height = canvasSize;
+            const ctx = canvas.getContext('2d');
 
-            const geometry = new THREE.SphereGeometry(nodeSize, 16, 8);
-            const material = new THREE.MeshStandardMaterial({
-                color: nodeColor,
-                metalness: 0.3, roughness: 0.4
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.colorSpace = THREE.SRGBColorSpace;
+            user.texture = texture; // Store texture for updates
+
+            const img = new Image();
+            img.crossOrigin = "Anonymous"; 
+            user.loadedImg = img; // Store image for redraws
+
+            img.onload = () => {
+                // Initial draw using the update function
+                updateNodeTexture(user, false); // Draw with default border initially
+            };
+            img.onerror = (err) => { console.error(`Error loading image ${user.photoUrl}:`, err); };
+            img.src = user.photoUrl;
+            // <--- End Texture Creation <---
+
+            // Create Combined Photo+Border Sprite Material
+            const combinedMaterial = new THREE.SpriteMaterial({
+                map: texture, // Use the canvas texture
+                sizeAttenuation: true,
+                transparent: true,
+                alphaTest: 0.1 // Keep this to handle potential aliasing at edges
             });
-            const sphere = new THREE.Mesh(geometry, material);
 
-            const sprite = new SpriteText(user.name);
-            sprite.material.depthWrite = false;
-            sprite.renderOrder = 1;
-            sprite.color = '#eeeeee';
-            sprite.textHeight = textHeightBase;
+            // Create Combined Sprite
+            const combinedSprite = new THREE.Sprite(combinedMaterial);
+            combinedSprite.scale.set(nodeSizeBase, nodeSizeBase, 1);
+            combinedSprite.renderOrder = 0; // Can be 0 now
 
-            const yOffset = nodeSize + (sprite.textHeight * 0.8) + 1;
-            sprite.position.set(0, yOffset, 0);
+            // Create Name Label (SpriteText)
+            const nameSprite = new SpriteText(user.name);
+            nameSprite.material.depthWrite = false;
+            nameSprite.renderOrder = 1; // Render text on top
+            nameSprite.color = defaultTextColor;
+            nameSprite.textHeight = textHeightBase;
+            // Position name below the combined sprite
+            const nameOffsetY = -(nodeSizeBase * 0.5 + textHeightBase * 0.6 + borderSize * 0.5); // Offset based on nodeSize + border
+            nameSprite.position.set(0, nameOffsetY, 0);
 
+            // Create Group
             const group = new THREE.Group();
-            group.add(sphere);
-            group.add(sprite);
+            group.add(combinedSprite); // Add the single combined sprite
+            group.add(nameSprite);   // Add name Sprite
             group.position.copy(user.position);
             group.userData = { id: user.id, type: 'node' };
 
-            user.threeObj = group;
+            user.threeObj = group; // Store the group
             scene.add(group);
         });
 
@@ -241,18 +304,34 @@
             const targetUser = userMap.get(link.target);
             if (!sourceUser || !targetUser) return;
 
-            const points = [sourceUser.position, targetUser.position];
-            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            // Use LineSegmentsGeometry for thick lines
+            const lineGeo = new LineSegmentsGeometry();
+            // Positions need to be a flat array: [x1, y1, z1, x2, y2, z2]
+            lineGeo.setPositions([ sourceUser.position.x, sourceUser.position.y, sourceUser.position.z, targetUser.position.x, targetUser.position.y, targetUser.position.z ]);
+
             const style = getLinkStyle(link.strength);
-            const material = new THREE.LineBasicMaterial({
+            // *** Determine initial width based on strength ***
+            let initialLineWidth;
+            switch(link.strength) {
+                case 'strong': initialLineWidth = strongBaseWidth; break;
+                case 'medium': initialLineWidth = mediumBaseWidth; break;
+                case 'weak':
+                default: initialLineWidth = weakBaseWidth; break;
+            }
+
+            const lineMat = new LineMaterial({
                 color: style.color,
-                linewidth: 1, // Linewidth > 1 often ignored
+                linewidth: initialLineWidth, // *** Use strength-specific initial width ***
+                opacity: style.opacity,
                 transparent: true,
-                opacity: style.opacity
+                // depthTest: false, // Optional: render lines on top
+                resolution: new THREE.Vector2(window.innerWidth, window.innerHeight) // Must pass screen dimensions
             });
 
-            const line = new THREE.Line(geometry, material);
-            line.userData = { link: link };
+            const line = new LineSegments2(lineGeo, lineMat);
+            line.computeLineDistances(); // Required
+            line.scale.set(1, 1, 1); // Required
+            line.userData = { link: link }; // Keep link data if needed
 
             scene.add(line);
             lineObjects.set(`${Math.min(link.source, link.target)}-${Math.max(link.source, link.target)}`, line);
@@ -322,38 +401,45 @@
 
     function updateGraphObjects() {
         const highlightLinkSet = new Set();
-        if (hoverNode) {
+            if (hoverNode) {
              highlightLinks.forEach(link => {
                  highlightLinkSet.add(`${Math.min(link.source, link.target)}-${Math.max(link.source, link.target)}`);
              });
         }
+
+        // *** Create Selected Link Set ***
+        const selectedLinkSet = new Set();
+        if (selectedNode) {
+            connectionLinks.forEach(link => {
+                if (link.source === selectedNode.id || link.target === selectedNode.id) {
+                    selectedLinkSet.add(`${Math.min(link.source, link.target)}-${Math.max(link.source, link.target)}`);
+                    }
+                });
+            }
 
         // Update Nodes
         users.forEach(user => {
             if (user.threeObj) {
                 user.threeObj.position.copy(user.position);
                 const isHovered = user === hoverNode;
-                const sphereMesh = user.threeObj.children[0];
-                const labelSprite = user.threeObj.children[1];
-                const nodeSize = isHovered ? nodeSizeHover : nodeSizeBase;
+                const combinedSprite = user.threeObj.children[0]; // Get combined sprite
+                const nameSprite = user.threeObj.children[1]; // Get name sprite
 
-                // Efficiently update only if needed
-                const targetScale = isHovered ? nodeSizeHover / nodeSizeBase : 1;
-                if (sphereMesh.scale.x !== targetScale) sphereMesh.scale.setScalar(targetScale);
-                // Define base color based on isYou, hover color is always orange
-                const baseColor = user.isYou ? '#9c27b0' : '#6baed6';
-                const targetColor = isHovered ? '#ffa500' : baseColor;
-                // Make selected node stand out slightly if not hovered
-                const finalColor = (user === selectedNode && !isHovered) ? '#ffeb3b' : targetColor; // Yellow if selected and not hovered
-                if (sphereMesh.material.color.getHexString() !== finalColor.substring(1)) sphereMesh.material.color.set(finalColor);
+                // Efficiently update scale only if needed (for combined sprite)
+                const targetScaleBase = isHovered ? nodeSizeHover : nodeSizeBase;
 
-                const targetTextColor = isHovered ? '#ffffff' : '#eeeeee';
-                if(labelSprite.color !== targetTextColor) labelSprite.color = targetTextColor;
-                const targetTextHeight = isHovered ? textHeightHover : textHeightBase;
-                if (labelSprite.textHeight !== targetTextHeight) {
-                    labelSprite.textHeight = targetTextHeight;
-                    const yOffset = nodeSize + (labelSprite.textHeight * 0.8) + 1;
-                    labelSprite.position.set(0, yOffset, 0);
+                if (combinedSprite.scale.x !== targetScaleBase) {
+                    combinedSprite.scale.set(targetScaleBase, targetScaleBase, 1);
+                }
+
+                // Update text color on hover
+                const targetTextColor = isHovered ? hoverTextColor : defaultTextColor;
+                if(nameSprite.color !== targetTextColor) nameSprite.color = targetTextColor;
+
+                // Recalculate and update name position based on current combined sprite scale
+                const currentNameOffsetY = -(targetScaleBase * 0.5 + textHeightBase * 0.6 + borderSize * 0.5);
+                if (nameSprite.position.y !== currentNameOffsetY) {
+                    nameSprite.position.y = currentNameOffsetY;
                 }
             }
         });
@@ -366,17 +452,58 @@
             const targetUser = userMap.get(link.target);
 
             if (line && sourceUser && targetUser) {
-                const positions = line.geometry.attributes.position;
-                positions.setXYZ(0, sourceUser.position.x, sourceUser.position.y, sourceUser.position.z);
-                positions.setXYZ(1, targetUser.position.x, targetUser.position.y, targetUser.position.z);
-                positions.needsUpdate = true;
-                line.geometry.computeBoundingSphere();
+                // Update positions for LineSegmentsGeometry
+                line.geometry.setPositions([ sourceUser.position.x, sourceUser.position.y, sourceUser.position.z, targetUser.position.x, targetUser.position.y, targetUser.position.z ]);
+                line.geometry.attributes.position.needsUpdate = true; // May not be strictly needed with setPositions
+                // line.computeLineDistances(); // Recalculating might impact performance if many lines update
 
-                const isHighlighted = highlightLinkSet.has(lineKey);
+                // Prioritize Selected > Hovered > Default
+                const isSelectedLink = selectedLinkSet.has(lineKey);
+                const isHighlightedLink = !isSelectedLink && highlightLinkSet.has(lineKey);
                 const style = getLinkStyle(link.strength);
-                const targetColor = isHighlighted ? style.highlightColor : style.color;
+
+                let targetColor;
+                let targetOpacity;
+                let targetLineWidth;
+
+                if (isSelectedLink) {
+                    targetColor = style.selectedHighlightColor; 
+                    targetOpacity = selectedLinkOpacity;
+                    // Select width based on strength for selected links
+                    switch(link.strength) {
+                        case 'strong': targetLineWidth = selectedStrongWidth; break;
+                        case 'medium': targetLineWidth = selectedMediumWidth; break;
+                        case 'weak':
+                        default: targetLineWidth = selectedWeakWidth; break;
+                    }
+                } else if (isHighlightedLink) {
+                    targetColor = style.highlightColor;
+                    targetOpacity = 0.95;
+                    // Hover keeps base width for that strength
+                    switch(link.strength) {
+                        case 'strong': targetLineWidth = strongBaseWidth; break;
+                        case 'medium': targetLineWidth = mediumBaseWidth; break;
+                        case 'weak':
+                        default: targetLineWidth = weakBaseWidth; break;
+                    }
+                } else {
+                    targetColor = style.color;
+                    targetOpacity = style.opacity;
+                    // Default uses base width for that strength
+                    switch(link.strength) {
+                        case 'strong': targetLineWidth = strongBaseWidth; break;
+                        case 'medium': targetLineWidth = mediumBaseWidth; break;
+                        case 'weak':
+                        default: targetLineWidth = weakBaseWidth; break;
+                    }
+                }
+
+                // Update material properties
                 if (line.material.color.getHexString() !== targetColor.substring(1)) line.material.color.set(targetColor);
-                line.material.opacity = isHighlighted ? 0.9 : style.opacity;
+                if (line.material.opacity !== targetOpacity) line.material.opacity = targetOpacity;
+                if (line.material.linewidth !== targetLineWidth) line.material.linewidth = targetLineWidth;
+
+                // Update material resolution on resize (handled in onWindowResize)
             }
         });
     }
@@ -424,22 +551,42 @@
     }
 
     function getLinkStyle(strength) {
-         let color, highlightColor, opacity;
+         // *** New Color Scheme & Styles ***
+         let color, highlightColor, selectedHighlightColor, opacity;
         switch (strength) {
-            case 'strong': color = '#ff6347'; highlightColor = '#ff8a65'; opacity = 0.75; break; // Tomato
-            case 'medium': color = '#ffd700'; highlightColor = '#ffea00'; opacity = 0.6; break; // Gold
+            // Strong: Orange -> Lighter Orange -> Brightest Orange
+            case 'strong': 
+                color = '#FFA500'; // Orange
+                highlightColor = '#FFB733'; // Lighter Orange
+                selectedHighlightColor = '#FFC866'; // Brightest Orange
+                opacity = 0.85; // Slightly higher base opacity
+                break; 
+            // Medium: Green -> Lighter Green -> Brightest Green
+            case 'medium': 
+                color = '#28A745'; // Bootstrap Green
+                highlightColor = '#34D399'; // Lighter Green
+                selectedHighlightColor = '#6EE7B7'; // Brightest Green
+                opacity = 0.75; 
+                break; 
+            // Weak: Blue -> Lighter Blue -> Brightest Blue
             case 'weak':
-            default:       color = '#aec6cf'; highlightColor = '#ddebf0'; opacity = 0.4; break; // LightSteelBlue
+            default:       
+                color = '#0D6EFD'; // Bootstrap Blue
+                highlightColor = '#3B82F6'; // Lighter Blue
+                selectedHighlightColor = '#60A5FA'; // Brightest Blue
+                opacity = 0.6; 
+                break; 
         }
-        return { color: color, highlightColor: highlightColor, opacity: opacity };
+        // Base opacity slightly increased for better default visibility with thickness
+        return { color, highlightColor, selectedHighlightColor, opacity }; 
     }
 
     function setupControls() {
         const speedSlider = document.getElementById('speedSlider');
         const speedValueSpan = document.getElementById('speedValue');
-        speedSlider.oninput = function() {
-            const speed = parseFloat(this.value);
-            speedValueSpan.textContent = speed.toFixed(1);
+    speedSlider.oninput = function() {
+        const speed = parseFloat(this.value);
+        speedValueSpan.textContent = speed.toFixed(1);
             if (controls) { controls.autoRotateSpeed = speed; }
         }
         speedSlider.dispatchEvent(new Event('input'));
@@ -449,6 +596,13 @@
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
+
+        // *** Update line material resolution ***
+        lineObjects.forEach(line => {
+            if (line && line.material) {
+                line.material.resolution.set(window.innerWidth, window.innerHeight);
+            }
+        });
     }
 
      function onDocumentMouseMove(event) {
@@ -499,8 +653,19 @@
     }
 
     function onNodeClick(node) {
-        console.log("onNodeClick called for:", node.name); // Log 4: Check if this is called
-        selectedNode = node;
+        console.log("onNodeClick called for:", node.name);
+
+        // If clicking the same node that's already selected, do nothing extra
+        if (selectedNode === node) return;
+
+        // Revert previously selected node's border (if exists)
+        if (selectedNode) {
+            updateNodeTexture(selectedNode, false);
+        }
+
+        // Update newly selected node
+        updateNodeTexture(node, true);
+        selectedNode = node; // Update selectedNode *after* potential revert
 
         // Stop auto-rotation
         if (controls) controls.autoRotate = false;
@@ -575,7 +740,12 @@
 
     }
 
-    function hideProfileDetails() {
+    // Attach to window to make it accessible from onclick attribute
+    window.hideProfileDetails = function() {
+        // Revert selected node's border before clearing
+        if (selectedNode) {
+            updateNodeTexture(selectedNode, false);
+        }
         selectedNode = null;
         profileDetailsDiv.style.display = 'none';
 
@@ -584,6 +754,65 @@
     }
 
     // --- End New Click Handling --- //
+
+    // --- New Function to Redraw Node Texture --- //
+    function updateNodeTexture(user, isSelected) {
+        if (!user || !user.texture || !user.loadedImg || !user.loadedImg.complete || user.loadedImg.naturalWidth === 0) {
+            // console.warn("Cannot update texture, image not ready for:", user?.name);
+            return; // Image not loaded or ready yet
+        }
+
+        const texture = user.texture;
+        const canvas = texture.image; // The canvas is the image source for CanvasTexture
+        const ctx = canvas.getContext('2d');
+        const img = user.loadedImg;
+
+        ctx.clearRect(0, 0, canvasSize, canvasSize);
+
+        // Determine border color
+        let currentBorderColor = borderColor; // Default
+        if (user.isYou) {
+            currentBorderColor = borderYouColor;
+        }
+        if (isSelected) {
+            currentBorderColor = selectedBorderColor;
+        }
+
+        // 1. Draw Border Circle
+        const center = canvasSize / 2;
+        const outerRadius = canvasSize / 2;
+        const innerRadius = outerRadius - (borderSize * (canvasSize / (nodeSizeBase * 2)));
+        
+        ctx.fillStyle = currentBorderColor;
+        ctx.beginPath();
+        ctx.arc(center, center, outerRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 2. Clip to Inner Circle
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(center, center, innerRadius, 0, Math.PI * 2);
+        ctx.clip();
+
+        // 3. Draw Image
+        // Ensure the image is fully loaded before drawing
+        try {
+             if (img.complete && img.naturalWidth > 0) {
+                 ctx.drawImage(img, 0, 0, canvasSize, canvasSize);
+             } else {
+                 console.warn("Image not ready for drawing on canvas for", user.name);
+             }
+        } catch (e) {
+             console.error("Error drawing image to canvas for", user.name, e);
+        }
+       
+        ctx.restore();
+
+        // 4. Update the texture
+        texture.needsUpdate = true;
+        // console.log(`Updated texture for ${user.name}, selected: ${isSelected}, border: ${currentBorderColor}`); // Debug log
+    }
+    // --- End Redraw Function --- //
 
 </script>
 
