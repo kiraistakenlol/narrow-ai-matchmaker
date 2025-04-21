@@ -1,61 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vector Matchmaker Playground</title>
-    <link rel="stylesheet" href="css/styles.css">
-</head>
-<body>
-    <div class="container">
-        <h1>Vector Matchmaker Playground</h1>
-
-        <section id="qdrant-controls" class="controls">
-            <h2>Manage Qdrant Collections</h2>
-            <div class="control-group">
-                <label for="collectionName">Collection Name:</label>
-                <input type="text" id="collectionName" placeholder="Enter collection name">
-            </div>
-            <div class="control-group">
-                <label for="vectorSize">Vector Size:</label>
-                <input type="number" id="vectorSize" value="1536" min="1">
-
-                <label for="distanceMetric">Distance Metric:</label>
-                <select id="distanceMetric">
-                    <option value="Cosine">Cosine</option>
-                    <option value="Dot">Dot</option>
-                    <option value="Euclid">Euclid</option>
-                </select>
-            </div>
-            <div class="control-group">
-                <button id="createCollectionBtn">Create Collection</button>
-                <button id="deleteCollectionBtn" class="delete">Delete Collection</button>
-            </div>
-            <div id="status"></div>
-        </section>
-
-        <section class="collection-list-section">
-            <h2>Existing Collections</h2>
-            <button id="listCollectionsBtn">List Collections</button>
-            <div id="listStatus"></div>
-            <div id="collectionsList"><pre>Click 'List Collections' to see existing collections.</pre></div>
-        </section>
-
-        <section id="embedding-section" class="controls">
-            <h2>Embedding Operations</h2>
-            <p>Select a collection above and use the "Generate Embedding" button on a profile to create an embedding in that collection.</p>
-            <div id="embedStatus"></div>
-        </section>
-
-        <section id="profile-explorer">
-            <h2>Conference Profiles</h2>
-            <div id="profilesList">
-                <!-- Profiles will be loaded here from the backend -->
-                <p>Loading profiles...</p>
-            </div>
-        </section>
-    </div>
-
-    <script src="js/app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="AI Model Matchmaker - Find the right AI model for your task" />
+    <title>Narrow AI Matchmaker</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html> 

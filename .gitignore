@@ -18,3 +18,4 @@ matching/playground/test_data/my_*.json
 
 # Node.js dependencies
 **/node_modules/
+**/qdrant_storage/*
