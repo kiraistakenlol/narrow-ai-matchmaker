@@ -12,7 +12,8 @@
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "axios": "^1.6.2"
+    "axios": "^1.6.2",
+    "narrow-ai-matchmaker-common": "file:../common"
   },
   "devDependencies": {
     "@types/react": "^18.2.37",

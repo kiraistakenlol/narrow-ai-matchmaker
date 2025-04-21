@@ -1,0 +1,17 @@
+{
+  "name": "narrow-ai-matchmaker-common",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Shared types and utilities for narrow-ai-matchmaker",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.2.2"
+  }
+} 

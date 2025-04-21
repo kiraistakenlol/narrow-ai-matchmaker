@@ -15,7 +15,8 @@
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.0.0",
     "@qdrant/js-client-rest": "^1.13.0",
-    "openai": "^4.10.0"
+    "openai": "^4.10.0",
+    "narrow-ai-matchmaker-common": "file:../common"
   },
   "devDependencies": {
     "@types/node": "^18.0.0",

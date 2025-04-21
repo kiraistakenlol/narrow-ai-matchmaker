@@ -1,15 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-
-interface Profile {
-  user_id: string;
-  input_text: string;
-}
-
-interface ProfilesData {
-  profiles: Profile[];
-}
+import { Profile, ProfilesData } from 'narrow-ai-matchmaker-common';
 
 @Injectable()
 export class ProfilesService {

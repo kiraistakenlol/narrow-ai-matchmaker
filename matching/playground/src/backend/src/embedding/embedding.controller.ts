@@ -1,10 +1,6 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { EmbeddingService } from './embedding.service';
-
-class EmbedProfileDto {
-  profileId: string;
-  collectionName: string;
-}
+import { EmbedProfileDto } from 'narrow-ai-matchmaker-common';
 
 @Controller('embed')
 export class EmbeddingController {
