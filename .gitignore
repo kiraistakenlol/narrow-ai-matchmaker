@@ -15,3 +15,6 @@ matching/playground/test_data/generator/dist/
 # Generated data goes into test_data/, not generator/
 matching/playground/test_data/generated_*.json 
 matching/playground/test_data/my_*.json 
+
+# Node.js dependencies
+**/node_modules/
