@@ -24,3 +24,4 @@ Based on initial research and project goals (performance, scalability, quality e
 
 *   **Vector Database:** **Qdrant** will be used, leveraging its performance benefits and advanced filtering capabilities.
 *   **Embedding Model:** Embeddings will be generated using the **OpenAI API**, targeting their latest high-performance models (e.g., `text-embedding-3-small` or `text-embedding-3-large`) for optimal semantic understanding.
+****

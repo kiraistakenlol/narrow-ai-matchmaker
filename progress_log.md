@@ -30,4 +30,18 @@ This file tracks development progress and outlines next steps between sessions.
 *   Standardized documentation filenames to lowercase and updated internal links.
 
 **Next Step:**
-*   Define and create concrete test data representing structured user profiles (simulating the output of audio processing/entity extraction). This could be a list of JSON objects, each representing a user with extracted fields (skills, location, goals, etc.) based on the example scenarios. The goal is to have tangible data to start experimenting with matching logic/vectorization. 
+*   Define and create concrete test data representing structured user profiles (simulating the output of audio processing/entity extraction). This could be a list of JSON objects, each representing a user with extracted fields (skills, location, goals, etc.) based on the example scenarios. The goal is to have tangible data to start experimenting with matching logic/vectorization.
+
+---
+
+## Session: 2025-04-18 (Vector DB Exploration & Planning)
+
+**Summary:**
+*   Explored vector database concepts and options (`matching/playground/vector/README.md`).
+*   Compared Qdrant vs. ChromaDB (focusing on filtering mechanisms).
+*   Researched text embedding API providers (`matching/playground/vector/vector_database_comparison.md`).
+*   Decided on using Qdrant (vector DB) and OpenAI API (embeddings) with a JS/TS client.
+*   Created a detailed implementation plan (`matching/playground/vector/plan.md`).
+
+**Next Step:**
+*   Begin executing `matching/playground/vector/plan.md`, starting with Step 1 (Environment Setup) and specifically reviewing the OpenAI Embeddings documentation (<https://platform.openai.com/docs/guides/embeddings>) as part of Step 4. 
