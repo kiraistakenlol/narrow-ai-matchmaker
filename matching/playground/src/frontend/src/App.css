@@ -176,6 +176,59 @@ input, select {
   border-color: #9d583c;
 }
 
+.separator {
+  border: 0;
+  border-top: 1px solid #444;
+  margin: 2rem 0;
+}
+
+.delete-section {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.delete-section h3 {
+  color: inherit;
+  margin-bottom: 1rem;
+}
+
+.delete-button {
+  background-color: #4a4a4a;
+  color: white;
+  border-color: transparent;
+}
+
+.delete-button:hover {
+  background-color: #5a5a5a;
+  border-color: #646cff;
+}
+
+.delete-button:disabled {
+  background-color: #4a4a4a;
+  opacity: 0.5;
+}
+
+.confirmation-box-danger {
+  background-color: rgba(255, 193, 7, 0.1);
+  border: 1px solid #ffc107;
+}
+
+.confirmation-box-danger p strong {
+  color: #ffca2c;
+}
+
+.confirm-delete-button {
+  background-color: #b00020;
+  color: white;
+  border-color: transparent;
+}
+
+.confirm-delete-button:hover {
+  background-color: #c9304a;
+  border-color: #b00020;
+}
+
 /* Profile List Styles */
 .profile-list {
   text-align: left;

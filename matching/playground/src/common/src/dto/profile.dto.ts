@@ -1,6 +1,6 @@
 export interface Profile {
-  user_id: string;
-  input_text: string;
+  id: string;
+  text: string;
 }
 
 export interface ProfilesData {

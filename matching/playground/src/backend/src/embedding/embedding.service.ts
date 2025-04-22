@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { QdrantClient } from '@qdrant/js-client-rest';
 import OpenAI from 'openai';
 import { ProfilesService } from '../profiles/profiles.service';
+import { Profile } from 'narrow-ai-matchmaker-common'; // Import Profile interface
 
 @Injectable()
 export class EmbeddingService {
@@ -9,6 +10,7 @@ export class EmbeddingService {
   private readonly openaiClient: OpenAI;
   private readonly logger = new Logger(EmbeddingService.name);
   private readonly vectorSize = 3072; // Size of text-embedding-3-large vectors
+  private readonly OPENAI_BATCH_SIZE = 100; // Adjust based on OpenAI limits and performance
 
   constructor(private readonly profilesService: ProfilesService) {
     this.logger.log('Initializing embedding service');
@@ -87,14 +89,14 @@ export class EmbeddingService {
         this.logger.error(`Profile with ID ${profileId} not found`);
         throw new Error(`Profile with ID ${profileId} not found`);
       }
-      this.logger.log(`Found profile. Text length: ${profile.input_text.length} characters`);
+      this.logger.log(`Found profile. Text length: ${profile.text.length} characters`);
 
       // Generate embedding with OpenAI
       this.logger.log(`Generating embedding with OpenAI (model: text-embedding-3-large)`);
       const startTime = Date.now();
       const response = await this.openaiClient.embeddings.create({
         model: 'text-embedding-3-large', // Use the latest embedding model
-        input: profile.input_text,
+        input: profile.text,
         encoding_format: 'float', // Get float values
       });
       const embedTime = Date.now() - startTime;
@@ -109,15 +111,15 @@ export class EmbeddingService {
       try {
         // Qdrant JS client requires specific formats for IDs
         // Using numeric IDs for better compatibility
-        const numericId = parseInt(profile.user_id.replace(/\D/g, ''), 10) || Math.floor(Math.random() * 1000000);
+        const numericId = parseInt(profile.id.replace(/\D/g, ''), 10) || Math.floor(Math.random() * 1000000);
         
         this.logger.debug(`Upserting point with ID: ${numericId}, vector length: ${embedding.length}`);
         
         // Simplified payload to avoid issues with large text
         const payload = {
-          user_id: profile.user_id,
+          id: profile.id,
           // Keep only a short snippet of text to avoid payload size issues
-          text_snippet: profile.input_text.substring(0, 200)
+          text_snippet: profile.text.substring(0, 200)
         };
         
         // Log the exact point structure we're sending
@@ -179,6 +181,8 @@ export class EmbeddingService {
 
   async createAllEmbeddings(collectionName: string) {
     this.logger.log(`Starting batch embedding for all profiles into collection: ${collectionName}`);
+    const batchStartTime = Date.now();
+    
     try {
       // Ensure collection exists before proceeding
       const collectionReady = await this.ensureCollectionExists(collectionName);
@@ -189,62 +193,120 @@ export class EmbeddingService {
       const allProfiles = this.profilesService.findAll().profiles;
       this.logger.log(`Found ${allProfiles.length} profiles to embed`);
       
-      const results = [];
-      let successCount = 0;
-      let failureCount = 0;
-      const startTime = Date.now();
+      if (allProfiles.length === 0) {
+        this.logger.log('No profiles to embed.');
+        return { success: true, message: 'No profiles found to embed.', collectionName, timing: { totalTime: 0 }, results: [] };
+      }
+      
+      const allPoints = [];
+      let openAiSuccessCount = 0;
+      let openAiFailureCount = 0;
+      let totalEmbedTime = 0;
 
-      for (let i = 0; i < allProfiles.length; i++) {
-        const profile = allProfiles[i];
-        this.logger.log(`Processing profile ${i+1}/${allProfiles.length}: ${profile.user_id}`);
+      // Process profiles in batches for OpenAI API
+      for (let i = 0; i < allProfiles.length; i += this.OPENAI_BATCH_SIZE) {
+        const batchProfiles = allProfiles.slice(i, i + this.OPENAI_BATCH_SIZE);
+        this.logger.log(`Processing batch ${Math.floor(i / this.OPENAI_BATCH_SIZE) + 1}: Profiles ${i + 1} to ${Math.min(i + this.OPENAI_BATCH_SIZE, allProfiles.length)}`);
+        
+        const batchInputs = batchProfiles.map(p => p.text);
         
         try {
-          const result = await this.createEmbedding(profile.user_id, collectionName);
-          results.push(result);
-          
-          if (result.success) {
-            successCount++;
-            this.logger.log(`Successfully embedded profile ${profile.user_id} (${successCount} successful, ${failureCount} failed)`);
-          } else {
-            failureCount++;
-            this.logger.warn(`Failed to embed profile ${profile.user_id} (${successCount} successful, ${failureCount} failed)`);
-          }
-        } catch (error) {
-          failureCount++;
-          this.logger.error(`Exception embedding profile ${profile.user_id}: ${error.message}`, error.stack);
-          results.push({
-            success: false,
-            message: `Error embedding profile ${profile.user_id}: ${error.message}`,
-            profileId: profile.user_id
+          const openaiStartTime = Date.now();
+          const response = await this.openaiClient.embeddings.create({
+            model: 'text-embedding-3-large',
+            input: batchInputs,
+            encoding_format: 'float',
           });
+          const openaiEndTime = Date.now();
+          const batchEmbedTime = openaiEndTime - openaiStartTime;
+          totalEmbedTime += batchEmbedTime;
+          this.logger.log(`OpenAI batch processed in ${batchEmbedTime}ms. Got ${response.data.length} embeddings.`);
+          openAiSuccessCount += batchInputs.length;
+          
+          // Match embeddings back to profiles and prepare Qdrant points
+          response.data.forEach((embeddingData, index) => {
+            const profile = batchProfiles[index];
+            const numericId = parseInt(profile.id.replace(/\D/g, ''), 10) || Math.floor(Math.random() * 1000000);
+            const payload = {
+              id: profile.id,
+              text_snippet: profile.text.substring(0, 200)
+            };
+            allPoints.push({
+              id: numericId,
+              vector: embeddingData.embedding,
+              payload: payload,
+            });
+          });
+
+        } catch (openaiError) {
+          this.logger.error(`Error calling OpenAI batch API: ${openaiError.message}`, openaiError.stack);
+          openAiFailureCount += batchInputs.length;
+          // Optionally, decide whether to continue or fail the whole batch
+          // For now, we log and continue, reporting failures at the end
         }
       }
 
-      const totalTime = Date.now() - startTime;
-      this.logger.log(`Completed embedding all profiles in ${totalTime}ms. Success: ${successCount}, Failed: ${failureCount}`);
+      this.logger.log(`OpenAI embedding generation complete. Success: ${openAiSuccessCount}, Failed: ${openAiFailureCount}. Total Embed Time: ${totalEmbedTime}ms`);
 
-      return {
-        success: true,
-        message: `Completed embedding all profiles. Success: ${successCount}, Failed: ${failureCount}`,
-        collectionName,
-        timing: {
-          totalTime,
-          averagePerProfile: allProfiles.length > 0 ? totalTime / allProfiles.length : 0
-        },
-        results
-      };
+      // Batch upsert points into Qdrant
+      if (allPoints.length > 0) {
+        this.logger.log(`Upserting ${allPoints.length} points into Qdrant collection: ${collectionName}`);
+        const qdrantStartTime = Date.now();
+        try {
+          const qdrantResult = await this.qdrantClient.upsert(collectionName, {
+            wait: true,
+            points: allPoints,
+          });
+          const qdrantEndTime = Date.now();
+          const qdrantUpsertTime = qdrantEndTime - qdrantStartTime;
+          this.logger.log(`Qdrant batch upsert completed in ${qdrantUpsertTime}ms. Result status: ${qdrantResult.status}`);
+
+          const totalBatchTime = Date.now() - batchStartTime;
+          return {
+            success: true,
+            message: `Completed embedding ${openAiSuccessCount} profiles successfully, ${openAiFailureCount} failed. Total time: ${totalBatchTime}ms.`,
+            collectionName,
+            timing: {
+              totalTime: totalBatchTime,
+              embeddingTime: totalEmbedTime,
+              qdrantUpsertTime,
+              averagePerProfile: allProfiles.length > 0 ? totalBatchTime / allProfiles.length : 0
+            },
+            // Note: Individual results aren't tracked in this batch approach
+            results: { status: qdrantResult.status, operation_id: qdrantResult.operation_id }
+          };
+
+        } catch (qdrantError) {
+          this.logger.error(`Error during Qdrant batch upsert: ${qdrantError.message}`, qdrantError.stack);
+          throw new Error(`Failed to store batch vectors in Qdrant: ${qdrantError.message}`);
+        }
+      } else {
+        this.logger.warn('No points were generated to upsert into Qdrant.');
+        const totalBatchTime = Date.now() - batchStartTime;
+        return {
+          success: openAiFailureCount === 0,
+          message: `Embedding process completed. ${openAiSuccessCount} profiles processed, ${openAiFailureCount} failed. No points upserted.`,
+          collectionName,
+          timing: { totalTime: totalBatchTime },
+          results: {}
+        };
+      }
+
     } catch (error) {
       this.logger.error(`Error creating all embeddings: ${error.message}`, error.stack);
+      const totalBatchTime = Date.now() - batchStartTime;
       return {
         success: false,
         message: `Error creating all embeddings: ${error.message}`,
-        collectionName
+        collectionName,
+        timing: { totalTime: totalBatchTime }
       };
     }
   }
 
   async findSimilarProfiles(profileId: string, collectionName: string, limit: number = 5) {
     this.logger.log(`Finding similar profiles for ${profileId} in collection ${collectionName} (limit: ${limit})`);
+    const overallStartTime = Date.now();
     try {
       // Ensure collection exists before proceeding
       const collectionExists = await this.ensureCollectionExists(collectionName);
@@ -252,30 +314,28 @@ export class EmbeddingService {
         throw new Error(`Collection '${collectionName}' doesn't exist or couldn't be created`);
       }
 
-      // Find the profile by ID
-      this.logger.log(`Looking up profile with ID ${profileId}`);
-      const profile = this.profilesService.findOne(profileId);
-      if (!profile) {
-        this.logger.error(`Profile with ID ${profileId} not found`);
-        throw new Error(`Profile with ID ${profileId} not found`);
+      // Convert profileId to the numeric ID used in Qdrant
+      const numericId = parseInt(profileId.replace(/\D/g, ''), 10);
+      if (isNaN(numericId)) {
+        throw new Error(`Invalid profile ID format: ${profileId}`);
       }
-      this.logger.log(`Found profile. Text length: ${profile.input_text.length} characters`);
+      this.logger.log(`Converted profile ID '${profileId}' to numeric ID ${numericId}`);
 
-      // Generate embedding for the query
-      this.logger.log(`Generating query embedding with OpenAI (model: text-embedding-3-large)`);
-      const startTime = Date.now();
-      const response = await this.openaiClient.embeddings.create({
-        model: 'text-embedding-3-large',
-        input: profile.input_text,
-        encoding_format: 'float',
+      // Retrieve the vector from Qdrant
+      this.logger.log(`Retrieving vector for ID ${numericId} from collection ${collectionName}`);
+      const retrieveStartTime = Date.now();
+      const points = await this.qdrantClient.retrieve(collectionName, {
+        ids: [numericId],
+        with_vector: true,
       });
-      const embedTime = Date.now() - startTime;
-      this.logger.log(`Query embedding generated in ${embedTime}ms`);
+      const retrieveTime = Date.now() - retrieveStartTime;
 
-      const queryEmbedding = response.data[0].embedding;
-
-      // Convert to numeric ID for search filter
-      const numericId = parseInt(profile.user_id.replace(/\D/g, ''), 10) || 0;
+      if (!points || points.length === 0 || !points[0].vector) {
+        this.logger.error(`Vector not found in Qdrant for ID ${numericId}`);
+        throw new Error(`Vector not found for profile ID ${profileId} (numeric ${numericId}) in collection ${collectionName}`);
+      }
+      this.logger.log(`Vector retrieved in ${retrieveTime}ms`);
+      const queryEmbedding = points[0].vector as number[];
 
       // Search Qdrant for similar vectors
       this.logger.log(`Searching Qdrant collection ${collectionName} for similar profiles`);
@@ -284,37 +344,64 @@ export class EmbeddingService {
       try {
         const searchResult = await this.qdrantClient.search(collectionName, {
           vector: queryEmbedding,
-          limit: limit,
-          with_payload: true,
-          filter: numericId > 0 ? {
+          limit: limit + 1, // Fetch one extra to exclude self if it appears
+          with_payload: true, // Retrieve payload which contains original profile ID
+          // We don't need the filter anymore if we retrieve first, but good practice to keep
+          filter: {
             must_not: [
               {
-                key: 'user_id',
-                match: { value: profile.user_id }
+                key: 'id',
+                match: { value: numericId } // Filter by numeric ID
               }
             ]
-          } : undefined
+          }
         });
         
         const searchTime = Date.now() - searchStartTime;
-        this.logger.log(`Found ${searchResult.length} similar profiles in ${searchTime}ms`);
+        this.logger.log(`Found ${searchResult.length} raw results from Qdrant in ${searchTime}ms`);
+
+        // Filter out the query point itself if it was returned
+        const rawSimilarPoints = searchResult.filter(p => p.id !== numericId).slice(0, limit);
+        
+        // Fetch full profile data for each similar point
+        this.logger.log(`Fetching full profile data for ${rawSimilarPoints.length} similar profiles`);
+        const fetchProfileStartTime = Date.now();
+        const finalResults = rawSimilarPoints.map(point => {
+          const originalProfileId = point.payload?.id as string; // Get original ID from payload
+          const fullProfile = this.profilesService.findOne(originalProfileId);
+          
+          if (!fullProfile) {
+            this.logger.warn(`Could not find full profile for ID ${originalProfileId} (Qdrant point ID ${point.id})`);
+            return null; // Handle case where profile might be missing
+          }
+          
+          return {
+            id: originalProfileId,
+            score: point.score,
+            profile: fullProfile // Return the full profile data
+          };
+        }).filter(result => result !== null); // Filter out any nulls (missing profiles)
+        const fetchProfileTime = Date.now() - fetchProfileStartTime;
+        this.logger.log(`Full profile data fetched in ${fetchProfileTime}ms`);
         
         // Log similarity scores for debugging
-        searchResult.forEach((result, index) => {
+        finalResults.forEach((result, index) => {
           this.logger.verbose(`Match ${index+1}: ID ${result.id}, Score: ${result.score.toFixed(4)}`);
         });
 
+        const overallTime = Date.now() - overallStartTime;
         return {
           success: true,
-          message: `Found ${searchResult.length} similar profiles`,
+          message: `Found ${finalResults.length} similar profiles`,
           profileId,
           collectionName,
           timing: {
-            embedding: embedTime,
+            retrieve: retrieveTime,
             search: searchTime,
-            total: embedTime + searchTime
+            profileFetch: fetchProfileTime,
+            total: overallTime
           },
-          results: searchResult
+          results: finalResults
         };
       } catch (searchError) {
         this.logger.error(`Qdrant search error: ${searchError.message}`);
@@ -328,6 +415,18 @@ export class EmbeddingService {
         profileId,
         collectionName
       };
+    }
+  }
+  
+  async deleteCollection(collectionName: string) {
+    this.logger.log(`Deleting collection '${collectionName}'`);
+    try {
+      await this.qdrantClient.deleteCollection(collectionName);
+      this.logger.log(`Collection '${collectionName}' deleted`);
+      return { success: true, message: `Collection '${collectionName}' deleted` };
+    } catch (error) {
+      this.logger.error(`Error deleting collection '${collectionName}': ${error.message}`);
+      return { success: false, message: `Error deleting collection '${collectionName}': ${error.message}` };
     }
   }
 } 

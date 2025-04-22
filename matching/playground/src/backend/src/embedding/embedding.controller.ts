@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Query } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Query, Delete } from '@nestjs/common';
 import { EmbeddingService } from './embedding.service';
 import { EmbedProfileDto } from 'narrow-ai-matchmaker-common';
 
@@ -30,5 +30,10 @@ export class EmbeddingController {
       collectionName,
       parseInt(limit, 10)
     );
+  }
+
+  @Delete('collection/:collectionName')
+  async deleteCollection(@Param('collectionName') collectionName: string) {
+    return this.embeddingService.deleteCollection(collectionName);
   }
 } 

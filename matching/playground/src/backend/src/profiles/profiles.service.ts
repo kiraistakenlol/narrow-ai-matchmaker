@@ -23,6 +23,6 @@ export class ProfilesService {
   }
 
   findOne(userId: string): Profile | undefined {
-    return this.profilesData.profiles.find(profile => profile.user_id === userId);
+    return this.profilesData.profiles.find(profile => profile.id === userId);
   }
 } 

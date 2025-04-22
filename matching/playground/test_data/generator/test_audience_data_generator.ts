@@ -24,8 +24,8 @@ const MODEL_NAME = 'claude-3-7-sonnet-20250219';
 const GENERATION_TEMPERATURE = 0.75; // Fixed temperature for generation
 
 interface UserProfile {
-    user_id: string;
-    input_text: string;
+    id: string;
+    text: string;
     // Potentially add assigned_type here if useful for debugging/analysis
     // assigned_type: string;
 }
@@ -69,11 +69,11 @@ async function generateSingleProfile(
     const max_tokens = 800; // Keep max tokens relatively high
 
     const systemPrompt = `You are an AI assistant generating a SYNTHETIC user profile introduction for a matchmaking platform test dataset.
-     Your output MUST be a valid JSON object containing ONLY a single key "input_text" with the generated user introduction string as its value. 
+     Your output MUST be a valid JSON object containing ONLY a single key "text" with the generated user introduction string as its value. 
      Do not include any other text, preamble, or explanation outside the JSON object. Adhere strictly to the persona and context implied by the user message.`;
 
     // Construct user message based on config
-    const userMessage = `Generate a realistic user introduction text for a synthetic profile, formatted as a JSON object with a single key "input_text".
+    const userMessage = `Generate a realistic user introduction text for a synthetic profile, formatted as a JSON object with a single key "text".
 
 **Context:** The user is at '${context}'.
 **Attendee Type:** This person primarily identifies as a '${attendeeType}'.
@@ -95,7 +95,7 @@ ${responseExamples.long}
 
 --- End of Examples ---
 
-Now, generate ONLY the JSON output like {"input_text": "...generated text..."} for this specific attendee type ('${attendeeType}') within the given context, aiming for verbosity level ${verbosity}/10.`;
+Now, generate ONLY the JSON output like {"text": "...generated text..."} for this specific attendee type ('${attendeeType}') within the given context, aiming for verbosity level ${verbosity}/10.`;
 
     try {
         console.log(`   - Generating profile ${index + 1} (Type: ${attendeeType}, Verbosity: ${verbosity}/10, Temp: ${GENERATION_TEMPERATURE})...`);
@@ -118,10 +118,10 @@ Now, generate ONLY the JSON output like {"input_text": "...generated text..."} f
                 const jsonMatch = rawText.match(/\{.*\}/s);
                 if (jsonMatch) {
                     const parsedJson = JSON.parse(jsonMatch[0]);
-                    if (parsedJson && typeof parsedJson.input_text === 'string' && parsedJson.input_text.trim() !== '') {
-                        profileText = parsedJson.input_text.trim();
+                    if (parsedJson && typeof parsedJson.text === 'string' && parsedJson.text.trim() !== '') {
+                        profileText = parsedJson.text.trim();
                     } else {
-                        console.warn(`   - Warning: JSON parsed for profile ${index + 1}, but 'input_text' key missing, empty, or not a string. Raw JSON: ${jsonMatch[0]}`);
+                        console.warn(`   - Warning: JSON parsed for profile ${index + 1}, but 'text' key missing, empty, or not a string. Raw JSON: ${jsonMatch[0]}`);
                     }
                 } else {
                     console.warn(`   - Warning: No valid JSON object found in response for profile ${index + 1}. Using raw text as fallback (potential issue). Raw: ${rawText}`);
@@ -136,8 +136,8 @@ Now, generate ONLY the JSON output like {"input_text": "...generated text..."} f
         }
 
         return {
-            user_id: `user_${String(index + 1).padStart(3, '0')}`,
-            input_text: profileText
+            id: `user_${String(index + 1).padStart(3, '0')}`,
+            text: profileText
             // assigned_type: attendeeType // Uncomment to include type in output JSON
         };
 

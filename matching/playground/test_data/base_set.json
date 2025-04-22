@@ -1,5 +1,4 @@
-{
-  "profiles": [
+[
     {
       "id": "base_01",
       "text": "After spending 17 years in biotech as a IoT engineer, I'm now diving into mobile performance. Keen to discuss CI/CD. Catch me to talk photography too!"
@@ -161,4 +160,3 @@
       "text": "After spending 15 years in agritech as a Software engineer, I'm now diving into mobile performance. Keen to discuss green tech. Catch me to talk improv theatre too!"
     }
   ]
-}

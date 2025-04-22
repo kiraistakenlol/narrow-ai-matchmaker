@@ -5,18 +5,15 @@ interface ProfileDetailProps {
   profileId: string
 }
 
-interface SimilarProfile {
+interface SimilarProfileResult {
   id: string
   score: number
-  payload: {
-    user_id: string
-    input_text: string
-  }
+  profile: Profile
 }
 
 export default function ProfileDetail({ profileId }: ProfileDetailProps) {
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [similarProfiles, setSimilarProfiles] = useState<SimilarProfile[]>([])
+  const [similarProfiles, setSimilarProfiles] = useState<SimilarProfileResult[]>([])
   const [loading, setLoading] = useState(true)
   const [searchLoading, setSearchLoading] = useState(false)
   const [error, setError] = useState('')
@@ -25,12 +22,13 @@ export default function ProfileDetail({ profileId }: ProfileDetailProps) {
 
   useEffect(() => {
     const fetchProfile = async () => {
+      setLoading(true)
       try {
         const response = await fetch('http://localhost:3000/profiles')
         const data = await response.json()
         
         if (data.profiles) {
-          const foundProfile = data.profiles.find((p: Profile) => p.user_id === profileId)
+          const foundProfile = data.profiles.find((p: Profile) => p.id === profileId)
           if (foundProfile) {
             setProfile(foundProfile)
           } else {
@@ -48,12 +46,15 @@ export default function ProfileDetail({ profileId }: ProfileDetailProps) {
     }
 
     fetchProfile()
+    setSimilarProfiles([])
+    setError('')
   }, [profileId])
 
   const handleSearch = async () => {
     if (!profile) return
     
     setSearchLoading(true)
+    setError('')
     try {
       const response = await fetch(
         `http://localhost:3000/embed/search?profileId=${profileId}&collectionName=${collectionName}&limit=${limit}`
@@ -65,17 +66,19 @@ export default function ProfileDetail({ profileId }: ProfileDetailProps) {
       } else {
         console.error('Search error:', data.message)
         setError(`Search failed: ${data.message}`)
+        setSimilarProfiles([])
       }
     } catch (error) {
       console.error('Error searching similar profiles:', error)
       setError('Failed to search similar profiles')
+      setSimilarProfiles([])
     } finally {
       setSearchLoading(false)
     }
   }
 
   if (loading) return <div className="loading">Loading profile...</div>
-  if (error) return <div className="error">{error}</div>
+  if (error && !searchLoading) return <div className="error">{error}</div>
   if (!profile) return <div className="error">Profile not found</div>
 
   return (
@@ -83,8 +86,8 @@ export default function ProfileDetail({ profileId }: ProfileDetailProps) {
       <h2>Profile Detail</h2>
       
       <div className="profile-card">
-        <h3>Profile ID: {profile.user_id}</h3>
-        <div className="profile-content">{profile.input_text}</div>
+        <h3>Profile ID: {profile.id}</h3>
+        <div className="profile-content">{profile.text}</div>
       </div>
       
       <div className="search-controls">
@@ -114,27 +117,33 @@ export default function ProfileDetail({ profileId }: ProfileDetailProps) {
         <button onClick={handleSearch} disabled={searchLoading}>
           {searchLoading ? 'Searching...' : 'Find Similar Profiles'}
         </button>
+        {error && searchLoading && <div className="error search-error">{error}</div>}
       </div>
       
-      {similarProfiles.length > 0 && (
+      {searchLoading && !error && <div className="loading">Searching for similar profiles...</div>}
+      {!searchLoading && similarProfiles.length > 0 && (
         <div className="similar-profiles">
-          <h3>Similar Profiles</h3>
+          <h3>Similar Profiles Found</h3>
           <ul>
-            {similarProfiles.map((similarProfile) => (
-              <li key={similarProfile.id} className="similar-profile-item">
+            {similarProfiles.map((similarResult) => (
+              <li key={similarResult.id} className="similar-profile-item">
                 <div className="similarity-score">
-                  Similarity: {(similarProfile.score * 100).toFixed(2)}%
+                  Similarity: {(similarResult.score * 100).toFixed(2)}%
                 </div>
                 <div className="profile-header">
-                  <span className="profile-id">{similarProfile.payload.user_id}</span>
+                  <span className="profile-id">{similarResult.id}</span>
                 </div>
                 <div className="profile-text">
-                  {similarProfile.payload.input_text.substring(0, 150)}
-                  {similarProfile.payload.input_text.length > 150 ? '...' : ''}
+                  {similarResult.profile.text}
                 </div>
               </li>
             ))}
           </ul>
+        </div>
+      )}
+      {!searchLoading && similarProfiles.length === 0 && (
+        <div className="no-results">
+          No similar profiles found (or search not yet run).
         </div>
       )}
     </div>

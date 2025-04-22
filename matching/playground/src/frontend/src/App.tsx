@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Profile } from 'narrow-ai-matchmaker-common'
 import './App.css'
 import ProfileList from './components/ProfileList'
@@ -64,7 +64,8 @@ function EmbeddingPanel() {
   const [result, setResult] = useState<any>(null)
   const [singleProfileId, setSingleProfileId] = useState('')
   const [embedMode, setEmbedMode] = useState<'single' | 'all'>('single')
-  const [showConfirmation, setShowConfirmation] = useState(false)
+  const [showEmbedConfirmation, setShowEmbedConfirmation] = useState(false)
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false)
   const [allProfiles, setAllProfiles] = useState<Profile[]>([])
   const [profilesLoading, setProfilesLoading] = useState(true)
   const [profilesError, setProfilesError] = useState('')
@@ -95,8 +96,8 @@ function EmbeddingPanel() {
   }, [])
 
   const handleEmbedAll = async () => {
-    if (!showConfirmation) {
-      setShowConfirmation(true)
+    if (!showEmbedConfirmation) {
+      setShowEmbedConfirmation(true)
       return
     }
 
@@ -116,7 +117,7 @@ function EmbeddingPanel() {
       setResult({ success: false, message: `Error: ${error.message}` })
     } finally {
       setLoading(false)
-      setShowConfirmation(false)
+      setShowEmbedConfirmation(false)
     }
   }
 
@@ -148,8 +149,31 @@ function EmbeddingPanel() {
     }
   }
 
+  const handleDeleteCollection = async () => {
+    if (!showDeleteConfirmation) {
+      setShowDeleteConfirmation(true)
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await fetch(`http://localhost:3000/embed/collection/${collectionName}`, {
+        method: 'DELETE'
+      })
+      const data = await response.json()
+      setResult(data)
+    } catch (error) {
+      console.error('Error deleting collection:', error)
+      setResult({ success: false, message: `Error: ${error.message}` })
+    } finally {
+      setLoading(false)
+      setShowDeleteConfirmation(false)
+    }
+  }
+
   const cancelConfirmation = () => {
-    setShowConfirmation(false)
+    setShowEmbedConfirmation(false)
+    setShowDeleteConfirmation(false)
   }
 
   if (profilesLoading) return <div className="loading">Loading profiles...</div>
@@ -162,7 +186,7 @@ function EmbeddingPanel() {
           className={embedMode === 'single' ? 'active' : ''} 
           onClick={() => {
             setEmbedMode('single')
-            setShowConfirmation(false)
+            cancelConfirmation()
           }}
         >
           Single Profile
@@ -171,7 +195,7 @@ function EmbeddingPanel() {
           className={embedMode === 'all' ? 'active' : ''} 
           onClick={() => {
             setEmbedMode('all')
-            setShowConfirmation(false)
+            cancelConfirmation()
           }}
         >
           All Profiles
@@ -185,6 +209,7 @@ function EmbeddingPanel() {
             type="text"
             value={collectionName}
             onChange={(e) => setCollectionName(e.target.value)}
+            disabled={showEmbedConfirmation || showDeleteConfirmation}
           />
         </label>
       </div>
@@ -197,16 +222,17 @@ function EmbeddingPanel() {
               value={singleProfileId}
               onChange={(e) => setSingleProfileId(e.target.value)}
               className="profile-select"
+              disabled={showEmbedConfirmation || showDeleteConfirmation}
             >
               {allProfiles.map(profile => (
-                <option key={profile.user_id} value={profile.user_id}>
-                  {profile.user_id}
+                <option key={profile.id} value={profile.id}>
+                  {profile.id}
                 </option>
               ))}
             </select>
           </label>
         </div>
-      ) : showConfirmation ? (
+      ) : showEmbedConfirmation ? (
         <div className="confirmation-box">
           <p>Are you sure you want to embed all {allProfiles.length} profiles?</p>
           <p>This operation might take some time.</p>
@@ -221,7 +247,7 @@ function EmbeddingPanel() {
         </div>
       ) : null}
       
-      {embedMode === 'single' && (
+      {embedMode === 'single' && !showEmbedConfirmation && !showDeleteConfirmation && (
         <button 
           onClick={handleEmbedSingle} 
           disabled={loading}
@@ -230,7 +256,7 @@ function EmbeddingPanel() {
         </button>
       )}
       
-      {embedMode === 'all' && !showConfirmation && (
+      {embedMode === 'all' && !showEmbedConfirmation && !showDeleteConfirmation && (
         <button 
           onClick={handleEmbedAll} 
           disabled={loading}
@@ -247,10 +273,45 @@ function EmbeddingPanel() {
             <p>
               Collection: {result.collectionName}
               {result.profileId && <span>, Profile: {result.profileId}</span>}
+              {result.pointId && <span>, Point ID: {result.pointId}</span>}
             </p>
           )}
         </div>
       )}
+
+      <hr className="separator" />
+
+      {/* Delete Collection Section */}
+      <div className="delete-section">
+        <h3>Danger Zone: Delete Collection</h3>
+        {!showDeleteConfirmation ? (
+          <button 
+            onClick={handleDeleteCollection} 
+            disabled={loading || !collectionName.trim()} 
+            className="delete-button"
+          >
+            Delete Collection '{collectionName}'
+          </button>
+        ) : (
+          <div className="confirmation-box confirmation-box-danger">
+            <p><strong>Are you sure you want to delete the collection '{collectionName}'?</strong></p>
+            <p>This action cannot be undone!</p>
+            <div className="confirmation-actions">
+              <button 
+                onClick={handleDeleteCollection} 
+                disabled={loading} 
+                className="delete-button confirm-delete-button"
+              >
+                {loading ? 'Deleting...' : 'Yes, Delete Collection'}
+              </button>
+              <button onClick={cancelConfirmation} disabled={loading} className="cancel-button">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
     </div>
   )
 }

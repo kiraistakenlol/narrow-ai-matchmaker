@@ -43,16 +43,16 @@ export default function ProfileList({ onSelectProfile }: ProfileListProps) {
       ) : (
         <ul>
           {profiles.map((profile) => (
-            <li key={profile.user_id} className="profile-item">
+            <li key={profile.id} className="profile-item">
               <div className="profile-header">
-                <span className="profile-id">{profile.user_id}</span>
-                <button onClick={() => onSelectProfile(profile.user_id)}>
+                <span className="profile-id">{profile.id}</span>
+                <button onClick={() => onSelectProfile(profile.id)}>
                   View Similar
                 </button>
               </div>
               <div className="profile-text">
-                {profile.input_text.substring(0, 150)}
-                {profile.input_text.length > 150 ? '...' : ''}
+                {profile.text.substring(0, 150)}
+                {profile.text.length > 150 ? '...' : ''}
               </div>
             </li>
           ))}
