@@ -8,11 +8,44 @@
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+  margin-bottom: 1rem;
+}
+
+h2 {
+  font-size: 2em;
+  margin-bottom: 1rem;
+}
+
+h3 {
+  font-size: 1.5em;
   margin-bottom: 0.5rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  justify-content: center;
+}
+
+.tabs button {
+  background-color: #1a1a1a;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  border-radius: 8px;
+  transition: border-color 0.25s;
+}
+
+.tabs button.active {
+  border-color: #646cff;
+  background-color: #2a2a2a;
 }
 
 .card {
   padding: 2em;
+  margin-bottom: 1rem;
+  background-color: #1a1a1a;
+  border-radius: 8px;
 }
 
 button {
@@ -34,4 +67,199 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+input, select {
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background-color: #242424;
+  color: white;
+  margin-left: 0.5rem;
+}
+
+.profile-select {
+  min-width: 200px;
+}
+
+.result {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 4px;
+  text-align: left;
+}
+
+.result.success {
+  background-color: rgba(0, 128, 0, 0.2);
+  border: 1px solid green;
+}
+
+.result.error {
+  background-color: rgba(255, 0, 0, 0.2);
+  border: 1px solid red;
+}
+
+.loading {
+  padding: 1rem;
+  color: #888;
+}
+
+.error {
+  padding: 1rem;
+  color: #f88;
+  background-color: rgba(255, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.embed-mode-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  justify-content: center;
+}
+
+.embed-mode-selector button {
+  background-color: #1a1a1a;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  border-radius: 8px;
+  transition: border-color 0.25s;
+}
+
+.embed-mode-selector button.active {
+  border-color: #646cff;
+  background-color: #2a2a2a;
+}
+
+.confirmation-box {
+  background-color: rgba(255, 193, 7, 0.1);
+  border: 1px solid #ffc107;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.confirm-button {
+  background-color: #2a623d;
+}
+
+.confirm-button:hover {
+  background-color: #2f7a4c;
+  border-color: #3c9d62;
+}
+
+.cancel-button {
+  background-color: #623a2a;
+}
+
+.cancel-button:hover {
+  background-color: #7a462f;
+  border-color: #9d583c;
+}
+
+/* Profile List Styles */
+.profile-list {
+  text-align: left;
+}
+
+.profile-list ul {
+  list-style: none;
+  padding: 0;
+}
+
+.profile-item {
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.profile-id {
+  font-weight: bold;
+  color: #646cff;
+}
+
+.profile-text {
+  color: #ccc;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Profile Detail Styles */
+.profile-detail {
+  text-align: left;
+}
+
+.profile-card {
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.profile-content {
+  color: #ddd;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.search-controls {
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.similar-profiles {
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.similar-profile-item {
+  background-color: #2a2a2a;
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.similar-profile-item:last-child {
+  margin-bottom: 0;
+}
+
+.similarity-score {
+  text-align: right;
+  font-size: 0.8rem;
+  color: #646cff;
+  margin-bottom: 0.5rem;
+}
+
+.content {
+  margin-top: 2rem;
 } 

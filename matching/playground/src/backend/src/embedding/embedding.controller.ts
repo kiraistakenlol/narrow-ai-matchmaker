@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Query } from '@nestjs/common';
 import { EmbeddingService } from './embedding.service';
 import { EmbedProfileDto } from 'narrow-ai-matchmaker-common';
 
@@ -11,6 +11,24 @@ export class EmbeddingController {
     return this.embeddingService.createEmbedding(
       embedProfileDto.profileId,
       embedProfileDto.collectionName
+    );
+  }
+
+  @Post('all')
+  async createAllEmbeddings(@Body() { collectionName }: { collectionName: string }) {
+    return this.embeddingService.createAllEmbeddings(collectionName);
+  }
+
+  @Get('search')
+  async findSimilar(
+    @Query('profileId') profileId: string,
+    @Query('collectionName') collectionName: string,
+    @Query('limit') limit = '5'
+  ) {
+    return this.embeddingService.findSimilarProfiles(
+      profileId,
+      collectionName,
+      parseInt(limit, 10)
     );
   }
 } 
