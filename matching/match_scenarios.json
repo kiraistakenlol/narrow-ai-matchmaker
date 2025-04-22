@@ -1,0 +1,353 @@
+{
+    "Core collaboration goals": [
+      {
+        "id": "A1",
+        "scenario": "Founder ⇄ CTO",
+        "match_description": "Non‑tech founder meets an engineer who can own the tech stack—idea + coding = complete team."
+      },
+      {
+        "id": "A2",
+        "scenario": "Startup ⇄ First Hires",
+        "match_description": "Small startup needs its first designer/marketer/etc.; candidate wants exactly that role."
+      },
+      {
+        "id": "A3",
+        "scenario": "Hackathon Squad",
+        "match_description": "Dev, designer, and PM with complementary skills team up to build a project under a deadline."
+      },
+      {
+        "id": "A4",
+        "scenario": "Researcher ⇄ Industry Partner",
+        "match_description": "Academic with a prototype links to a company that can bring it to market—brains + muscle."
+      },
+      {
+        "id": "A5",
+        "scenario": "Investor ⇄ Startup",
+        "match_description": "Founder seeking funding meets an investor looking for new deals—money meets pitch."
+      },
+      {
+        "id": "A6",
+        "scenario": "OSS Maintainer ⇄ Contributors",
+        "match_description": "Open‑source lead needs hands on deck; developers want first PR credit."
+      },
+      {
+        "id": "A7",
+        "scenario": "Consultant ⇄ Client",
+        "match_description": "Agency offers a service; organization needs that scoped expertise."
+      },
+      {
+        "id": "A8",
+        "scenario": "Freelancer ⇄ Gig",
+        "match_description": "Freelancer wants short contracts; startup needs quick help—easy win‑win."
+      },
+      {
+        "id": "A9",
+        "scenario": "Vendor ⇄ Buyer",
+        "match_description": "SaaS vendor meets the budget‑holder manager—seller + buyer."
+      },
+      {
+        "id": "A10",
+        "scenario": "Sponsor ⇄ Organizer",
+        "match_description": "Company wants to sponsor; event team needs sponsors—perfect fit."
+      },
+      {
+        "id": "A11",
+        "scenario": "Founder ⇄ Lawyer",
+        "match_description": "Fintech founder needs legal setup; lawyer wants clients in tech/finance."
+      }
+    ],
+  
+    "Learning & mentoring": [
+      {
+        "id": "B1",
+        "scenario": "Mentor ⇄ Mentee",
+        "match_description": "Senior pro happy to teach pairs with junior eager to learn."
+      },
+      {
+        "id": "B2",
+        "scenario": "Peer Study Buddies",
+        "match_description": "Two mid‑level peers team up to study and practice together."
+      },
+      {
+        "id": "B3",
+        "scenario": "Teacher ⇄ Learner",
+        "match_description": "Workshop host fills seats with attendees wanting that exact skill."
+      },
+      {
+        "id": "B4",
+        "scenario": "Career‑Switcher ⇄ Veteran",
+        "match_description": "Professional changing fields meets an experienced guide."
+      },
+      {
+        "id": "B5",
+        "scenario": "Advisor ⇄ Grad Student",
+        "match_description": "Professor recruits a student whose thesis matches the lab’s focus."
+      }
+    ],
+  
+    "Skill relationships": [
+      {
+        "id": "C1",
+        "scenario": "Complementary Skills",
+        "match_description": "Backend dev links with UI designer—each brings what the other needs."
+      },
+      {
+        "id": "C2",
+        "scenario": "Identical Niche Expertise",
+        "match_description": "Two Rust performance geeks swap deep‑dive tips."
+      },
+      {
+        "id": "C3",
+        "scenario": "Gap Fill",
+        "match_description": "Team missing QA finds a test‑automation specialist."
+      },
+      {
+        "id": "C4",
+        "scenario": "Skill Swap",
+        "match_description": "Designer learns DevOps tricks while DevOps engineer picks up UX tips."
+      }
+    ],
+  
+    "Industry / domain focus": [
+      {
+        "id": "D1",
+        "scenario": "Same Vertical",
+        "match_description": "Two fintech builders compare common pain points."
+      },
+      {
+        "id": "D2",
+        "scenario": "Cross‑Industry Synergy",
+        "match_description": "Health‑tech founder gets AI expertise from a generalist engineer."
+      },
+      {
+        "id": "D3",
+        "scenario": "Regulated‑Domain Guidance",
+        "match_description": "Med‑device startup meets an FDA compliance consultant."
+      }
+    ],
+  
+    "Hobby & social glue": [
+      {
+        "id": "E1",
+        "scenario": "Run Club",
+        "match_description": "Two runners plan a morning jog together."
+      },
+      {
+        "id": "E2",
+        "scenario": "Geek Game Night",
+        "match_description": "Board‑game fans organize an evening session."
+      },
+      {
+        "id": "E3",
+        "scenario": "Language Exchange",
+        "match_description": "Spanish native pairs with English native to practice each other’s language."
+      },
+      {
+        "id": "E4",
+        "scenario": "Jam Session",
+        "match_description": "Musicians meet up to play instruments together."
+      },
+      {
+        "id": "E5",
+        "scenario": "Foodie Crawl",
+        "match_description": "Ramen lovers plan a late‑night tasting tour."
+      }
+    ],
+  
+    "Values & culture fit": [
+      {
+        "id": "F1",
+        "scenario": "Mission‑Driven Alignment",
+        "match_description": "Green‑tech dev meets sustainability‑minded startup."
+      },
+      {
+        "id": "F2",
+        "scenario": "Work‑Style Match",
+        "match_description": "Remote‑first workers share tips on async workflows."
+      },
+      {
+        "id": "F3",
+        "scenario": "Affinity Group Meetup",
+        "match_description": "Women‑in‑tech professionals gather for a roundtable."
+      },
+      {
+        "id": "F4",
+        "scenario": "Introvert‑Friendly Networking",
+        "match_description": "Quiet 1‑on‑1 coffee meets for those who avoid loud mixers."
+      }
+    ],
+  
+    "Seniority & career stage": [
+      {
+        "id": "G1",
+        "scenario": "Junior‑Junior Buddy",
+        "match_description": "Two interns pair up to navigate the event together."
+      },
+      {
+        "id": "G2",
+        "scenario": "Senior‑Senior Sparring",
+        "match_description": "Two architects debate high‑level design trade‑offs."
+      },
+      {
+        "id": "G3",
+        "scenario": "Exec Roundtable",
+        "match_description": "C‑suite leaders share war stories over breakfast."
+      }
+    ],
+  
+    "Logistics & constraints": [
+      {
+        "id": "H1",
+        "scenario": "Same‑City Follow‑up",
+        "match_description": "Attendees from the same city arrange a post‑event coffee."
+      },
+      {
+        "id": "H2",
+        "scenario": "Time‑Zone Sync",
+        "match_description": "Profiles within ±3 h overlap for easy meetings."
+      },
+      {
+        "id": "H3",
+        "scenario": "Schedule Fit",
+        "match_description": "Weekend‑only collaborators match with weekend availability."
+      },
+      {
+        "id": "H4",
+        "scenario": "Ride Share",
+        "match_description": "Early‑bird attendees split an airport taxi."
+      },
+      {
+        "id": "H5",
+        "scenario": "Co‑Living Crew",
+        "match_description": "Freelancers team up to rent an Airbnb."
+      }
+    ],
+  
+    "Preferences & vetoes": [
+      {
+        "id": "I1",
+        "scenario": "Hard Requirement",
+        "match_description": "AI team needs a CUDA expert—only those profiles qualify."
+      },
+      {
+        "id": "I2",
+        "scenario": "Soft Preference",
+        "match_description": "Founder prefers healthcare background but is open to others."
+      },
+      {
+        "id": "I3",
+        "scenario": "Hard No",
+        "match_description": "Designer explicitly avoids crypto projects—those are filtered out."
+      },
+      {
+        "id": "I4",
+        "scenario": "Role Reluctance",
+        "match_description": "Ex‑CTO who wants an IC role ranks lower for CTO positions."
+      }
+    ],
+  
+    "Group‑size quirks": [
+      {
+        "id": "J1",
+        "scenario": "One‑to‑Many",
+        "match_description": "Solo UX designer matches with several dev teams needing design."
+      },
+      {
+        "id": "J2",
+        "scenario": "Team‑to‑Team",
+        "match_description": "Two small startups explore a product integration partnership."
+      },
+      {
+        "id": "J3",
+        "scenario": "Cross‑Table Round",
+        "match_description": "Data, design, PM, and dev experts form a balanced panel."
+      }
+    ],
+  
+    "Edge & data‑quality cases": [
+      {
+        "id": "K1",
+        "scenario": "Sparse Bio",
+        "match_description": "Profile with minimal info still yields reasonable suggestions."
+      },
+      {
+        "id": "K2",
+        "scenario": "Noisy Bio",
+        "match_description": "Typos and emojis don’t break parsing or matching logic."
+      },
+      {
+        "id": "K3",
+        "scenario": "Contradiction",
+        "match_description": "System respects “any project—except fintech” exclusions."
+      },
+      {
+        "id": "K4",
+        "scenario": "Duplicate Profiles",
+        "match_description": "Near‑identical profiles are hidden to avoid echo."
+      },
+      {
+        "id": "K5",
+        "scenario": "Spam Filter",
+        "match_description": "Salesy profiles are down‑ranked or removed."
+      },
+      {
+        "id": "K6",
+        "scenario": "Bot Flag",
+        "match_description": "Obvious AI‑generated profiles are flagged for review."
+      }
+    ],
+  
+    "Misc special situations": [
+      {
+        "id": "L1",
+        "scenario": "Accessibility Need",
+        "match_description": "Deaf attendee pairs with a sign‑language interpreter."
+      },
+      {
+        "id": "L2",
+        "scenario": "Visa Help",
+        "match_description": "Developer seeking EU relocation meets a visa‑specialist recruiter."
+      },
+      {
+        "id": "L3",
+        "scenario": "Legal Consult",
+        "match_description": "Founder connects with a GDPR compliance lawyer."
+      },
+      {
+        "id": "L4",
+        "scenario": "Dataset Share",
+        "match_description": "University team offering data meets an ML researcher."
+      },
+      {
+        "id": "L5",
+        "scenario": "Hardware Partner",
+        "match_description": "IoT startup finds a PCB fabrication vendor."
+      },
+      {
+        "id": "L6",
+        "scenario": "Non‑Profit Collab",
+        "match_description": "Volunteers link with a charity needing a website."
+      },
+      {
+        "id": "L7",
+        "scenario": "Organizer Network",
+        "match_description": "Meetup hosts swap speaker lists and resources."
+      },
+      {
+        "id": "L8",
+        "scenario": "Podcast Guest",
+        "match_description": "Podcaster books an edge‑AI expert."
+      },
+      {
+        "id": "L9",
+        "scenario": "Volunteer Signup",
+        "match_description": "Attendee signs up to help at the registration desk."
+      },
+      {
+        "id": "L10",
+        "scenario": "Swag Trade",
+        "match_description": "Startups swap leftover T‑shirts and stickers for cross‑promo."
+      }
+    ]
+  }
+  
