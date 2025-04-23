@@ -1,50 +1,70 @@
 import json
 import os
 from pathlib import Path
-import uuid
 
 # Define the directory paths
 BASE_DIR = Path(__file__).parent
 DICTIONARIES_DIR = BASE_DIR / "dictionaries"
 OUTPUT_SCHEMA_PATH = BASE_DIR / "profile_schema.json"
 
-# Dictionary mapping schema fields to their corresponding enum files
+# Dictionary mapping schema fields to their corresponding enum files and keys
 FIELD_TO_ENUM_FILE = {
-    "visiting_status": "visiting_status.json",
-    "org_type": "organization_types.json",
-    "category": "role_categories.json",
-    "sub_category": "role_categories.json",  # Note: Uses same file, will filter for sub-categories
-    "seniority": "seniority_levels.json",
-    "engagement.type": "engagement_types.json",
-    "engagement.commitment": "engagement_commitments.json",
-    "engagement.work_mode": "engagemen_work_modes.json",
-    "industries": "industries_list.json",
-    "hobbies": "hobbies_list.json",
-    "goals.looking_for": "goal_tags.json",
-    "goals.offering": "goal_tags.json",
-    "skills.hard.skill": "skills_hard.json",
-    "skills.soft.skill": "skills_soft.json",
-    "roles.skills.hard.skill": "skills_hard.json",
-    "roles.skills.soft.skill": "skills_soft.json",
-    "skills.hard.level": "skill_level.json",
-    "skills.soft.level": "skill_level.json",
-    "roles.skills.hard.level": "skill_level.json",
-    "roles.skills.soft.level": "skill_level.json"
+    "visiting_status": {"file": "visiting_status.json"},
+    "org_type": {"file": "organization_types.json"},
+    "category": {"file": "role_categories.json", "type": "categories"},
+    "sub_category": {"file": "role_categories.json", "type": "sub_categories"},
+    "seniority": {"file": "seniority_levels.json"},
+    "engagement.type": {"file": "engagement_types.json"},
+    "engagement.commitment": {"file": "engagement_commitments.json"},
+    "engagement.work_mode": {"file": "engagemen_work_modes.json"},
+    "industries": {"file": "industries_list.json"},
+    "hobbies": {"file": "hobbies_list.json"},
+    "goals.looking_for": {"file": "goal_tags.json"},
+    "goals.offering": {"file": "goal_tags.json"},
+    "skills.hard.skill": {"file": "skills_hard.json"},
+    "skills.soft.skill": {"file": "skills_soft.json"},
+    "roles.skills.hard.skill": {"file": "skills_hard.json"},
+    "roles.skills.soft.skill": {"file": "skills_soft.json"},
+    "skills.hard.level": {"file": "skill_level.json"},
+    "skills.soft.level": {"file": "skill_level.json"},
+    "roles.skills.hard.level": {"file": "skill_level.json"},
+    "roles.skills.soft.level": {"file": "skill_level.json"}
 }
 
-def load_enum_values(filename):
+def load_enum_values(field_key):
     """Load enum values from a JSON file in the dictionaries directory."""
+    config = FIELD_TO_ENUM_FILE[field_key]
+    filename = config["file"]
     file_path = DICTIONARIES_DIR / filename
     if not file_path.exists():
         print(f"Warning: Enum file {file_path} not found.")
         return []
+    
     with open(file_path, 'r') as f:
-        values = json.load(f)
-        # Ensure values is a list
-        if not isinstance(values, list):
-            print(f"Warning: {file_path} does not contain a list. Found: {type(values)}")
+        data = json.load(f)
+    
+    if filename == "role_categories.json":
+        if config.get("type") == "categories":
+            # Return top-level keys for categories
+            values = list(data.keys())
+        elif config.get("type") == "sub_categories":
+            # Flatten all sub-category values
+            values = []
+            for category_values in data.values():
+                if isinstance(category_values, list):
+                    values.extend(category_values)
+            values = sorted(set(values))  # Remove duplicates and sort
+        else:
+            print(f"Warning: Invalid type for {filename} in field {field_key}")
             return []
-        return values
+    else:
+        # For other files, expect a flat list
+        if not isinstance(data, list):
+            print(f"Warning: {file_path} does not contain a list. Found: {type(data)}")
+            return []
+        values = data
+    
+    return values
 
 def add_null_to_enums(enum_values):
     """Add null to enum values if not already present."""
@@ -67,7 +87,7 @@ schema = {
                 "name": {"type": ["string", "null"]},
                 "headline": {"type": ["string", "null"]},
                 "visiting_status": {
-                    "enum": add_null_to_enums(load_enum_values(FIELD_TO_ENUM_FILE["visiting_status"]))
+                    "enum": add_null_to_enums(load_enum_values("visiting_status"))
                 }
             },
             "required": ["name", "headline", "visiting_status"],
@@ -82,10 +102,10 @@ schema = {
                         "type": "object",
                         "properties": {
                             "skill": {
-                                "enum": add_null_to_enums(load_enum_values(FIELD_TO_ENUM_FILE["skills.hard.skill"]))
+                                "enum": add_null_to_enums(load_enum_values("skills.hard.skill"))
                             },
                             "level": {
-                                "enum": add_null_to_enums(load_enum_values(FIELD_TO_ENUM_FILE["skills.hard.level"]))
+                                "enum": add_null_to_enums(load_enum_values("skills.hard.level"))
                             }
                         },
                         "required": ["skill", "level"],
@@ -98,10 +118,10 @@ schema = {
                         "type": "object",
                         "properties": {
                             "skill": {
-                                "enum": add_null_to_enums(load_enum_values(FIELD_TO_ENUM_FILE["skills.soft.skill"]))
+                                "enum": add_null_to_enums(load_enum_values("skills.soft.skill"))
                             },
                             "level": {
-                                "enum": add_null_to_enums(load_enum_values(FIELD_TO_ENUM_FILE["skills.soft.level"]))
+                                "enum": add_null_to_enums(load_enum_values("skills.soft.level"))
                             }
                         },
                         "required": ["skill", "level"],
@@ -114,11 +134,11 @@ schema = {
         },
         "industries": {
             "type": "array",
-            "items": {"type": "string", "enum": load_enum_values(FIELD_TO_ENUM_FILE["industries"])}
+            "items": {"type": "string", "enum": load_enum_values("industries")}
         },
         "hobbies": {
             "type": "array",
-            "items": {"type": "string", "enum": load_enum_values(FIELD_TO_ENUM_FILE["hobbies"])}
+            "items": {"type": "string", "enum": load_enum_values("hobbies")}
         },
         "roles": {
             "type": "array",
@@ -129,39 +149,39 @@ schema = {
                         "type": "object",
                         "properties": {
                             "org_type": {
-                                "enum": add_null_to_enums(load_enum_values(FIELD_TO_ENUM_FILE["org_type"]))
+                                "enum": add_null_to_enums(load_enum_values("org_type"))
                             },
                             "name": {"type": ["string", "null"]},
                             "url": {"type": ["string", "null"]},
                             "industries": {
                                 "type": "array",
-                                "items": {"type": "string", "enum": load_enum_values(FIELD_TO_ENUM_FILE["industries"])}
+                                "items": {"type": "string", "enum": load_enum_values("industries")}
                             }
                         },
                         "required": ["org_type", "name", "url", "industries"],
                         "additionalProperties": False
                     },
                     "category": {
-                        "enum": add_null_to_enums(load_enum_values(FIELD_TO_ENUM_FILE["category"]))
+                        "enum": add_null_to_enums(load_enum_values("category"))
                     },
                     "sub_category": {
-                        "enum": add_null_to_enums(load_enum_values(FIELD_TO_ENUM_FILE["sub_category"]))
+                        "enum": add_null_to_enums(load_enum_values("sub_category"))
                     },
                     "title": {"type": ["string", "null"]},
                     "seniority": {
-                        "enum": add_null_to_enums(load_enum_values(FIELD_TO_ENUM_FILE["seniority"]))
+                        "enum": add_null_to_enums(load_enum_values("seniority"))
                     },
                     "engagement": {
                         "type": "object",
                         "properties": {
                             "type": {
-                                "enum": add_null_to_enums(load_enum_values(FIELD_TO_ENUM_FILE["engagement.type"]))
+                                "enum": add_null_to_enums(load_enum_values("engagement.type"))
                             },
                             "commitment": {
-                                "enum": add_null_to_enums(load_enum_values(FIELD_TO_ENUM_FILE["engagement.commitment"]))
+                                "enum": add_null_to_enums(load_enum_values("engagement.commitment"))
                             },
                             "work_mode": {
-                                "enum": add_null_to_enums(load_enum_values(FIELD_TO_ENUM_FILE["engagement.work_mode"]))
+                                "enum": add_null_to_enums(load_enum_values("engagement.work_mode"))
                             }
                         },
                         "required": ["type", "commitment", "work_mode"],
@@ -176,10 +196,10 @@ schema = {
                                     "type": "object",
                                     "properties": {
                                         "skill": {
-                                            "enum": add_null_to_enums(load_enum_values(FIELD_TO_ENUM_FILE["roles.skills.hard.skill"]))
+                                            "enum": add_null_to_enums(load_enum_values("roles.skills.hard.skill"))
                                         },
                                         "level": {
-                                            "enum": add_null_to_enums(load_enum_values(FIELD_TO_ENUM_FILE["roles.skills.hard.level"]))
+                                            "enum": add_null_to_enums(load_enum_values("roles.skills.hard.level"))
                                         }
                                     },
                                     "required": ["skill", "level"],
@@ -192,10 +212,10 @@ schema = {
                                     "type": "object",
                                     "properties": {
                                         "skill": {
-                                            "enum": add_null_to_enums(load_enum_values(FIELD_TO_ENUM_FILE["roles.skills.soft.skill"]))
+                                            "enum": add_null_to_enums(load_enum_values("roles.skills.soft.skill"))
                                         },
                                         "level": {
-                                            "enum": add_null_to_enums(load_enum_values(FIELD_TO_ENUM_FILE["roles.skills.soft.level"]))
+                                            "enum": add_null_to_enums(load_enum_values("roles.skills.soft.level"))
                                         }
                                     },
                                     "required": ["skill", "level"],
@@ -235,11 +255,11 @@ schema = {
                     "properties": {
                         "looking_for": {
                             "type": "array",
-                            "items": {"type": "string", "enum": load_enum_values(FIELD_TO_ENUM_FILE["goals.looking_for"])}
+                            "items": {"type": "string", "enum": load_enum_values("goals.looking_for")}
                         },
                         "offering": {
                             "type": "array",
-                            "items": {"type": "string", "enum": load_enum_values(FIELD_TO_ENUM_FILE["goals.offering"])}
+                            "items": {"type": "string", "enum": load_enum_values("goals.offering")}
                         }
                     },
                     "required": ["looking_for", "offering"],
