@@ -79,4 +79,7 @@ export interface FullProfile {
 // Interface for the structure stored in the JSON file
 export interface FullProfilesData {
     profiles: FullProfile[];
+    embeddings?: {
+        [profileId: string]: number[];
+    };
 } 

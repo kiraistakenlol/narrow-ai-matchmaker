@@ -548,6 +548,8 @@ export class EmbeddingService {
       // 2. Read base_audience.json
       const filePath = path.join(__dirname, '../../../../test_cases', 'base_audience.json');
       let baseData: FullProfilesData;
+      let fileUpdated = false;
+
       try {
         this.logger.log(`Reading base audience file: ${filePath}`);
         const fileContent = await fs.readFile(filePath, 'utf-8');
@@ -556,6 +558,11 @@ export class EmbeddingService {
             throw new Error('Invalid format in base_audience.json');
         }
         this.logger.log(`Successfully read ${baseData.profiles.length} profiles from base audience.`);
+
+        // Initialize embeddings object if it doesn't exist
+        if (!baseData.embeddings) {
+          baseData.embeddings = {};
+        }
       } catch (error) {
         if (error.code === 'ENOENT') {
             this.logger.error(`Base audience file not found: ${filePath}`);
@@ -577,6 +584,8 @@ export class EmbeddingService {
       let openAiSuccessCount = 0;
       let openAiFailureCount = 0;
       let totalEmbedTime = 0;
+      let embeddingsFromFile = 0;
+      let embeddingsGenerated = 0;
 
       for (let i = 0; i < allProfiles.length; i += this.OPENAI_BATCH_SIZE) {
           const batchProfiles = allProfiles.slice(i, i + this.OPENAI_BATCH_SIZE);
@@ -590,42 +599,92 @@ export class EmbeddingService {
           }
           if (validBatchProfiles.length === 0) continue; // Skip batch if no valid profiles
 
-          const batchInputs = validBatchProfiles.map(p => p.raw_input as string); // Assert non-null
-          
-          try {
-            const openaiStartTime = Date.now();
-            const response = await this.openaiClient.embeddings.create({
-                model: 'text-embedding-3-large',
-                input: batchInputs,
-                encoding_format: 'float',
-            });
-            const batchEmbedTime = Date.now() - openaiStartTime;
-            totalEmbedTime += batchEmbedTime;
-            this.logger.log(`OpenAI batch processed in ${batchEmbedTime}ms. Got ${response.data.length} embeddings.`);
-            openAiSuccessCount += validBatchProfiles.length;
+          // Process each profile
+          for (const profile of validBatchProfiles) {
+            const profileLogId = profile.id;
             
-            // Prepare Qdrant points
-            response.data.forEach((embeddingData, index) => {
-                const profile = validBatchProfiles[index];
-                const numericId = hashCode(profile.id); // Use hash of original ID
-                const payload = {
-                    originalProfileId: profile.id,
-                    source: 'base',
-                    raw_input_snippet: profile.raw_input!.substring(0, 100) // Use ! as we filtered nulls
-                };
-                pointsToUpsert.push({
-                    id: numericId,
-                    vector: embeddingData.embedding,
-                    payload: payload,
+            // Skip profiles without raw_input
+            if (!profile.raw_input) continue;
+            
+            let embedding: number[];
+            
+            // Check if embedding already exists in the file
+            if (baseData.embeddings[profileLogId]) {
+              this.logger.log(`Using existing embedding for profile ${profileLogId} from file`);
+              embedding = baseData.embeddings[profileLogId];
+              embeddingsFromFile++;
+              
+              // Prepare Qdrant point with cached embedding
+              const numericId = hashCode(profile.id);
+              const payload = {
+                originalProfileId: profile.id,
+                source: 'base',
+                raw_input_snippet: profile.raw_input.substring(0, 100)
+              };
+              
+              pointsToUpsert.push({
+                id: numericId,
+                vector: embedding,
+                payload: payload,
+              });
+              
+              openAiSuccessCount++;
+            } else {
+              // Need to generate new embedding
+              try {
+                this.logger.log(`Generating new embedding for profile ${profileLogId}`);
+                const embedStartTime = Date.now();
+                const response = await this.openaiClient.embeddings.create({
+                    model: 'text-embedding-3-large',
+                    input: profile.raw_input,
+                    encoding_format: 'float',
                 });
-            });
-
-          } catch (openaiError) {
-              this.logger.error(`Error calling OpenAI batch API for base audience: ${openaiError.message}`, openaiError.stack);
-              openAiFailureCount += validBatchProfiles.length;
+                embedding = response.data[0].embedding;
+                const embedTime = Date.now() - embedStartTime;
+                totalEmbedTime += embedTime;
+                this.logger.log(`Embedding generated for ${profileLogId} in ${embedTime}ms`);
+                embeddingsGenerated++;
+                
+                // Save embedding to file for future use
+                baseData.embeddings[profileLogId] = embedding;
+                fileUpdated = true;
+                
+                // Prepare Qdrant point
+                const numericId = hashCode(profile.id);
+                const payload = {
+                  originalProfileId: profile.id,
+                  source: 'base',
+                  raw_input_snippet: profile.raw_input.substring(0, 100)
+                };
+                
+                pointsToUpsert.push({
+                  id: numericId,
+                  vector: embedding,
+                  payload: payload,
+                });
+                
+                openAiSuccessCount++;
+              } catch (openaiError) {
+                this.logger.error(`Error generating embedding for profile ${profileLogId}: ${openaiError.message}`, openaiError.stack);
+                openAiFailureCount++;
+              }
+            }
           }
       }
-      this.logger.log(`Base Audience OpenAI embedding generation complete. Success: ${openAiSuccessCount}, Failed: ${openAiFailureCount}. Total Embed Time: ${totalEmbedTime}ms`);
+      
+      this.logger.log(`Base Audience embedding complete. Success: ${openAiSuccessCount}, Failed: ${openAiFailureCount}. From file: ${embeddingsFromFile}, Generated: ${embeddingsGenerated}. Total Embed Time: ${totalEmbedTime}ms`);
+
+      // Write updated file with embeddings if any were generated
+      if (fileUpdated) {
+        try {
+          this.logger.log(`Saving updated base audience file with embeddings: ${filePath}`);
+          await fs.writeFile(filePath, JSON.stringify(baseData, null, 2), 'utf-8');
+          this.logger.log(`Successfully saved embeddings to base audience file`);
+        } catch (writeError) {
+          this.logger.error(`Failed to write updated base audience file: ${writeError.message}`, writeError.stack);
+          // Continue with operation even if file write fails
+        }
+      }
 
       // 4. Batch upsert points
       let qdrantResult = null;
@@ -652,12 +711,14 @@ export class EmbeddingService {
       const success = openAiFailureCount === 0 && pointsToUpsert.length > 0;
       return {
           success: success,
-          message: `Base Audience: Processed ${openAiSuccessCount} profiles. OpenAI errors: ${openAiFailureCount}. Upserted ${pointsToUpsert.length} points. Total time: ${operationTime}ms.`,
+          message: `Base Audience: Processed ${openAiSuccessCount} profiles. OpenAI errors: ${openAiFailureCount}. Upserted ${pointsToUpsert.length} points. Used ${embeddingsFromFile} cached embeddings, generated ${embeddingsGenerated} new. Total time: ${operationTime}ms.`,
           collectionName,
           profilesInFile: allProfiles.length,
           profilesProcessed: openAiSuccessCount,
           openAiErrors: openAiFailureCount,
           pointsUpserted: pointsToUpsert.length,
+          embeddingsFromFile,
+          embeddingsGenerated,
           qdrantStatus: qdrantResult?.status,
           timing: {
               total: operationTime,
