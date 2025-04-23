@@ -122,12 +122,15 @@ export class TestDataService implements OnModuleInit {
           \`\`\`json
           ${this.profileSchemaStringified}
           \`\`\`
-      2.  **Content - Generic Profiles:** These profiles represent the background population at a typical tech conference. They should be DIVERSE but GENERIC. Fill in the fields appropriately for common roles (developers, designers, managers, students, etc.), common skills (web dev, AI, cloud, project management), and typical goals (networking, learning, finding jobs/talent). AVOID highly specific, niche, or unusual details. Keep text inputs like highlights or raw_input brief.
-      3.  **Content - Scenario Context:** The generated profiles MUST NOT strongly align with any specific matching scenario listed below. They should serve as a neutral background against which specific "signal" profiles (designed for these scenarios) can be tested later. Review these scenarios to understand what to AVOID making profiles too specific about:
+      2.  **Content - Generic Profiles:** These profiles represent the background population at a typical tech conference. They should be DIVERSE but GENERIC. Fill in the fields appropriately for common roles (developers, designers, managers, students, etc.), common skills (web dev, AI, cloud, project management). AVOID highly specific, niche, or unusual details. Keep text inputs like highlights or raw_input brief.
+      3.  **Content - Array Lengths:** For all fields that are arrays of strings or simple objects (like skills, industries, hobbies), include a maximum of ONE or TWO items. Keep them concise and common.
+      4.  **Content - Roles:** The \`roles\` array MUST contain exactly ONE role object, and its \`active\` property MUST be \`true\`. Do not include past roles.
+      5.  **Content - Goals:** To ensure neutrality, the \`event_context.goals.looking_for\` array MUST contain ONLY the single string "NETWORKING". Similarly, the \`event_context.goals.offering\` array MUST also contain ONLY the single string "NETWORKING".
+      6.  **Content - Scenario Avoidance:** The generated profiles MUST NOT strongly align with any specific matching scenario listed below (beyond the generic goals specified above). They should serve as a neutral background against which specific "signal" profiles (designed for these scenarios) can be tested later. Review these scenarios to understand what to AVOID making profiles too specific about:
           \`\`\`json
           ${this.matchScenarios}
           \`\`\`
-      4.  **Output Purity:** Your response MUST contain ONLY the JSON array, starting with '[' and ending with ']'. Do not include any introductory text, explanations, markdown formatting, or anything else outside the JSON array.
+      7.  **Output Purity:** Your response MUST contain ONLY the JSON array, starting with '[' and ending with ']'. Do not include any introductory text, explanations, markdown formatting, or anything else outside the JSON array.
     `;
 
     const estimatedTokensPerProfile = 1500;
