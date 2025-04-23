@@ -2,6 +2,10 @@
 
 Only leave comments when absolutely necessary.
 
+When asked to remove something - remove it completely instead of commending out.
+
 Be as brief as possible
 
 When implementing UI components be minimalistic but use just enough styling to make it simple but functional. (not ugly)
+
+High level project overview is in README.md in the root of the project.

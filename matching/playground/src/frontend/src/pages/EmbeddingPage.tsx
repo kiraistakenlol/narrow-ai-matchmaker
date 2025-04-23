@@ -1,14 +1,16 @@
 import React from 'react';
 import EmbeddingPanel from '../components/EmbeddingPanel';
-import BaseSetGenerator from '../components/BaseSetGenerator';
+// Remove BaseSetGenerator import
+// import BaseSetGenerator from '../components/BaseSetGenerator'; 
 import '../App.css';
 
 function EmbeddingPage() {
   return (
     <div className="embedding-page">
       <EmbeddingPanel />
-      <hr className="separator" />
-      <BaseSetGenerator />
+      {/* Remove BaseSetGenerator usage */}
+      {/* <hr className="separator" /> */}
+      {/* <BaseSetGenerator /> */}
     </div>
   );
 }

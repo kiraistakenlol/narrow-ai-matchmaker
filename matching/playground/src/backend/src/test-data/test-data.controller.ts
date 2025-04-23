@@ -16,6 +16,7 @@ import {
 } from '@nestjs/common';
 import { TestDataService } from './test-data.service';
 import { MatchScenarioCategories } from '../../common/src/types/match-scenarios.types';
+import { FullProfile } from '../../../common/src/types/full-profile.types';
 
 @Controller('test-data')
 export class TestDataController {
@@ -74,6 +75,20 @@ export class TestDataController {
       }
       // Avoid exposing raw error details for other errors
       throw new InternalServerErrorException(`Failed to generate scenario bundle for ${scenarioId}.`);
+    }
+  }
+
+  @Get('get-base-set')
+  @HttpCode(HttpStatus.OK)
+  async getBaseSet(): Promise<FullProfile[]> {
+    try {
+      return await this.testDataService.getBaseAudienceProfiles();
+    } catch (error) {
+      console.error('Error fetching base set:', error);
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(error.message);
+      }
+      throw new InternalServerErrorException('Failed to fetch base set profiles.');
     }
   }
 } 

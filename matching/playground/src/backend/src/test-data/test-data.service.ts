@@ -77,6 +77,31 @@ export class TestDataService implements OnModuleInit {
     }
   }
 
+  /**
+   * Reads the base audience profiles from the JSON file.
+   * @returns Promise<FullProfile[]>
+   */
+  async getBaseAudienceProfiles(): Promise<FullProfile[]> {
+    const baseAudiencePath = path.join(__dirname, '../../../../test_cases/base_audience.json');
+    this.logger.log(`Attempting to read base audience from: ${baseAudiencePath}`);
+    try {
+      const fileContent = await fs.readFile(baseAudiencePath, 'utf-8');
+      const parsedData: FullProfilesData = JSON.parse(fileContent);
+      if (!parsedData || !Array.isArray(parsedData.profiles)) {
+        throw new Error('Invalid format in base_audience.json: "profiles" array not found or invalid.');
+      }
+      this.logger.log(`Successfully read and parsed ${parsedData.profiles.length} profiles from base audience.`);
+      return parsedData.profiles;
+    } catch (error) {
+      this.logger.error(`Failed to read or parse base_audience.json: ${error.message}`, error.stack);
+      // Distinguish between file not found and other errors if needed
+      if (error.code === 'ENOENT') {
+          throw new NotFoundException(`Base audience file not found at ${baseAudiencePath}. Generate it first?`);
+      }
+      throw new InternalServerErrorException(`Failed to load/parse base audience file: ${error.message}`);
+    }
+  }
+
   async generateAndSaveBaseSet(count: number): Promise<{ count: number; filePath: string }> {
     if (!this.anthropic) {
       throw new InternalServerErrorException('Anthropic client not initialized. Missing API key?');

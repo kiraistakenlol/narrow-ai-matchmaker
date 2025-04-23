@@ -1,63 +1,81 @@
-import { useState, useEffect } from 'react'
-import { Profile } from 'narrow-ai-matchmaker-common'
+import React, { useState } from 'react';
+import { FullProfile } from '../../../../common/src/types/full-profile.types';
+import ProfileCard from './ProfileCard';
 
 interface ProfileListProps {
-  onSelectProfile: (profileId: string) => void
+  profiles: FullProfile[];
+  loading: boolean;
+  error: string | null;
+  onGenerationComplete: () => void;
 }
 
-export default function ProfileList({ onSelectProfile }: ProfileListProps) {
-  const [profiles, setProfiles] = useState<Profile[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+export default function ProfileList({ profiles, loading, error, onGenerationComplete }: ProfileListProps) {
+  const [generationCount, setGenerationCount] = useState(10);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchProfiles = async () => {
-      try {
-        const response = await fetch('http://localhost:3000/profiles')
-        const data = await response.json()
-        
-        if (data.profiles) {
-          setProfiles(data.profiles)
-        } else {
-          setError('Invalid response format')
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    setGenerationError(null);
+    try {
+      const response = await fetch(
+        `http://localhost:3000/test-data/generate-base-set?count=${generationCount}`,
+        {
+          method: 'POST',
+          headers: { 'Accept': 'application/json' }
         }
-      } catch (error) {
-        console.error('Error fetching profiles:', error)
-        setError('Failed to load profiles')
-      } finally {
-        setLoading(false)
+      );
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || `HTTP error! status: ${response.status}`);
       }
+      onGenerationComplete();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An unknown error occurred';
+      console.error('Error generating base set:', err);
+      setGenerationError(`Failed: ${message}`);
+    } finally {
+      setIsGenerating(false);
     }
+  };
 
-    fetchProfiles()
-  }, [])
-
-  if (loading) return <div className="loading">Loading profiles...</div>
-  if (error) return <div className="error">{error}</div>
+  if (loading) return <div className="loading" style={{ padding: '20px' }}>Loading profiles...</div>;
+  if (error) return <div className="error" style={{ padding: '20px', color: 'red' }}>Error loading profiles: {error}</div>;
 
   return (
-    <div className="profile-list">
-      <h2>Available Profiles</h2>
-      {profiles.length === 0 ? (
-        <p>No profiles found.</p>
+    <div className="profile-list" style={{ padding: '20px', fontFamily: 'sans-serif' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '20px' }}>
+        <h2 style={{ margin: 0 }}>Base Audience</h2>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <label style={{ marginRight: '5px', fontSize: '0.9em' }}>Generate:</label>
+          <input 
+            type="number"
+            value={generationCount}
+            onChange={(e) => setGenerationCount(parseInt(e.target.value, 10) || 1)}
+            min="1"
+            max="500"
+            disabled={isGenerating}
+            style={{ width: '60px', marginRight: '10px', padding: '5px' }}
+          />
+          <button
+            onClick={handleGenerate}
+            disabled={isGenerating || generationCount <= 0 || generationCount > 500}
+            style={{ padding: '5px 10px' }}
+          >
+            {isGenerating ? 'Generating...' : 'Go'}
+          </button>
+          {generationError && <span style={{ color: 'red', marginLeft: '10px', fontSize: '0.8em' }}>{generationError}</span>}
+        </div>
+      </div>
+      {profiles.length === 0 && !loading ? (
+        <p>No profiles found. Use the button above to generate some.</p>
       ) : (
-        <ul>
+        <ul style={{ listStyle: 'none', padding: 0 }}>
           {profiles.map((profile) => (
-            <li key={profile.user_id} className="profile-item">
-              <div className="profile-header">
-                <span className="profile-id">{profile.user_id}</span>
-                <button onClick={() => onSelectProfile(profile.user_id)}>
-                  View Similar
-                </button>
-              </div>
-              <div className="profile-text">
-                {profile.text.substring(0, 150)}
-                {profile.text.length > 150 ? '...' : ''}
-              </div>
-            </li>
+            <ProfileCard key={profile.id} profile={profile} />
           ))}
         </ul>
       )}
     </div>
-  )
+  );
 } 

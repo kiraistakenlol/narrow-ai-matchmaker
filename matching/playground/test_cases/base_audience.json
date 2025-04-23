@@ -1,9 +1,10 @@
 {
   "profiles": [
     {
-      "raw_input": "Software developer with experience in web technologies. Looking to network and learn about new trends in the industry.",
+      "id": "base-set-1",
+      "raw_input": "I'm Sarah Chen, a frontend developer with 5 years of experience working with React and TypeScript. Currently at TechSolutions building enterprise applications. Looking to connect with other developers and possibly find mentorship opportunities in system architecture.",
       "personal": {
-        "name": "Alex Johnson",
+        "name": "Sarah Chen",
         "headline": "Frontend Developer at TechSolutions",
         "visiting_status": "LOCAL"
       },
@@ -11,29 +12,37 @@
         "hard": [
           {
             "skill": "JavaScript",
+            "level": "EXPERT"
+          },
+          {
+            "skill": "TypeScript",
             "level": "ADVANCED"
           },
           {
             "skill": "React",
-            "level": "INTERMEDIATE"
+            "level": "EXPERT"
           },
           {
-            "skill": "TypeScript",
-            "level": "INTERMEDIATE"
+            "skill": "CSS",
+            "level": "ADVANCED"
           },
           {
             "skill": "HTML",
             "level": "EXPERT"
           },
           {
-            "skill": "CSS",
-            "level": "ADVANCED"
+            "skill": "REST_APIs",
+            "level": "INTERMEDIATE"
+          },
+          {
+            "skill": "Next.js",
+            "level": "INTERMEDIATE"
           }
         ],
         "soft": [
           {
             "skill": "Communication",
-            "level": "INTERMEDIATE"
+            "level": "ADVANCED"
           },
           {
             "skill": "Teamwork",
@@ -42,17 +51,23 @@
           {
             "skill": "Problem_Solving",
             "level": "INTERMEDIATE"
+          },
+          {
+            "skill": "Time_Management",
+            "level": "INTERMEDIATE"
           }
         ]
       },
       "industries": [
         "SaaS",
+        "Enterprise_Software",
         "E_Commerce"
       ],
       "hobbies": [
-        "Gaming",
+        "Reading",
+        "Cooking",
         "Hiking",
-        "Reading"
+        "Photography"
       ],
       "roles": [
         {
@@ -62,17 +77,68 @@
             "url": "https://techsolutions.example.com",
             "industries": [
               "SaaS",
+              "Enterprise_Software"
+            ]
+          },
+          "category": "ENGINEERING",
+          "sub_category": "FRONTEND_DEVELOPER",
+          "title": "Senior Frontend Developer",
+          "seniority": "SENIOR",
+          "engagement": {
+            "type": "EMPLOYMENT",
+            "commitment": "FULL_TIME",
+            "work_mode": "HYBRID"
+          },
+          "skills": {
+            "hard": [
+              {
+                "skill": "JavaScript",
+                "level": "EXPERT"
+              },
+              {
+                "skill": "TypeScript",
+                "level": "ADVANCED"
+              },
+              {
+                "skill": "React",
+                "level": "EXPERT"
+              }
+            ],
+            "soft": [
+              {
+                "skill": "Communication",
+                "level": "ADVANCED"
+              },
+              {
+                "skill": "Teamwork",
+                "level": "ADVANCED"
+              }
+            ]
+          },
+          "highlights": [
+            "Led migration from JavaScript to TypeScript",
+            "Improved application performance by 40%",
+            "Mentored junior developers"
+          ],
+          "active": true
+        },
+        {
+          "organization": {
+            "org_type": "STARTUP_GROWTH_STAGE",
+            "name": "WebFront",
+            "url": "https://webfront.example.com",
+            "industries": [
               "E_Commerce"
             ]
           },
-          "category": null,
-          "sub_category": null,
+          "category": "ENGINEERING",
+          "sub_category": "FRONTEND_DEVELOPER",
           "title": "Frontend Developer",
           "seniority": "MID_LEVEL",
           "engagement": {
             "type": "EMPLOYMENT",
             "commitment": "FULL_TIME",
-            "work_mode": "HYBRID"
+            "work_mode": "REMOTE"
           },
           "skills": {
             "hard": [
@@ -83,10 +149,6 @@
               {
                 "skill": "React",
                 "level": "INTERMEDIATE"
-              },
-              {
-                "skill": "TypeScript",
-                "level": "INTERMEDIATE"
               }
             ],
             "soft": [
@@ -96,23 +158,23 @@
               },
               {
                 "skill": "Teamwork",
-                "level": "ADVANCED"
+                "level": "INTERMEDIATE"
               }
             ]
           },
           "highlights": [
-            "Developed responsive web interfaces for e-commerce platforms",
-            "Improved site performance by 30%",
-            "Contributed to component library development"
+            "Built responsive e-commerce interfaces",
+            "Implemented shopping cart functionality"
           ],
-          "active": true
+          "active": false
         }
       ],
       "event_context": {
-        "event_id": "TECHCONF2023",
+        "event_id": "techconf2023",
         "goals": {
           "looking_for": [
             "NETWORKING",
+            "FIND_MENTOR",
             "LEARNING",
             "EXPLORE_NEW_TECH"
           ],
@@ -122,14 +184,14 @@
           ]
         }
       },
-      "extra_notes": "Interested in learning more about TypeScript best practices and potential collaboration opportunities.",
-      "id": "base-set-1"
+      "extra_notes": "Interested in design systems and component libraries. Would like to connect with backend developers to better understand API design."
     },
     {
-      "raw_input": "Product manager with background in fintech. Attending to expand network and explore new partnerships.",
+      "id": "base-set-2",
+      "raw_input": "Marcus Johnson here. Product manager with background in UX design. Currently at CloudScale managing our data analytics platform. Looking to network with developers and potential clients at this conference.",
       "personal": {
-        "name": "Sarah Chen",
-        "headline": "Senior Product Manager at FinanceWorks",
+        "name": "Marcus Johnson",
+        "headline": "Product Manager at CloudScale",
         "visiting_status": "TEMPORARY_VISITOR"
       },
       "skills": {
@@ -143,12 +205,16 @@
             "level": "ADVANCED"
           },
           {
-            "skill": "Market_Analysis",
+            "skill": "Scrum",
+            "level": "ADVANCED"
+          },
+          {
+            "skill": "Data_Analysis",
             "level": "INTERMEDIATE"
           },
           {
             "skill": "SQL",
-            "level": "BEGINNER"
+            "level": "INTERMEDIATE"
           }
         ],
         "soft": [
@@ -166,32 +232,39 @@
           },
           {
             "skill": "Stakeholder_Management",
-            "level": "EXPERT"
+            "level": "ADVANCED"
+          },
+          {
+            "skill": "Presentation_Skills",
+            "level": "ADVANCED"
           }
         ]
       },
       "industries": [
-        "FinTech",
-        "SaaS"
+        "SaaS",
+        "Cloud_Computing",
+        "Data_Analytics"
       ],
       "hobbies": [
+        "Running",
         "Traveling",
-        "Cooking",
-        "Yoga"
+        "Board_Games",
+        "Attending_Meetups"
       ],
       "roles": [
         {
           "organization": {
-            "org_type": "SCALE_UP",
-            "name": "FinanceWorks",
-            "url": "https://financeworks.example.com",
+            "org_type": "STARTUP_GROWTH_STAGE",
+            "name": "CloudScale",
+            "url": "https://cloudscale.example.com",
             "industries": [
-              "FinTech",
-              "SaaS"
+              "SaaS",
+              "Cloud_Computing",
+              "Data_Analytics"
             ]
           },
-          "category": null,
-          "sub_category": null,
+          "category": "MANAGEMENT",
+          "sub_category": "PRODUCT_MANAGER",
           "title": "Senior Product Manager",
           "seniority": "SENIOR",
           "engagement": {
@@ -210,7 +283,7 @@
                 "level": "ADVANCED"
               },
               {
-                "skill": "Market_Analysis",
+                "skill": "Data_Analysis",
                 "level": "INTERMEDIATE"
               }
             ],
@@ -225,133 +298,46 @@
               },
               {
                 "skill": "Stakeholder_Management",
-                "level": "EXPERT"
+                "level": "ADVANCED"
               }
             ]
           },
           "highlights": [
-            "Led development of payment processing platform",
-            "Managed cross-functional team of 12",
-            "Launched 3 successful products in the last 2 years"
+            "Led product launch that increased revenue by 30%",
+            "Coordinated cross-functional teams of 15+ people",
+            "Developed product strategy based on market research"
           ],
           "active": true
-        }
-      ],
-      "event_context": {
-        "event_id": "TECHCONF2023",
-        "goals": {
-          "looking_for": [
-            "NETWORKING",
-            "FIND_PARTNERS",
-            "INDUSTRY_INSIGHTS"
-          ],
-          "offering": [
-            "NETWORKING",
-            "INDUSTRY_INSIGHTS",
-            "COLLABORATION_OPPORTUNITIES"
-          ]
-        }
-      },
-      "extra_notes": "Interested in discussing payment systems innovation and potential partnership opportunities.",
-      "id": "base-set-2"
-    },
-    {
-      "raw_input": "Backend engineer with cloud experience. Looking to meet other developers and potentially find new opportunities.",
-      "personal": {
-        "name": "Michael Torres",
-        "headline": "Backend Engineer at CloudScale",
-        "visiting_status": "LOCAL"
-      },
-      "skills": {
-        "hard": [
-          {
-            "skill": "Python",
-            "level": "EXPERT"
-          },
-          {
-            "skill": "AWS",
-            "level": "ADVANCED"
-          },
-          {
-            "skill": "Docker",
-            "level": "INTERMEDIATE"
-          },
-          {
-            "skill": "Kubernetes",
-            "level": "INTERMEDIATE"
-          },
-          {
-            "skill": "PostgreSQL",
-            "level": "ADVANCED"
-          }
-        ],
-        "soft": [
-          {
-            "skill": "Problem_Solving",
-            "level": "EXPERT"
-          },
-          {
-            "skill": "Teamwork",
-            "level": "INTERMEDIATE"
-          },
-          {
-            "skill": "Time_Management",
-            "level": "ADVANCED"
-          }
-        ]
-      },
-      "industries": [
-        "Cloud_Computing",
-        "SaaS"
-      ],
-      "hobbies": [
-        "Cycling",
-        "Open_Source_Contribution",
-        "Board_Games"
-      ],
-      "roles": [
+        },
         {
           "organization": {
-            "org_type": "STARTUP_GROWTH_STAGE",
-            "name": "CloudScale",
-            "url": "https://cloudscale.example.com",
+            "org_type": "ENTERPRISE",
+            "name": "TechDesign",
+            "url": "https://techdesign.example.com",
             "industries": [
-              "Cloud_Computing",
               "SaaS"
             ]
           },
-          "category": null,
-          "sub_category": null,
-          "title": "Backend Engineer",
-          "seniority": "SENIOR",
+          "category": "DESIGN",
+          "sub_category": "UX_UI_DESIGNER",
+          "title": "UX Designer",
+          "seniority": "MID_LEVEL",
           "engagement": {
             "type": "EMPLOYMENT",
             "commitment": "FULL_TIME",
-            "work_mode": "REMOTE"
+            "work_mode": "ON_SITE"
           },
           "skills": {
             "hard": [
               {
-                "skill": "Python",
-                "level": "EXPERT"
-              },
-              {
-                "skill": "AWS",
-                "level": "ADVANCED"
-              },
-              {
-                "skill": "Docker",
-                "level": "INTERMEDIATE"
-              },
-              {
-                "skill": "PostgreSQL",
-                "level": "ADVANCED"
+                "skill": "SQL",
+                "level": "BEGINNER"
               }
             ],
             "soft": [
               {
-                "skill": "Problem_Solving",
-                "level": "EXPERT"
+                "skill": "Creativity",
+                "level": "ADVANCED"
               },
               {
                 "skill": "Teamwork",
@@ -360,173 +346,37 @@
             ]
           },
           "highlights": [
-            "Built scalable microservices architecture",
-            "Reduced infrastructure costs by 25%",
-            "Implemented CI/CD pipelines for automated deployments"
+            "Redesigned user interfaces that increased conversion by 25%",
+            "Conducted user research and usability testing"
           ],
-          "active": true
+          "active": false
         }
       ],
       "event_context": {
-        "event_id": "TECHCONF2023",
+        "event_id": "techconf2023",
         "goals": {
           "looking_for": [
             "NETWORKING",
-            "FIND_JOB",
-            "EXPLORE_NEW_TECH"
+            "FIND_CLIENTS",
+            "INDUSTRY_INSIGHTS",
+            "COLLABORATION_OPPORTUNITIES"
           ],
           "offering": [
             "NETWORKING",
-            "COLLABORATION_OPPORTUNITIES",
-            "PROBLEM_SOLVING"
+            "OFFER_MENTORSHIP",
+            "INDUSTRY_INSIGHTS"
           ]
         }
       },
-      "extra_notes": "Passionate about scalable systems and cloud optimization.",
-      "id": "base-set-3"
+      "extra_notes": "Interested in discussing how AI is transforming product analytics and customer insights. Open to coffee meetings during the conference."
     },
     {
-      "raw_input": "UX/UI designer with experience in mobile apps. Looking to connect with developers and product managers.",
+      "id": "base-set-3",
+      "raw_input": "Hi, I'm Olivia Kim, a data scientist with experience in machine learning models for retail analytics. Currently working at DataSmart as a senior data scientist. Looking to learn about the latest ML frameworks and connect with other data professionals.",
       "personal": {
-        "name": "Emma Rodriguez",
-        "headline": "UX/UI Designer at DesignFusion",
-        "visiting_status": "LOCAL"
-      },
-      "skills": {
-        "hard": [
-          {
-            "skill": "Figma",
-            "level": "EXPERT"
-          },
-          {
-            "skill": "Adobe_Creative_Suite",
-            "level": "ADVANCED"
-          },
-          {
-            "skill": "Sketch",
-            "level": "INTERMEDIATE"
-          },
-          {
-            "skill": "HTML",
-            "level": "INTERMEDIATE"
-          },
-          {
-            "skill": "CSS",
-            "level": "INTERMEDIATE"
-          }
-        ],
-        "soft": [
-          {
-            "skill": "Creativity",
-            "level": "EXPERT"
-          },
-          {
-            "skill": "Communication",
-            "level": "ADVANCED"
-          },
-          {
-            "skill": "Empathy",
-            "level": "ADVANCED"
-          },
-          {
-            "skill": "Collaboration",
-            "level": "INTERMEDIATE"
-          }
-        ]
-      },
-      "industries": [
-        "SaaS",
-        "E_Commerce",
-        "HealthTech"
-      ],
-      "hobbies": [
-        "Drawing",
-        "Photography",
-        "Traveling"
-      ],
-      "roles": [
-        {
-          "organization": {
-            "org_type": "CONSULTANCY",
-            "name": "DesignFusion",
-            "url": "https://designfusion.example.com",
-            "industries": [
-              "SaaS",
-              "E_Commerce",
-              "HealthTech"
-            ]
-          },
-          "category": null,
-          "sub_category": null,
-          "title": "Senior UX/UI Designer",
-          "seniority": "SENIOR",
-          "engagement": {
-            "type": "EMPLOYMENT",
-            "commitment": "FULL_TIME",
-            "work_mode": "HYBRID"
-          },
-          "skills": {
-            "hard": [
-              {
-                "skill": "Figma",
-                "level": "EXPERT"
-              },
-              {
-                "skill": "Adobe_Creative_Suite",
-                "level": "ADVANCED"
-              },
-              {
-                "skill": "Sketch",
-                "level": "INTERMEDIATE"
-              }
-            ],
-            "soft": [
-              {
-                "skill": "Creativity",
-                "level": "EXPERT"
-              },
-              {
-                "skill": "Communication",
-                "level": "ADVANCED"
-              },
-              {
-                "skill": "Empathy",
-                "level": "ADVANCED"
-              }
-            ]
-          },
-          "highlights": [
-            "Designed UI for healthcare mobile apps",
-            "Led redesign of e-commerce platform with 15% conversion improvement",
-            "Created design system used across multiple products"
-          ],
-          "active": true
-        }
-      ],
-      "event_context": {
-        "event_id": "TECHCONF2023",
-        "goals": {
-          "looking_for": [
-            "NETWORKING",
-            "COLLABORATION_OPPORTUNITIES",
-            "FIND_PARTNERS"
-          ],
-          "offering": [
-            "NETWORKING",
-            "COLLABORATION_OPPORTUNITIES",
-            "PROBLEM_SOLVING"
-          ]
-        }
-      },
-      "extra_notes": "Interested in projects that focus on user-centered design principles.",
-      "id": "base-set-4"
-    },
-    {
-      "raw_input": "Data scientist with focus on machine learning. Seeking to learn about latest AI developments and meet like-minded professionals.",
-      "personal": {
-        "name": "David Kim",
-        "headline": "Data Scientist at AnalyticsPro",
-        "visiting_status": "TEMPORARY_VISITOR"
+        "name": "Olivia Kim",
+        "headline": "Senior Data Scientist at DataSmart",
+        "visiting_status": "LONG_TERM_RESIDENT"
       },
       "skills": {
         "hard": [
@@ -549,12 +399,20 @@
           {
             "skill": "SQL",
             "level": "ADVANCED"
+          },
+          {
+            "skill": "Data_Analysis",
+            "level": "EXPERT"
+          },
+          {
+            "skill": "Big_Data",
+            "level": "INTERMEDIATE"
           }
         ],
         "soft": [
           {
             "skill": "Problem_Solving",
-            "level": "EXPERT"
+            "level": "ADVANCED"
           },
           {
             "skill": "Critical_Thinking",
@@ -563,33 +421,39 @@
           {
             "skill": "Communication",
             "level": "INTERMEDIATE"
+          },
+          {
+            "skill": "Teamwork",
+            "level": "INTERMEDIATE"
           }
         ]
       },
       "industries": [
         "Artificial_Intelligence",
         "Machine_Learning",
-        "Consulting_Tech"
+        "E_Commerce",
+        "Marketplace"
       ],
       "hobbies": [
+        "Cycling",
         "Reading",
-        "Board_Games",
-        "Hiking"
+        "Painting",
+        "Learning_Languages"
       ],
       "roles": [
         {
           "organization": {
-            "org_type": "CONSULTANCY",
-            "name": "AnalyticsPro",
-            "url": "https://analyticspro.example.com",
+            "org_type": "SCALE_UP",
+            "name": "DataSmart",
+            "url": "https://datasmart.example.com",
             "industries": [
               "Artificial_Intelligence",
               "Machine_Learning",
-              "Consulting_Tech"
+              "E_Commerce"
             ]
           },
-          "category": null,
-          "sub_category": null,
+          "category": "ENGINEERING",
+          "sub_category": "DATA_SCIENTIST",
           "title": "Senior Data Scientist",
           "seniority": "SENIOR",
           "engagement": {
@@ -608,261 +472,44 @@
                 "level": "ADVANCED"
               },
               {
-                "skill": "TensorFlow",
-                "level": "INTERMEDIATE"
-              },
-              {
-                "skill": "SQL",
-                "level": "ADVANCED"
+                "skill": "Data_Analysis",
+                "level": "EXPERT"
               }
             ],
             "soft": [
               {
                 "skill": "Problem_Solving",
-                "level": "EXPERT"
+                "level": "ADVANCED"
               },
               {
                 "skill": "Critical_Thinking",
                 "level": "ADVANCED"
-              },
-              {
-                "skill": "Communication",
-                "level": "INTERMEDIATE"
               }
             ]
           },
           "highlights": [
-            "Developed predictive models for customer churn reduction",
-            "Implemented recommendation systems for e-commerce platforms",
-            "Led team of 3 junior data scientists"
+            "Developed recommendation engine that increased sales by 15%",
+            "Created customer segmentation models using clustering algorithms",
+            "Built predictive analytics dashboard for marketing team"
           ],
           "active": true
-        }
-      ],
-      "event_context": {
-        "event_id": "TECHCONF2023",
-        "goals": {
-          "looking_for": [
-            "NETWORKING",
-            "LEARNING",
-            "EXPLORE_NEW_TECH"
-          ],
-          "offering": [
-            "NETWORKING",
-            "PROBLEM_SOLVING",
-            "COLLABORATION_OPPORTUNITIES"
-          ]
-        }
-      },
-      "extra_notes": "Interested in the latest developments in deep learning and NLP applications.",
-      "id": "base-set-5"
-    },
-    {
-      "raw_input": "Project manager with IT background. Looking to expand network and learn about agile methodologies.",
-      "personal": {
-        "name": "Rebecca Thompson",
-        "headline": "Senior Project Manager at GlobalTech",
-        "visiting_status": "LOCAL"
-      },
-      "skills": {
-        "hard": [
-          {
-            "skill": "Agile_Methodologies",
-            "level": "EXPERT"
-          },
-          {
-            "skill": "Scrum",
-            "level": "EXPERT"
-          },
-          {
-            "skill": "JIRA",
-            "level": "ADVANCED"
-          },
-          {
-            "skill": "Microsoft_Project",
-            "level": "INTERMEDIATE"
-          },
-          {
-            "skill": "SQL",
-            "level": "BEGINNER"
-          }
-        ],
-        "soft": [
-          {
-            "skill": "Leadership",
-            "level": "ADVANCED"
-          },
-          {
-            "skill": "Communication",
-            "level": "EXPERT"
-          },
-          {
-            "skill": "Stakeholder_Management",
-            "level": "EXPERT"
-          },
-          {
-            "skill": "Problem_Solving",
-            "level": "ADVANCED"
-          }
-        ]
-      },
-      "industries": [
-        "Enterprise_Software",
-        "SaaS",
-        "Consulting_Tech"
-      ],
-      "hobbies": [
-        "Yoga",
-        "Reading",
-        "Traveling"
-      ],
-      "roles": [
+        },
         {
           "organization": {
             "org_type": "ENTERPRISE",
-            "name": "GlobalTech",
-            "url": "https://globaltech.example.com",
+            "name": "RetailTech",
+            "url": "https://retailtech.example.com",
             "industries": [
-              "Enterprise_Software",
-              "SaaS"
+              "E_Commerce",
+              "Marketplace"
             ]
           },
-          "category": null,
-          "sub_category": null,
-          "title": "Senior Project Manager",
-          "seniority": "SENIOR",
+          "category": "ENGINEERING",
+          "sub_category": "DATA_ANALYST",
+          "title": "Data Analyst",
+          "seniority": "MID_LEVEL",
           "engagement": {
             "type": "EMPLOYMENT",
-            "commitment": "FULL_TIME",
-            "work_mode": "HYBRID"
-          },
-          "skills": {
-            "hard": [
-              {
-                "skill": "Agile_Methodologies",
-                "level": "EXPERT"
-              },
-              {
-                "skill": "Scrum",
-                "level": "EXPERT"
-              },
-              {
-                "skill": "JIRA",
-                "level": "ADVANCED"
-              }
-            ],
-            "soft": [
-              {
-                "skill": "Leadership",
-                "level": "ADVANCED"
-              },
-              {
-                "skill": "Communication",
-                "level": "EXPERT"
-              },
-              {
-                "skill": "Stakeholder_Management",
-                "level": "EXPERT"
-              }
-            ]
-          },
-          "highlights": [
-            "Managed enterprise software implementations for Fortune 500 clients",
-            "Led teams of up to 20 developers and designers",
-            "Reduced project delivery time by 20% through process improvements"
-          ],
-          "active": true
-        }
-      ],
-      "event_context": {
-        "event_id": "TECHCONF2023",
-        "goals": {
-          "looking_for": [
-            "NETWORKING",
-            "LEARNING",
-            "INDUSTRY_INSIGHTS"
-          ],
-          "offering": [
-            "NETWORKING",
-            "MENTORSHIP",
-            "COLLABORATION_OPPORTUNITIES"
-          ]
-        }
-      },
-      "extra_notes": "Interested in scaling agile practices across large organizations.",
-      "id": "base-set-6"
-    },
-    {
-      "raw_input": "Student in computer science looking for internship opportunities and mentorship. Experience with Python and web development.",
-      "personal": {
-        "name": "Jason Lee",
-        "headline": "Computer Science Student at State University",
-        "visiting_status": "LOCAL"
-      },
-      "skills": {
-        "hard": [
-          {
-            "skill": "Python",
-            "level": "INTERMEDIATE"
-          },
-          {
-            "skill": "JavaScript",
-            "level": "BEGINNER"
-          },
-          {
-            "skill": "HTML",
-            "level": "INTERMEDIATE"
-          },
-          {
-            "skill": "CSS",
-            "level": "INTERMEDIATE"
-          },
-          {
-            "skill": "SQL",
-            "level": "BEGINNER"
-          }
-        ],
-        "soft": [
-          {
-            "skill": "Teamwork",
-            "level": "INTERMEDIATE"
-          },
-          {
-            "skill": "Communication",
-            "level": "BEGINNER"
-          },
-          {
-            "skill": "Problem_Solving",
-            "level": "INTERMEDIATE"
-          }
-        ]
-      },
-      "industries": [
-        "SaaS",
-        "E_Commerce",
-        "EdTech"
-      ],
-      "hobbies": [
-        "Gaming",
-        "Coding",
-        "Hiking"
-      ],
-      "roles": [
-        {
-          "organization": {
-            "org_type": "ACADEMIA_UNIVERSITY",
-            "name": "State University",
-            "url": "https://stateuniversity.example.edu",
-            "industries": [
-              "EdTech"
-            ]
-          },
-          "category": null,
-          "sub_category": null,
-          "title": "Computer Science Student",
-          "seniority": "INTERN",
-          "engagement": {
-            "type": "INTERNSHIP",
             "commitment": "FULL_TIME",
             "work_mode": "ON_SITE"
           },
@@ -873,22 +520,18 @@
                 "level": "INTERMEDIATE"
               },
               {
-                "skill": "JavaScript",
-                "level": "BEGINNER"
+                "skill": "SQL",
+                "level": "ADVANCED"
               },
               {
-                "skill": "HTML",
-                "level": "INTERMEDIATE"
+                "skill": "Data_Analysis",
+                "level": "ADVANCED"
               }
             ],
             "soft": [
               {
-                "skill": "Teamwork",
-                "level": "INTERMEDIATE"
-              },
-              {
                 "skill": "Communication",
-                "level": "BEGINNER"
+                "level": "INTERMEDIATE"
               },
               {
                 "skill": "Problem_Solving",
@@ -897,312 +540,37 @@
             ]
           },
           "highlights": [
-            "Created a web application for campus event management",
-            "Participated in university hackathon, placed 3rd",
-            "Volunteer teaching assistant for intro programming courses"
+            "Created sales forecasting models",
+            "Built automated reporting systems",
+            "Analyzed customer purchase patterns"
           ],
-          "active": true
+          "active": false
         }
       ],
       "event_context": {
-        "event_id": "TECHCONF2023",
+        "event_id": "techconf2023",
         "goals": {
           "looking_for": [
-            "FIND_MENTOR",
-            "FIND_INTERNSHIP",
-            "LEARNING"
+            "NETWORKING",
+            "LEARNING",
+            "INDUSTRY_INSIGHTS",
+            "EXPLORE_NEW_TECH"
           ],
           "offering": [
             "NETWORKING",
-            "HACKATHON_PARTICIPATION",
+            "INDUSTRY_INSIGHTS",
             "COLLABORATION_OPPORTUNITIES"
           ]
         }
       },
-      "extra_notes": "Eager to learn and contribute to meaningful projects. Looking for summer internship opportunities.",
-      "id": "base-set-7"
+      "extra_notes": "Particularly interested in NLP applications and time series forecasting. Would like to discuss best practices for deploying ML models in production."
     },
     {
-      "raw_input": "DevOps engineer with focus on cloud infrastructure. Interested in meeting others in the field and exploring new tools.",
+      "id": "base-set-4",
+      "raw_input": "Michael Torres, cybersecurity engineer with 7 years of experience. Currently working at SecureCloud focusing on cloud security solutions. Looking to meet other security professionals and learn about emerging threats.",
       "personal": {
-        "name": "Marcus Wilson",
-        "headline": "Senior DevOps Engineer at CloudInfra",
-        "visiting_status": "TEMPORARY_VISITOR"
-      },
-      "skills": {
-        "hard": [
-          {
-            "skill": "AWS",
-            "level": "EXPERT"
-          },
-          {
-            "skill": "Kubernetes",
-            "level": "ADVANCED"
-          },
-          {
-            "skill": "Docker",
-            "level": "EXPERT"
-          },
-          {
-            "skill": "Terraform",
-            "level": "ADVANCED"
-          },
-          {
-            "skill": "CI_CD",
-            "level": "EXPERT"
-          }
-        ],
-        "soft": [
-          {
-            "skill": "Problem_Solving",
-            "level": "EXPERT"
-          },
-          {
-            "skill": "Communication",
-            "level": "INTERMEDIATE"
-          },
-          {
-            "skill": "Teamwork",
-            "level": "ADVANCED"
-          }
-        ]
-      },
-      "industries": [
-        "Cloud_Computing",
-        "SaaS",
-        "Infrastructure_Tech"
-      ],
-      "hobbies": [
-        "Open_Source_Contribution",
-        "Gaming",
-        "Hiking"
-      ],
-      "roles": [
-        {
-          "organization": {
-            "org_type": "SCALE_UP",
-            "name": "CloudInfra",
-            "url": "https://cloudinfra.example.com",
-            "industries": [
-              "Cloud_Computing",
-              "SaaS",
-              "Infrastructure_Tech"
-            ]
-          },
-          "category": null,
-          "sub_category": null,
-          "title": "Senior DevOps Engineer",
-          "seniority": "SENIOR",
-          "engagement": {
-            "type": "EMPLOYMENT",
-            "commitment": "FULL_TIME",
-            "work_mode": "REMOTE"
-          },
-          "skills": {
-            "hard": [
-              {
-                "skill": "AWS",
-                "level": "EXPERT"
-              },
-              {
-                "skill": "Kubernetes",
-                "level": "ADVANCED"
-              },
-              {
-                "skill": "Docker",
-                "level": "EXPERT"
-              },
-              {
-                "skill": "Terraform",
-                "level": "ADVANCED"
-              }
-            ],
-            "soft": [
-              {
-                "skill": "Problem_Solving",
-                "level": "EXPERT"
-              },
-              {
-                "skill": "Communication",
-                "level": "INTERMEDIATE"
-              },
-              {
-                "skill": "Teamwork",
-                "level": "ADVANCED"
-              }
-            ]
-          },
-          "highlights": [
-            "Designed and implemented cloud-native infrastructure",
-            "Reduced deployment time from hours to minutes",
-            "Established disaster recovery protocols with 99.99% uptime"
-          ],
-          "active": true
-        }
-      ],
-      "event_context": {
-        "event_id": "TECHCONF2023",
-        "goals": {
-          "looking_for": [
-            "NETWORKING",
-            "EXPLORE_NEW_TECH",
-            "INDUSTRY_INSIGHTS"
-          ],
-          "offering": [
-            "NETWORKING",
-            "PROBLEM_SOLVING",
-            "COLLABORATION_OPPORTUNITIES"
-          ]
-        }
-      },
-      "extra_notes": "Passionate about infrastructure as code and cloud-native technologies.",
-      "id": "base-set-8"
-    },
-    {
-      "raw_input": "Marketing professional specializing in tech industry. Looking to connect with startups and discuss growth strategies.",
-      "personal": {
-        "name": "Olivia Patel",
-        "headline": "Head of Marketing at TechGrowth Agency",
-        "visiting_status": "LOCAL"
-      },
-      "skills": {
-        "hard": [
-          {
-            "skill": "Digital_Marketing",
-            "level": "EXPERT"
-          },
-          {
-            "skill": "SEO",
-            "level": "ADVANCED"
-          },
-          {
-            "skill": "Content_Strategy",
-            "level": "EXPERT"
-          },
-          {
-            "skill": "Analytics",
-            "level": "INTERMEDIATE"
-          },
-          {
-            "skill": "Social_Media_Management",
-            "level": "ADVANCED"
-          }
-        ],
-        "soft": [
-          {
-            "skill": "Communication",
-            "level": "EXPERT"
-          },
-          {
-            "skill": "Creativity",
-            "level": "ADVANCED"
-          },
-          {
-            "skill": "Strategic_Thinking",
-            "level": "EXPERT"
-          },
-          {
-            "skill": "Presentation_Skills",
-            "level": "ADVANCED"
-          }
-        ]
-      },
-      "industries": [
-        "SaaS",
-        "E_Commerce",
-        "Creator_Economy"
-      ],
-      "hobbies": [
-        "Writing",
-        "Photography",
-        "Yoga"
-      ],
-      "roles": [
-        {
-          "organization": {
-            "org_type": "CONSULTANCY",
-            "name": "TechGrowth Agency",
-            "url": "https://techgrowth.example.com",
-            "industries": [
-              "SaaS",
-              "E_Commerce",
-              "Creator_Economy"
-            ]
-          },
-          "category": null,
-          "sub_category": null,
-          "title": "Head of Marketing",
-          "seniority": "DIRECTOR",
-          "engagement": {
-            "type": "EMPLOYMENT",
-            "commitment": "FULL_TIME",
-            "work_mode": "HYBRID"
-          },
-          "skills": {
-            "hard": [
-              {
-                "skill": "Digital_Marketing",
-                "level": "EXPERT"
-              },
-              {
-                "skill": "SEO",
-                "level": "ADVANCED"
-              },
-              {
-                "skill": "Content_Strategy",
-                "level": "EXPERT"
-              },
-              {
-                "skill": "Analytics",
-                "level": "INTERMEDIATE"
-              }
-            ],
-            "soft": [
-              {
-                "skill": "Communication",
-                "level": "EXPERT"
-              },
-              {
-                "skill": "Creativity",
-                "level": "ADVANCED"
-              },
-              {
-                "skill": "Strategic_Thinking",
-                "level": "EXPERT"
-              }
-            ]
-          },
-          "highlights": [
-            "Led marketing strategies for 20+ tech startups",
-            "Achieved 200% average growth in client acquisition",
-            "Developed content strategies resulting in 150% traffic increase"
-          ],
-          "active": true
-        }
-      ],
-      "event_context": {
-        "event_id": "TECHCONF2023",
-        "goals": {
-          "looking_for": [
-            "NETWORKING",
-            "FIND_CLIENTS",
-            "INDUSTRY_INSIGHTS"
-          ],
-          "offering": [
-            "NETWORKING",
-            "MENTORSHIP",
-            "COLLABORATION_OPPORTUNITIES"
-          ]
-        }
-      },
-      "extra_notes": "Specialized in helping early-stage startups develop effective go-to-market strategies.",
-      "id": "base-set-9"
-    },
-    {
-      "raw_input": "Cybersecurity specialist with background in finance. Looking to network and discuss emerging threats and solutions.",
-      "personal": {
-        "name": "Thomas Wright",
-        "headline": "Security Engineer at SecureDefense",
+        "name": "Michael Torres",
+        "headline": "Cybersecurity Engineer at SecureCloud",
         "visiting_status": "LOCAL"
       },
       "skills": {
@@ -1212,62 +580,76 @@
             "level": "EXPERT"
           },
           {
-            "skill": "Network_Security",
+            "skill": "Cloud_Security",
             "level": "ADVANCED"
           },
           {
-            "skill": "Cloud_Security",
-            "level": "INTERMEDIATE"
-          },
-          {
-            "skill": "Penetration_Testing",
+            "skill": "Network_Security",
             "level": "ADVANCED"
           },
           {
             "skill": "Python",
             "level": "INTERMEDIATE"
+          },
+          {
+            "skill": "AWS",
+            "level": "ADVANCED"
+          },
+          {
+            "skill": "Docker",
+            "level": "INTERMEDIATE"
+          },
+          {
+            "skill": "Penetration_Testing",
+            "level": "ADVANCED"
           }
         ],
         "soft": [
           {
             "skill": "Problem_Solving",
-            "level": "EXPERT"
+            "level": "ADVANCED"
           },
           {
             "skill": "Communication",
             "level": "INTERMEDIATE"
           },
           {
-            "skill": "Critical_Thinking",
-            "level": "EXPERT"
+            "skill": "Teamwork",
+            "level": "INTERMEDIATE"
+          },
+          {
+            "skill": "Adaptability",
+            "level": "ADVANCED"
           }
         ]
       },
       "industries": [
         "Cybersecurity",
-        "FinTech",
-        "Cloud_Computing"
+        "Cloud_Computing",
+        "Enterprise_Software",
+        "Infrastructure_Tech"
       ],
       "hobbies": [
+        "Gaming",
         "Hiking",
         "Reading",
-        "Chess"
+        "Attending_Meetups"
       ],
       "roles": [
         {
           "organization": {
-            "org_type": "CONSULTANCY",
-            "name": "SecureDefense",
-            "url": "https://securedefense.example.com",
+            "org_type": "SCALE_UP",
+            "name": "SecureCloud",
+            "url": "https://securecloud.example.com",
             "industries": [
               "Cybersecurity",
-              "FinTech",
-              "Cloud_Computing"
+              "Cloud_Computing",
+              "Enterprise_Software"
             ]
           },
-          "category": null,
-          "sub_category": null,
-          "title": "Security Engineer",
+          "category": "ENGINEERING",
+          "sub_category": "SECURITY_ENGINEER",
+          "title": "Senior Security Engineer",
           "seniority": "SENIOR",
           "engagement": {
             "type": "EMPLOYMENT",
@@ -1281,58 +663,294 @@
                 "level": "EXPERT"
               },
               {
-                "skill": "Network_Security",
+                "skill": "Cloud_Security",
                 "level": "ADVANCED"
               },
               {
-                "skill": "Cloud_Security",
-                "level": "INTERMEDIATE"
-              },
-              {
-                "skill": "Penetration_Testing",
+                "skill": "AWS",
                 "level": "ADVANCED"
               }
             ],
             "soft": [
               {
                 "skill": "Problem_Solving",
-                "level": "EXPERT"
+                "level": "ADVANCED"
               },
               {
                 "skill": "Communication",
                 "level": "INTERMEDIATE"
-              },
-              {
-                "skill": "Critical_Thinking",
-                "level": "EXPERT"
               }
             ]
           },
           "highlights": [
-            "Led security assessments for financial institutions",
-            "Implemented zero-trust architecture for cloud environments",
-            "Developed security training programs for client organizations"
+            "Implemented zero-trust architecture across enterprise applications",
+            "Led security audits for AWS infrastructure",
+            "Developed automated security scanning tools"
           ],
           "active": true
+        },
+        {
+          "organization": {
+            "org_type": "ENTERPRISE",
+            "name": "DataDefense",
+            "url": "https://datadefense.example.com",
+            "industries": [
+              "Cybersecurity",
+              "Infrastructure_Tech"
+            ]
+          },
+          "category": "ENGINEERING",
+          "sub_category": "SECURITY_ENGINEER",
+          "title": "Security Analyst",
+          "seniority": "MID_LEVEL",
+          "engagement": {
+            "type": "EMPLOYMENT",
+            "commitment": "FULL_TIME",
+            "work_mode": "ON_SITE"
+          },
+          "skills": {
+            "hard": [
+              {
+                "skill": "Network_Security",
+                "level": "INTERMEDIATE"
+              },
+              {
+                "skill": "Penetration_Testing",
+                "level": "INTERMEDIATE"
+              },
+              {
+                "skill": "Python",
+                "level": "BEGINNER"
+              }
+            ],
+            "soft": [
+              {
+                "skill": "Teamwork",
+                "level": "INTERMEDIATE"
+              },
+              {
+                "skill": "Problem_Solving",
+                "level": "INTERMEDIATE"
+              }
+            ]
+          },
+          "highlights": [
+            "Conducted vulnerability assessments",
+            "Responded to security incidents",
+            "Created security training materials for employees"
+          ],
+          "active": false
         }
       ],
       "event_context": {
-        "event_id": "TECHCONF2023",
+        "event_id": "techconf2023",
         "goals": {
           "looking_for": [
             "NETWORKING",
+            "LEARNING",
             "INDUSTRY_INSIGHTS",
-            "COLLABORATION_OPPORTUNITIES"
+            "EXPLORE_NEW_TECH"
           ],
           "offering": [
             "NETWORKING",
-            "PROBLEM_SOLVING",
+            "OFFER_MENTORSHIP",
             "INDUSTRY_INSIGHTS"
           ]
         }
       },
-      "extra_notes": "Interested in discussing the latest trends in finance sector security challenges.",
-      "id": "base-set-10"
+      "extra_notes": "Focused on container security and Kubernetes environments. Interested in discussing zero-day vulnerability management and threat intelligence."
+    },
+    {
+      "id": "base-set-5",
+      "raw_input": "I'm Jessica Lee, currently a grad student in Computer Science at Tech University, focusing on AI research. I've interned at DataCorp and am looking for full-time opportunities in machine learning. Excited to connect with professionals in the field.",
+      "personal": {
+        "name": "Jessica Lee",
+        "headline": "Computer Science Graduate Student at Tech University",
+        "visiting_status": "LOCAL"
+      },
+      "skills": {
+        "hard": [
+          {
+            "skill": "Python",
+            "level": "ADVANCED"
+          },
+          {
+            "skill": "Machine_Learning",
+            "level": "INTERMEDIATE"
+          },
+          {
+            "skill": "TensorFlow",
+            "level": "INTERMEDIATE"
+          },
+          {
+            "skill": "Java",
+            "level": "INTERMEDIATE"
+          },
+          {
+            "skill": "Data_Analysis",
+            "level": "INTERMEDIATE"
+          },
+          {
+            "skill": "SQL",
+            "level": "BEGINNER"
+          }
+        ],
+        "soft": [
+          {
+            "skill": "Communication",
+            "level": "INTERMEDIATE"
+          },
+          {
+            "skill": "Teamwork",
+            "level": "INTERMEDIATE"
+          },
+          {
+            "skill": "Problem_Solving",
+            "level": "ADVANCED"
+          },
+          {
+            "skill": "Adaptability",
+            "level": "ADVANCED"
+          }
+        ]
+      },
+      "industries": [
+        "Artificial_Intelligence",
+        "Machine_Learning",
+        "Research_Development",
+        "Education"
+      ],
+      "hobbies": [
+        "Reading",
+        "Hiking",
+        "Photography",
+        "Attending_Meetups"
+      ],
+      "roles": [
+        {
+          "organization": {
+            "org_type": "ACADEMIA_UNIVERSITY",
+            "name": "Tech University",
+            "url": "https://techuniversity.example.edu",
+            "industries": [
+              "Education",
+              "Research_Development",
+              "Artificial_Intelligence"
+            ]
+          },
+          "category": "STUDENT",
+          "sub_category": "ACADEMIC_RESEARCHER",
+          "title": "Graduate Research Assistant",
+          "seniority": "JUNIOR",
+          "engagement": {
+            "type": "INTERNSHIP",
+            "commitment": "PART_TIME",
+            "work_mode": "ON_SITE"
+          },
+          "skills": {
+            "hard": [
+              {
+                "skill": "Python",
+                "level": "ADVANCED"
+              },
+              {
+                "skill": "Machine_Learning",
+                "level": "INTERMEDIATE"
+              },
+              {
+                "skill": "TensorFlow",
+                "level": "INTERMEDIATE"
+              }
+            ],
+            "soft": [
+              {
+                "skill": "Problem_Solving",
+                "level": "ADVANCED"
+              },
+              {
+                "skill": "Communication",
+                "level": "INTERMEDIATE"
+              }
+            ]
+          },
+          "highlights": [
+            "Researching neural network optimization techniques",
+            "Published paper on transfer learning applications",
+            "Assisting with undergraduate AI course"
+          ],
+          "active": true
+        },
+        {
+          "organization": {
+            "org_type": "ENTERPRISE",
+            "name": "DataCorp",
+            "url": "https://datacorp.example.com",
+            "industries": [
+              "Artificial_Intelligence",
+              "Machine_Learning",
+              "Enterprise_Software"
+            ]
+          },
+          "category": "ENGINEERING",
+          "sub_category": "DATA_SCIENTIST",
+          "title": "ML Engineering Intern",
+          "seniority": "INTERN",
+          "engagement": {
+            "type": "INTERNSHIP",
+            "commitment": "FULL_TIME",
+            "work_mode": "HYBRID"
+          },
+          "skills": {
+            "hard": [
+              {
+                "skill": "Python",
+                "level": "INTERMEDIATE"
+              },
+              {
+                "skill": "Machine_Learning",
+                "level": "INTERMEDIATE"
+              },
+              {
+                "skill": "SQL",
+                "level": "BEGINNER"
+              }
+            ],
+            "soft": [
+              {
+                "skill": "Teamwork",
+                "level": "INTERMEDIATE"
+              },
+              {
+                "skill": "Adaptability",
+                "level": "INTERMEDIATE"
+              }
+            ]
+          },
+          "highlights": [
+            "Developed image classification model for product recognition",
+            "Optimized data processing pipeline",
+            "Collaborated with product team on feature development"
+          ],
+          "active": false
+        }
+      ],
+      "event_context": {
+        "event_id": "techconf2023",
+        "goals": {
+          "looking_for": [
+            "NETWORKING",
+            "FIND_JOB",
+            "LEARNING",
+            "FIND_MENTOR"
+          ],
+          "offering": [
+            "NETWORKING",
+            "COLLABORATION_OPPORTUNITIES",
+            "PRESENT_PROJECT"
+          ]
+        }
+      },
+      "extra_notes": "Currently working on thesis about reinforcement learning applications in robotics. Open to discussing research collaboration opportunities or entry-level positions."
     }
   ]
 }

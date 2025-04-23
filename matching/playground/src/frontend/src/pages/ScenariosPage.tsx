@@ -125,7 +125,7 @@ function ScenariosPage() {
                       disabled={status.isLoading}
                       className="generate-button"
                     >
-                      {status.isLoading ? 'Generating...' : 'Generate Bundle'}
+                      {status.isLoading ? 'Generating...' : 'Generate Profiles'}
                     </button>
                     {status.error && <p className="error-message">{status.error}</p>}
                     {status.message && <p className="success-message">{status.message}</p>}

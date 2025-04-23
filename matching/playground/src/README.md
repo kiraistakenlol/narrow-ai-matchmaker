@@ -1,4 +1,4 @@
-# Vector Database Playground
+# Narrow AI matchmaker playground
 
 Experimental project to explore AI matching techniques using vector databases.
 

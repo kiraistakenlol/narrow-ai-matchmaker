@@ -5,7 +5,7 @@ import {
   NavLink
 } from 'react-router-dom';
 import './App.css';
-import ProfilesPage from './pages/ProfilesPage';
+import BaseAudiencePage from './pages/ProfilesPage';
 import EmbeddingPage from './pages/EmbeddingPage';
 import SearchPage from './pages/SearchPage';
 import ScenariosPage from './pages/ScenariosPage';
@@ -13,14 +13,14 @@ import ScenariosPage from './pages/ScenariosPage';
 function App() {
   return (
     <div className="app-container">
-      <h1>Vector Database Playground</h1>
+      <h1>Narrow AI matchmaker playground</h1>
       
       <nav className="tabs">
         <NavLink 
           to="/"
           className={({ isActive }) => isActive ? 'active' : ''}
         >
-          Profiles
+          Base Audience
         </NavLink>
         <NavLink 
           to="/embed"
@@ -38,7 +38,7 @@ function App() {
 
       <div className="content">
         <Routes>
-          <Route path="/" element={<ProfilesPage />} />
+          <Route path="/" element={<BaseAudiencePage />} />
           <Route path="/embed" element={<EmbeddingPage />} />
           <Route path="/search/:profileId" element={<SearchPage />} />
           <Route path="/scenarios" element={<ScenariosPage />} />
