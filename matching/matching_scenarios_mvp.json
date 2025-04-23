@@ -1,0 +1,57 @@
+[
+    {
+      "id": "A1",
+      "scenario": "Founder ⇄ CTO",
+      "match_description": "Non‑tech founder meets an engineer who can own the tech stack—idea + coding = complete team."
+    },
+    {
+      "id": "A2",
+      "scenario": "Startup ⇄ First Hires",
+      "match_description": "Small startup needs its first designer/marketer/etc.; candidate wants exactly that role."
+    },
+    {
+      "id": "A3",
+      "scenario": "Hackathon Squad",
+      "match_description": "Dev, designer, and PM with complementary skills team up to build a project under a deadline."
+    },
+    {
+      "id": "A4",
+      "scenario": "Researcher ⇄ Industry Partner",
+      "match_description": "Academic with a prototype links to a company that can bring it to market—brains + muscle."
+    },
+    {
+      "id": "A5",
+      "scenario": "Investor ⇄ Startup",
+      "match_description": "Founder seeking funding meets an investor looking for new deals—money meets pitch."
+    },
+    {
+      "id": "A6",
+      "scenario": "OSS Maintainer ⇄ Contributors",
+      "match_description": "Open‑source lead needs hands on deck; developers want first PR credit."
+    },
+    {
+      "id": "A7",
+      "scenario": "Consultant ⇄ Client",
+      "match_description": "Agency offers a service; organization needs that scoped expertise."
+    },
+    {
+      "id": "A8",
+      "scenario": "Freelancer ⇄ Gig",
+      "match_description": "Freelancer wants short contracts; startup needs quick help—easy win‑win."
+    },
+    {
+      "id": "A9",
+      "scenario": "Vendor ⇄ Buyer",
+      "match_description": "SaaS vendor meets the budget‑holder manager—seller + buyer."
+    },
+    {
+      "id": "A10",
+      "scenario": "Sponsor ⇄ Organizer",
+      "match_description": "Company wants to sponsor; event team needs sponsors—perfect fit."
+    },
+    {
+      "id": "A11",
+      "scenario": "Founder ⇄ Lawyer",
+      "match_description": "Fintech founder needs legal setup; lawyer wants clients in tech/finance."
+    }
+  ]

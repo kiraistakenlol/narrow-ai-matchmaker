@@ -315,4 +315,90 @@ input, select {
 
 .content {
   margin-top: 2rem;
+}
+
+/* Add styles for Scenarios Page */
+.scenarios-page {
+  padding: 20px;
+}
+
+.scenario-category {
+  margin-bottom: 30px;
+  padding: 15px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.scenario-category h3 {
+  margin-top: 0;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+  color: #000000;
+}
+
+.scenario-category ul {
+  list-style: none;
+  padding: 0;
+}
+
+.scenario-category li {
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #eee; /* Lighter border for list items */
+}
+
+.scenario-category li:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.scenario-category strong {
+  display: block; /* Make strong tag take full width */
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.scenario-category p {
+  margin: 0;
+  font-size: 0.9em;
+  color: #666;
+}
+
+/* Styles for Scenario Item Actions */
+.scenario-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* Align items to the top */
+  gap: 20px; /* Add space between info and actions */
+}
+
+.scenario-info {
+  flex-grow: 1; /* Allow info to take available space */
+}
+
+.scenario-actions {
+  flex-shrink: 0; /* Prevent actions from shrinking */
+  text-align: right;
+  min-width: 150px; /* Ensure space for button and messages */
+}
+
+.generate-button {
+  /* Add specific styles or inherit from global button */
+  margin-bottom: 5px;
+  padding: 0.4em 0.8em;
+  font-size: 0.9em;
+}
+
+.error-message {
+  color: #f88; /* Match existing error style */
+  font-size: 0.8em;
+  margin-top: 5px;
+}
+
+.success-message {
+  color: #8f8; /* Light green for success */
+  font-size: 0.8em;
+  margin-top: 5px;
 } 

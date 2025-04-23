@@ -1,0 +1,379 @@
+{
+  "id": "A1",
+  "scenario": "Founder ⇄ CTO",
+  "match_description": "Non‑tech founder meets an engineer who can own the tech stack—idea + coding = complete team.",
+  "profiles": [
+    {
+      "id": "signal-A1-1",
+      "raw_input": "I'm a non-technical founder with a revolutionary healthcare app idea. I've done market research, secured initial funding, and have medical expertise. What I desperately need is a strong technical co-founder who can build and lead the development of our product. I have the vision, business plan, and industry connections, but need someone to own the technical implementation.",
+      "personal": {
+        "name": "Jordan Hayes",
+        "headline": "Founder & CEO at MediConnect (pre-launch)",
+        "visiting_status": "LOCAL"
+      },
+      "skills": {
+        "hard": [
+          {
+            "skill": "Market_Analysis",
+            "level": "EXPERT"
+          },
+          {
+            "skill": "Financial_Modeling",
+            "level": "ADVANCED"
+          },
+          {
+            "skill": "Product_Roadmapping",
+            "level": "INTERMEDIATE"
+          }
+        ],
+        "soft": [
+          {
+            "skill": "Leadership",
+            "level": "ADVANCED"
+          },
+          {
+            "skill": "Networking",
+            "level": "EXPERT"
+          },
+          {
+            "skill": "Strategic_Thinking",
+            "level": "EXPERT"
+          },
+          {
+            "skill": "Communication",
+            "level": "ADVANCED"
+          }
+        ]
+      },
+      "industries": [
+        "HealthTech",
+        "SaaS"
+      ],
+      "hobbies": [
+        "Reading",
+        "Hiking",
+        "Meditation"
+      ],
+      "roles": [
+        {
+          "organization": {
+            "org_type": "STARTUP_EARLY_STAGE",
+            "name": "MediConnect",
+            "url": "https://mediconnect.example.com",
+            "industries": [
+              "HealthTech",
+              "SaaS"
+            ]
+          },
+          "category": null,
+          "sub_category": null,
+          "title": "Founder & CEO",
+          "seniority": "FOUNDER",
+          "engagement": {
+            "type": "FOUNDER_COFOUNDER",
+            "commitment": "FULL_TIME",
+            "work_mode": "HYBRID"
+          },
+          "skills": {
+            "hard": [
+              {
+                "skill": "Market_Analysis",
+                "level": "EXPERT"
+              },
+              {
+                "skill": "Financial_Modeling",
+                "level": "ADVANCED"
+              },
+              {
+                "skill": "Product_Roadmapping",
+                "level": "INTERMEDIATE"
+              }
+            ],
+            "soft": [
+              {
+                "skill": "Leadership",
+                "level": "ADVANCED"
+              },
+              {
+                "skill": "Strategic_Thinking",
+                "level": "EXPERT"
+              },
+              {
+                "skill": "Networking",
+                "level": "EXPERT"
+              }
+            ]
+          },
+          "highlights": [
+            "Secured $250K in pre-seed funding",
+            "Developed comprehensive business plan with 3-year projections",
+            "Established partnerships with 3 regional healthcare providers"
+          ],
+          "active": true
+        },
+        {
+          "organization": {
+            "org_type": "ENTERPRISE",
+            "name": "Metro Healthcare Systems",
+            "url": "https://metrohealthcare.example.com",
+            "industries": [
+              "HealthTech"
+            ]
+          },
+          "category": null,
+          "sub_category": null,
+          "title": "Director of Patient Services",
+          "seniority": "DIRECTOR",
+          "engagement": {
+            "type": "EMPLOYMENT",
+            "commitment": "FULL_TIME",
+            "work_mode": "ON_SITE"
+          },
+          "skills": {
+            "hard": [
+              {
+                "skill": "Market_Analysis",
+                "level": "ADVANCED"
+              }
+            ],
+            "soft": [
+              {
+                "skill": "Leadership",
+                "level": "ADVANCED"
+              },
+              {
+                "skill": "Stakeholder_Management",
+                "level": "EXPERT"
+              }
+            ]
+          },
+          "highlights": [
+            "Led team of 25 healthcare professionals",
+            "Improved patient satisfaction scores by 32%",
+            "Identified key pain points in healthcare delivery leading to startup idea"
+          ],
+          "active": false
+        }
+      ],
+      "event_context": {
+        "event_id": "TECHCONF2023",
+        "goals": {
+          "looking_for": [
+            "FIND_COFOUNDER",
+            "NETWORKING",
+            "FIND_EMPLOYEES"
+          ],
+          "offering": [
+            "COLLABORATION_OPPORTUNITIES",
+            "NETWORKING",
+            "VALIDATE_IDEA"
+          ]
+        }
+      },
+      "extra_notes": "I have the vision and business expertise but need a technical co-founder who can build our platform from the ground up. Ideally seeking someone with healthcare tech experience but open to any strong engineering leader who can own the technical side of the business."
+    },
+    {
+      "id": "signal-A1-2",
+      "raw_input": "I'm a full-stack engineer with 8+ years of experience building web and mobile applications. I've worked at several startups and most recently led engineering at a health-tech company that was acquired. I'm now looking to join an early-stage startup as a technical co-founder or CTO where I can build a product from scratch. I have expertise in system architecture, cloud infrastructure, and leading development teams.",
+      "personal": {
+        "name": "Alex Rivera",
+        "headline": "Senior Software Engineer & Former Tech Lead at HealthTrack (acquired)",
+        "visiting_status": "LOCAL"
+      },
+      "skills": {
+        "hard": [
+          {
+            "skill": "JavaScript",
+            "level": "EXPERT"
+          },
+          {
+            "skill": "Python",
+            "level": "ADVANCED"
+          },
+          {
+            "skill": "React",
+            "level": "EXPERT"
+          },
+          {
+            "skill": "Node.js",
+            "level": "EXPERT"
+          },
+          {
+            "skill": "AWS",
+            "level": "ADVANCED"
+          },
+          {
+            "skill": "System_Design",
+            "level": "EXPERT"
+          },
+          {
+            "skill": "Docker",
+            "level": "ADVANCED"
+          },
+          {
+            "skill": "CI_CD",
+            "level": "ADVANCED"
+          }
+        ],
+        "soft": [
+          {
+            "skill": "Leadership",
+            "level": "ADVANCED"
+          },
+          {
+            "skill": "Problem_Solving",
+            "level": "EXPERT"
+          },
+          {
+            "skill": "Communication",
+            "level": "ADVANCED"
+          },
+          {
+            "skill": "Mentorship",
+            "level": "ADVANCED"
+          }
+        ]
+      },
+      "industries": [
+        "HealthTech",
+        "SaaS",
+        "E_Commerce"
+      ],
+      "hobbies": [
+        "Open_Source_Contribution",
+        "Cycling",
+        "Board_Games"
+      ],
+      "roles": [
+        {
+          "organization": {
+            "org_type": "STARTUP_GROWTH_STAGE",
+            "name": "HealthTrack",
+            "url": "https://healthtrack.example.com",
+            "industries": [
+              "HealthTech",
+              "SaaS"
+            ]
+          },
+          "category": null,
+          "sub_category": null,
+          "title": "Technical Lead",
+          "seniority": "LEAD",
+          "engagement": {
+            "type": "EMPLOYMENT",
+            "commitment": "FULL_TIME",
+            "work_mode": "HYBRID"
+          },
+          "skills": {
+            "hard": [
+              {
+                "skill": "JavaScript",
+                "level": "EXPERT"
+              },
+              {
+                "skill": "React",
+                "level": "EXPERT"
+              },
+              {
+                "skill": "Node.js",
+                "level": "EXPERT"
+              },
+              {
+                "skill": "System_Design",
+                "level": "ADVANCED"
+              }
+            ],
+            "soft": [
+              {
+                "skill": "Leadership",
+                "level": "ADVANCED"
+              },
+              {
+                "skill": "Mentorship",
+                "level": "ADVANCED"
+              },
+              {
+                "skill": "Problem_Solving",
+                "level": "EXPERT"
+              }
+            ]
+          },
+          "highlights": [
+            "Built healthcare patient management platform from scratch",
+            "Led team of 6 engineers through product development and acquisition",
+            "Designed scalable architecture handling 50,000+ daily user sessions"
+          ],
+          "active": false
+        },
+        {
+          "organization": {
+            "org_type": "STARTUP_EARLY_STAGE",
+            "name": "ShopWave",
+            "url": "https://shopwave.example.com",
+            "industries": [
+              "E_Commerce",
+              "SaaS"
+            ]
+          },
+          "category": null,
+          "sub_category": null,
+          "title": "Senior Software Engineer",
+          "seniority": "SENIOR",
+          "engagement": {
+            "type": "EMPLOYMENT",
+            "commitment": "FULL_TIME",
+            "work_mode": "REMOTE"
+          },
+          "skills": {
+            "hard": [
+              {
+                "skill": "JavaScript",
+                "level": "EXPERT"
+              },
+              {
+                "skill": "Python",
+                "level": "INTERMEDIATE"
+              },
+              {
+                "skill": "AWS",
+                "level": "INTERMEDIATE"
+              }
+            ],
+            "soft": [
+              {
+                "skill": "Problem_Solving",
+                "level": "ADVANCED"
+              },
+              {
+                "skill": "Teamwork",
+                "level": "ADVANCED"
+              }
+            ]
+          },
+          "highlights": [
+            "Built e-commerce platform serving 200+ small businesses",
+            "Implemented payment processing system with fraud detection",
+            "Reduced infrastructure costs by 40% through AWS optimization"
+          ],
+          "active": false
+        }
+      ],
+      "event_context": {
+        "event_id": "TECHCONF2023",
+        "goals": {
+          "looking_for": [
+            "FIND_COFOUNDER",
+            "FIND_INVESTMENT",
+            "NETWORKING"
+          ],
+          "offering": [
+            "TECHNICAL_EXPERTISE",
+            "PROBLEM_SOLVING",
+            "COLLABORATION_OPPORTUNITIES"
+          ]
+        }
+      },
+      "extra_notes": "I'm specifically looking to join an early-stage startup with a strong vision but needing technical leadership. I want to build something meaningful from the ground up and am particularly interested in health, education, or sustainability sectors."
+    }
+  ]
+}

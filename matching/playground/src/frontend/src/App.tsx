@@ -8,6 +8,7 @@ import './App.css';
 import ProfilesPage from './pages/ProfilesPage';
 import EmbeddingPage from './pages/EmbeddingPage';
 import SearchPage from './pages/SearchPage';
+import ScenariosPage from './pages/ScenariosPage';
 
 function App() {
   return (
@@ -27,6 +28,12 @@ function App() {
         >
           Embedding
         </NavLink>
+        <NavLink 
+          to="/scenarios"
+          className={({ isActive }) => isActive ? 'active' : ''}
+        >
+          Scenarios
+        </NavLink>
       </nav>
 
       <div className="content">
@@ -34,6 +41,7 @@ function App() {
           <Route path="/" element={<ProfilesPage />} />
           <Route path="/embed" element={<EmbeddingPage />} />
           <Route path="/search/:profileId" element={<SearchPage />} />
+          <Route path="/scenarios" element={<ScenariosPage />} />
         </Routes>
       </div>
     </div>
