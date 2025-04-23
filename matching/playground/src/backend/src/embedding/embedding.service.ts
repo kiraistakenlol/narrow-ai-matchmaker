@@ -13,6 +13,10 @@ interface ScenarioFile {
   scenario: string;
   match_description: string;
   profiles: FullProfile[];
+  // Add embeddings to store generated embeddings
+  embeddings?: {
+    [profileId: string]: number[];
+  };
 }
 
 // Simple hash function to generate numeric ID from string
@@ -203,131 +207,6 @@ export class EmbeddingService {
     }
   }
 
-  async createAllEmbeddings(collectionName: string) {
-    this.logger.log(`Starting batch embedding for all profiles into collection: ${collectionName}`);
-    const batchStartTime = Date.now();
-    
-    try {
-      // Ensure collection exists before proceeding
-      const collectionReady = await this.ensureCollectionExists(collectionName);
-      if (!collectionReady) {
-        throw new Error(`Could not prepare collection '${collectionName}' for embeddings`);
-      }
-
-      const allProfiles = this.profilesService.findAll().profiles;
-      this.logger.log(`Found ${allProfiles.length} profiles to embed`);
-      
-      if (allProfiles.length === 0) {
-        this.logger.log('No profiles to embed.');
-        return { success: true, message: 'No profiles found to embed.', collectionName, timing: { totalTime: 0 }, results: [] };
-      }
-      
-      const allPoints = [];
-      let openAiSuccessCount = 0;
-      let openAiFailureCount = 0;
-      let totalEmbedTime = 0;
-
-      // Process profiles in batches for OpenAI API
-      for (let i = 0; i < allProfiles.length; i += this.OPENAI_BATCH_SIZE) {
-        const batchProfiles = allProfiles.slice(i, i + this.OPENAI_BATCH_SIZE);
-        this.logger.log(`Processing batch ${Math.floor(i / this.OPENAI_BATCH_SIZE) + 1}: Profiles ${i + 1} to ${Math.min(i + this.OPENAI_BATCH_SIZE, allProfiles.length)}`);
-        
-        const batchInputs = batchProfiles.map(p => p.text);
-        
-        try {
-          const openaiStartTime = Date.now();
-          const response = await this.openaiClient.embeddings.create({
-            model: 'text-embedding-3-large',
-            input: batchInputs,
-            encoding_format: 'float',
-          });
-          const openaiEndTime = Date.now();
-          const batchEmbedTime = openaiEndTime - openaiStartTime;
-          totalEmbedTime += batchEmbedTime;
-          this.logger.log(`OpenAI batch processed in ${batchEmbedTime}ms. Got ${response.data.length} embeddings.`);
-          openAiSuccessCount += batchInputs.length;
-          
-          // Match embeddings back to profiles and prepare Qdrant points
-          response.data.forEach((embeddingData, index) => {
-            const profile = batchProfiles[index];
-            const numericId = parseInt(profile.id.replace(/\D/g, ''), 10) || Math.floor(Math.random() * 1000000);
-            const payload = {
-              id: profile.id,
-              text_snippet: profile.text.substring(0, 200)
-            };
-            allPoints.push({
-              id: numericId,
-              vector: embeddingData.embedding,
-              payload: payload,
-            });
-          });
-
-        } catch (openaiError) {
-          this.logger.error(`Error calling OpenAI batch API: ${openaiError.message}`, openaiError.stack);
-          openAiFailureCount += batchInputs.length;
-          // Optionally, decide whether to continue or fail the whole batch
-          // For now, we log and continue, reporting failures at the end
-        }
-      }
-
-      this.logger.log(`OpenAI embedding generation complete. Success: ${openAiSuccessCount}, Failed: ${openAiFailureCount}. Total Embed Time: ${totalEmbedTime}ms`);
-
-      // Batch upsert points into Qdrant
-      if (allPoints.length > 0) {
-        this.logger.log(`Upserting ${allPoints.length} points into Qdrant collection: ${collectionName}`);
-        const qdrantStartTime = Date.now();
-        try {
-          const qdrantResult = await this.qdrantClient.upsert(collectionName, {
-            wait: true,
-            points: allPoints,
-          });
-          const qdrantEndTime = Date.now();
-          const qdrantUpsertTime = qdrantEndTime - qdrantStartTime;
-          this.logger.log(`Qdrant batch upsert completed in ${qdrantUpsertTime}ms. Result status: ${qdrantResult.status}`);
-
-          const totalBatchTime = Date.now() - batchStartTime;
-          return {
-            success: true,
-            message: `Completed embedding ${openAiSuccessCount} profiles successfully, ${openAiFailureCount} failed. Total time: ${totalBatchTime}ms.`,
-            collectionName,
-            timing: {
-              totalTime: totalBatchTime,
-              embeddingTime: totalEmbedTime,
-              qdrantUpsertTime,
-              averagePerProfile: allProfiles.length > 0 ? totalBatchTime / allProfiles.length : 0
-            },
-            // Note: Individual results aren't tracked in this batch approach
-            results: { status: qdrantResult.status, operation_id: qdrantResult.operation_id }
-          };
-
-        } catch (qdrantError) {
-          this.logger.error(`Error during Qdrant batch upsert: ${qdrantError.message}`, qdrantError.stack);
-          throw new Error(`Failed to store batch vectors in Qdrant: ${qdrantError.message}`);
-        }
-      } else {
-        this.logger.warn('No points were generated to upsert into Qdrant.');
-        const totalBatchTime = Date.now() - batchStartTime;
-        return {
-          success: openAiFailureCount === 0,
-          message: `Embedding process completed. ${openAiSuccessCount} profiles processed, ${openAiFailureCount} failed. No points upserted.`,
-          collectionName,
-          timing: { totalTime: totalBatchTime },
-          results: {}
-        };
-      }
-
-    } catch (error) {
-      this.logger.error(`Error creating all embeddings: ${error.message}`, error.stack);
-      const totalBatchTime = Date.now() - batchStartTime;
-      return {
-        success: false,
-        message: `Error creating all embeddings: ${error.message}`,
-        collectionName,
-        timing: { totalTime: totalBatchTime }
-      };
-    }
-  }
-
   async findSimilarProfiles(profileId: string, collectionName: string, limit: number = 5) {
     this.logger.log(`Finding similar profiles for ${profileId} in collection ${collectionName} (limit: ${limit})`);
     const overallStartTime = Date.now();
@@ -442,18 +321,6 @@ export class EmbeddingService {
     }
   }
   
-  async deleteCollection(collectionName: string) {
-    this.logger.log(`Deleting collection '${collectionName}'`);
-    try {
-      await this.qdrantClient.deleteCollection(collectionName);
-      this.logger.log(`Collection '${collectionName}' deleted`);
-      return { success: true, message: `Collection '${collectionName}' deleted` };
-    } catch (error) {
-      this.logger.error(`Error deleting collection '${collectionName}': ${error.message}`);
-      return { success: false, message: `Error deleting collection '${collectionName}': ${error.message}` };
-    }
-  }
-
   async embedScenarioProfiles(scenarioId: string, collectionName: string) {
     const operationStartTime = Date.now();
     this.logger.log(`Starting embedding for scenario ${scenarioId} into collection ${collectionName}`);
@@ -464,14 +331,41 @@ export class EmbeddingService {
       throw new InternalServerErrorException(`Could not prepare collection '${collectionName}' for embeddings`);
     }
 
-    // 2. Construct file path and read the scenario file
+    // 2. Delete all existing scenario signals
+    this.logger.log(`Deleting existing scenario signals from collection ${collectionName}`);
+    try {
+      await this.qdrantClient.delete(collectionName, {
+        filter: {
+          must: [
+            {
+              key: 'source',
+              match: { value: 'scenario' }
+            }
+          ]
+        },
+        wait: true
+      });
+      this.logger.log(`Successfully deleted existing scenario signals from collection ${collectionName}`);
+    } catch (error) {
+      this.logger.error(`Failed to delete existing scenario signals: ${error.message}`, error.stack);
+      // Continue with operation even if deletion fails
+    }
+
+    // 3. Construct file path and read the scenario file
     const filePath = path.join(__dirname, '../../../../test_cases', `${scenarioId}.json`);
     let scenarioData: ScenarioFile;
+    let fileUpdated = false;
+    
     try {
       this.logger.log(`Reading scenario file: ${filePath}`);
       const fileContent = await fs.readFile(filePath, 'utf-8');
       scenarioData = JSON.parse(fileContent);
       this.logger.log(`Successfully read and parsed scenario file for ${scenarioId}`);
+      
+      // Initialize embeddings object if it doesn't exist
+      if (!scenarioData.embeddings) {
+        scenarioData.embeddings = {};
+      }
     } catch (error) {
       if (error.code === 'ENOENT') {
         this.logger.error(`Scenario file not found: ${filePath}`);
@@ -482,7 +376,7 @@ export class EmbeddingService {
       }
     }
 
-    // 3. Validate profiles (expecting 2 signal profiles)
+    // 4. Validate profiles (expecting 2 signal profiles)
     if (!scenarioData.profiles || scenarioData.profiles.length === 0) {
          throw new InternalServerErrorException(`No profiles found in scenario file for ${scenarioId}.`);
     }
@@ -495,8 +389,10 @@ export class EmbeddingService {
     let profilesProcessed = 0;
     let openAiErrors = 0;
     let totalEmbedTime = 0;
+    let embeddingsFromFile = 0;
+    let embeddingsGenerated = 0;
 
-    // 4. Process each profile
+    // 5. Process each profile
     for (let i = 0; i < scenarioData.profiles.length; i++) {
       const profile = scenarioData.profiles[i];
       const profileLogId = profile.id || `index-${i}`;
@@ -506,48 +402,73 @@ export class EmbeddingService {
         continue;
       }
 
+      // Create consistent ID for the profile
+      const targetStringId = `signal-${scenarioId}-${i + 1}`;
+      const numericHashedId = hashCode(targetStringId);
+      
+      let embedding: number[];
+      
+      // Check if embedding already exists in the file
+      if (scenarioData.embeddings[profileLogId]) {
+        this.logger.log(`Using existing embedding for profile ${profileLogId} from file`);
+        embedding = scenarioData.embeddings[profileLogId];
+        embeddingsFromFile++;
+      } else {
+        try {
+          // Generate embedding for raw_input
+          this.logger.log(`Generating new embedding for profile ${profileLogId} (Scenario ${scenarioId})`);
+          const embedStartTime = Date.now();
+          const response = await this.openaiClient.embeddings.create({
+            model: 'text-embedding-3-large',
+            input: profile.raw_input,
+            encoding_format: 'float',
+          });
+          embedding = response.data[0].embedding;
+          const embedTime = Date.now() - embedStartTime;
+          totalEmbedTime += embedTime;
+          embeddingsGenerated++;
+          this.logger.log(`Embedding generated for ${profileLogId} in ${embedTime}ms`);
+          
+          // Save embedding to the scenario file for future use
+          scenarioData.embeddings[profileLogId] = embedding;
+          fileUpdated = true;
+        } catch (openaiError) {
+          this.logger.error(`Failed to generate embedding for profile ${profileLogId} (Scenario ${scenarioId}): ${openaiError.message}`, openaiError.stack);
+          openAiErrors++;
+          continue; // Skip this profile
+        }
+      }
+
+      // Prepare Qdrant point
+      const payload = {
+        scenarioId: scenarioId,
+        originalProfileId: profile.id, // Store the original profile ID from the file
+        source: 'scenario', // Indicate the source
+        raw_input_snippet: profile.raw_input.substring(0, 100), // Optional: snippet for context
+        signalId: targetStringId // Store the desired string ID in payload
+      };
+
+      pointsToUpsert.push({
+        id: numericHashedId, // Use numeric ID generated from hash
+        vector: embedding,
+        payload: payload,
+      });
+      profilesProcessed++;
+    }
+
+    // Write updated scenario file with embeddings if any were generated
+    if (fileUpdated) {
       try {
-        // Generate embedding for raw_input
-        this.logger.log(`Generating embedding for profile ${profileLogId} (Scenario ${scenarioId})`);
-        const embedStartTime = Date.now();
-        const response = await this.openaiClient.embeddings.create({
-          model: 'text-embedding-3-large',
-          input: profile.raw_input,
-          encoding_format: 'float',
-        });
-        const embedding = response.data[0].embedding;
-        const embedTime = Date.now() - embedStartTime;
-        totalEmbedTime += embedTime;
-        this.logger.log(`Embedding generated for ${profileLogId} in ${embedTime}ms`);
-
-        // Prepare Qdrant point
-        const targetStringId = `signal-${scenarioId}-${i + 1}`;
-        const numericHashedId = hashCode(targetStringId); // Generate numeric ID from hash
-
-        const payload = {
-          scenarioId: scenarioId,
-          originalProfileId: profile.id, // Store the original profile ID from the file
-          source: 'scenario', // Indicate the source
-          raw_input_snippet: profile.raw_input.substring(0, 100), // Optional: snippet for context
-          signalId: targetStringId // Store the desired string ID in payload
-        };
-
-        pointsToUpsert.push({
-          id: numericHashedId, // Use numeric ID generated from hash
-          vector: embedding,
-          payload: payload,
-        });
-        profilesProcessed++;
-
-      } catch (openaiError) {
-        this.logger.error(`Failed to generate embedding for profile ${profileLogId} (Scenario ${scenarioId}): ${openaiError.message}`, openaiError.stack);
-        openAiErrors++;
-        // Decide if one error should stop the whole process or just skip this profile
-        // For now, we skip and report at the end.
+        this.logger.log(`Saving updated scenario file with embeddings: ${filePath}`);
+        await fs.writeFile(filePath, JSON.stringify(scenarioData, null, 2), 'utf-8');
+        this.logger.log(`Successfully saved embeddings to scenario file ${filePath}`);
+      } catch (writeError) {
+        this.logger.error(`Failed to write updated scenario file: ${writeError.message}`, writeError.stack);
+        // Continue with operation even if file write fails
       }
     }
 
-    // 5. Upsert points to Qdrant if any were successfully processed
+    // 6. Upsert points to Qdrant if any were successfully processed
     let qdrantResult = null;
     let qdrantUpsertTime = 0;
     if (pointsToUpsert.length > 0) {
@@ -574,13 +495,15 @@ export class EmbeddingService {
 
     return {
       success: success,
-      message: `Scenario ${scenarioId}: Processed ${profilesProcessed} profiles. OpenAI errors: ${openAiErrors}. Upserted ${pointsToUpsert.length} points. Total time: ${operationTime}ms.`,
+      message: `Scenario ${scenarioId}: Processed ${profilesProcessed} profiles. OpenAI errors: ${openAiErrors}. Upserted ${pointsToUpsert.length} points. Used ${embeddingsFromFile} cached embeddings, generated ${embeddingsGenerated} new. Total time: ${operationTime}ms.`,
       scenarioId,
       collectionName,
       profilesFound: scenarioData.profiles.length,
       profilesProcessed,
       openAiErrors,
       pointsUpserted: pointsToUpsert.length,
+      embeddingsFromFile,
+      embeddingsGenerated,
       qdrantStatus: qdrantResult?.status,
       timing: {
         total: operationTime,

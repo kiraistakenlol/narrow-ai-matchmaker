@@ -1,14 +1,9 @@
-import { Controller, Post, Body, Get, Param, Query, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { EmbeddingService } from './embedding.service';
 
 @Controller('embed')
 export class EmbeddingController {
   constructor(private readonly embeddingService: EmbeddingService) {}
-
-  @Post('all')
-  async createAllEmbeddings(@Body() { collectionName }: { collectionName: string }) {
-    return this.embeddingService.createAllEmbeddings(collectionName);
-  }
 
   @Post('base-audience')
   @HttpCode(HttpStatus.OK)
@@ -42,10 +37,5 @@ export class EmbeddingController {
       throw new Error('collectionName must be provided in the request body.');
     }
     return this.embeddingService.embedScenarioProfiles(scenarioId, body.collectionName);
-  }
-
-  @Delete('collection/:collectionName')
-  async deleteCollection(@Param('collectionName') collectionName: string) {
-    return this.embeddingService.deleteCollection(collectionName);
   }
 } 
