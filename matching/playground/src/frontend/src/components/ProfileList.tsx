@@ -43,10 +43,10 @@ export default function ProfileList({ onSelectProfile }: ProfileListProps) {
       ) : (
         <ul>
           {profiles.map((profile) => (
-            <li key={profile.id} className="profile-item">
+            <li key={profile.user_id} className="profile-item">
               <div className="profile-header">
-                <span className="profile-id">{profile.id}</span>
-                <button onClick={() => onSelectProfile(profile.id)}>
+                <span className="profile-id">{profile.user_id}</span>
+                <button onClick={() => onSelectProfile(profile.user_id)}>
                   View Similar
                 </button>
               </div>
