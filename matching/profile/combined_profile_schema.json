@@ -1,6 +1,5 @@
 {
   "raw_input": "<user’s free text or voice transcript>",
-
   "personal": {
     "name": "string | null",
     "headline": "string | null",
@@ -10,10 +9,9 @@
       "LOCAL_RESIDENT"
     ]
   },
-
   "skills": {
     "hard": [
-      { 
+      {
         "skill": [
           "Typescript",
           "Javascript",
@@ -98,7 +96,7 @@
           "Design_Systems",
           "Figma",
           "Sketch"
-        ], 
+        ],
         "level": [
           "BEGINNER",
           "INTERMEDIATE",
@@ -109,7 +107,7 @@
       }
     ],
     "soft": [
-      { 
+      {
         "skill": [
           "COMMUNICATION",
           "TEAMWORK",
@@ -132,7 +130,7 @@
           "WRITTEN_COMMUNICATION",
           "PROJECT_MANAGEMENT",
           "STRATEGIC_THINKING"
-        ], 
+        ],
         "level": [
           "BEGINNER",
           "INTERMEDIATE",
@@ -143,7 +141,6 @@
       }
     ]
   },
-
   "industries": [
     "Web3",
     "Blockchain",
@@ -179,7 +176,6 @@
     "Research_Development",
     "Telecommunications"
   ],
-
   "hobbies": [
     "Reading",
     "Hiking",
@@ -215,8 +211,7 @@
     "Collecting_NFTs",
     "Collecting_Comics_Cards"
   ],
- 
- "roles": [
+  "roles": [
     {
       "organization": {
         "org_type": [
@@ -234,46 +229,54 @@
           "SELF_EMPLOYED_FREELANCE",
           "CONSULTANCY",
           "INVESTMENT_FIRM_VC_PE"
-        ],              
+        ],
         "name": "string | null",
         "url": "string | null",
-        "industries": [ /* Omitted for brevity - same as top-level industries */ ] 
+        "industries": []
       },
-
       "category": [
-          "LEADERSHIP",
-          "MANAGEMENT",
-          "ENGINEERING",
-          "SCIENCE",
-          "DESIGN",
-          "INVESTMENT_FINANCE",
-          "SALES_MARKETING_COMMUNITY",
-          "MEDIA_WRITING",
-          "SUPPORT_OPERATIONS",
-          "LEGAL_HR"
+        "LEADERSHIP",
+        "MANAGEMENT",
+        "ENGINEERING",
+        "SCIENCE",
+        "DESIGN",
+        "INVESTMENT_FINANCE",
+        "SALES_MARKETING_COMMUNITY",
+        "MEDIA_WRITING",
+        "SUPPORT_OPERATIONS",
+        "LEGAL_HR"
       ],
       "sub_category": [
-          "FOUNDER", "CEO", "PRODUCT_MANAGER", "ENGINEERING_MANAGER", 
-          "FRONTEND_DEVELOPER", "BACKEND_DEVELOPER", "SCIENTIST", "DATA_SCIENTIST", 
-          "UX_UI_DESIGNER", "VENTURE_CAPITALIST", "SALES_REPRESENTATIVE", "JOURNALIST", 
-          "TECHNICAL_SUPPORT", "LEGAL_COUNSEL" 
+        "FOUNDER",
+        "CEO",
+        "PRODUCT_MANAGER",
+        "ENGINEERING_MANAGER",
+        "FRONTEND_DEVELOPER",
+        "BACKEND_DEVELOPER",
+        "SCIENTIST",
+        "DATA_SCIENTIST",
+        "UX_UI_DESIGNER",
+        "VENTURE_CAPITALIST",
+        "SALES_REPRESENTATIVE",
+        "JOURNALIST",
+        "TECHNICAL_SUPPORT",
+        "LEGAL_COUNSEL"
       ],
-      "title": "string | null", 
+      "title": "string | null",
       "seniority": [
-          "INTERN",
-          "JUNIOR",
-          "MID_LEVEL",
-          "SENIOR",
-          "STAFF",
-          "PRINCIPAL",
-          "LEAD",
-          "MANAGER",
-          "DIRECTOR",
-          "VP",
-          "C_LEVEL",
-          "FOUNDER"
+        "INTERN",
+        "JUNIOR",
+        "MID_LEVEL",
+        "SENIOR",
+        "STAFF",
+        "PRINCIPAL",
+        "LEAD",
+        "MANAGER",
+        "DIRECTOR",
+        "VP",
+        "C_LEVEL",
+        "FOUNDER"
       ],
-
       "engagement": {
         "type": [
           "EMPLOYMENT",
@@ -302,19 +305,28 @@
           "REMOTE_FIRST"
         ]
       },
-
       "skills": {
-        "hard": [ { "skill": [/* Omitted for brevity - same as top-level */], "level": [/* Omitted for brevity - same as top-level */] } ],
-        "soft": [ { "skill": [/* Omitted for brevity - same as top-level */], "level": [/* Omitted for brevity - same as top-level */] } ]
+        "hard": [
+          {
+            "skill": [],
+            "level": []
+          }
+        ],
+        "soft": [
+          {
+            "skill": [],
+            "level": []
+          }
+        ]
       },
-      "highlights": [ "string" ], 
-
+      "highlights": [
+        "string"
+      ],
       "active": true
     }
   ],
-
   "event_context": {
-    "event_id": "string", 
+    "event_id": "string",
     "goals": {
       "looking_for": [
         "TEAMMATES_COFOUNDERS",
@@ -356,6 +368,5 @@
       ]
     }
   },
-
   "extra_notes": "string | null"
-} 
+}
