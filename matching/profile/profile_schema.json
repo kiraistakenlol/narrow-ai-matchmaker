@@ -1,0 +1,762 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "raw_input": {
+      "type": "string",
+      "description": "User's free text or voice transcript"
+    },
+    "personal": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "headline": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "visiting_status": {
+          "enum": [
+            "TEMPORARY_VISITOR",
+            "LONG_TERM_RESIDENT",
+            "LOCAL",
+            null
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "headline",
+        "visiting_status"
+      ],
+      "additionalProperties": false
+    },
+    "skills": {
+      "type": "object",
+      "properties": {
+        "hard": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "skill": {
+                "enum": [
+                  "JavaScript",
+                  "TypeScript",
+                  "Python",
+                  "Go",
+                  "Rust",
+                  "Java",
+                  "C#",
+                  "C++",
+                  "Solidity",
+                  "Move",
+                  "React",
+                  "Vue",
+                  "Angular",
+                  "Svelte",
+                  "Node.js",
+                  "Next.js",
+                  "GraphQL",
+                  "REST_APIs",
+                  "gRPC",
+                  "Docker",
+                  "Kubernetes",
+                  "AWS",
+                  "GCP",
+                  "Azure",
+                  "Terraform",
+                  "Ansible",
+                  "CI_CD",
+                  "Jenkins",
+                  "Github_Actions",
+                  "PostgreSQL",
+                  "MySQL",
+                  "MongoDB",
+                  "Redis",
+                  "Cassandra",
+                  "SQL",
+                  "NoSQL",
+                  "System_Design",
+                  "Microservices",
+                  "Serverless",
+                  "Smart_Contracts",
+                  "Ethereum",
+                  "Solana",
+                  "Polygon",
+                  "Cosmos_SDK",
+                  "Substrate",
+                  "EVM",
+                  "WASM",
+                  "DeFi",
+                  "NFTs",
+                  "DAOs",
+                  "Cryptography",
+                  "Zero_Knowledge_Proofs",
+                  "Tokenomics",
+                  "Machine_Learning",
+                  "Deep_Learning",
+                  "NLP",
+                  "Computer_Vision",
+                  "PyTorch",
+                  "TensorFlow",
+                  "Data_Analysis",
+                  "Big_Data",
+                  "Spark",
+                  "Kafka",
+                  "iOS_Development",
+                  "Android_Development",
+                  "Swift",
+                  "Kotlin",
+                  "Game_Development",
+                  "Unity",
+                  "Unreal_Engine",
+                  "Cybersecurity",
+                  "Network_Security",
+                  "Cloud_Security",
+                  "Penetration_Testing",
+                  "Financial_Modeling",
+                  "Market_Analysis",
+                  "Agile_Methodologies",
+                  "Scrum",
+                  "Product_Roadmapping",
+                  null
+                ]
+              },
+              "level": {
+                "enum": [
+                  "BEGINNER",
+                  "INTERMEDIATE",
+                  "ADVANCED",
+                  "EXPERT",
+                  "FAMILIAR",
+                  null
+                ]
+              }
+            },
+            "required": [
+              "skill",
+              "level"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "soft": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "skill": {
+                "enum": [
+                  "Communication",
+                  "Teamwork",
+                  "Collaboration",
+                  "Problem_Solving",
+                  "Critical_Thinking",
+                  "Adaptability",
+                  "Resilience",
+                  "Time_Management",
+                  "Leadership",
+                  "Mentorship",
+                  "Negotiation",
+                  "Presentation_Skills",
+                  "Public_Speaking",
+                  "Conflict_Resolution",
+                  "Creativity",
+                  "Networking",
+                  "Strategic_Thinking",
+                  "Decision_Making",
+                  "Empathy",
+                  "Active_Listening",
+                  "Feedback_Delivery_Receiving",
+                  "Project_Management",
+                  "Stakeholder_Management",
+                  null
+                ]
+              },
+              "level": {
+                "enum": [
+                  "BEGINNER",
+                  "INTERMEDIATE",
+                  "ADVANCED",
+                  "EXPERT",
+                  "FAMILIAR",
+                  null
+                ]
+              }
+            },
+            "required": [
+              "skill",
+              "level"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "hard",
+        "soft"
+      ],
+      "additionalProperties": false
+    },
+    "industries": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Web3",
+          "Blockchain",
+          "Cryptocurrency",
+          "DeFi",
+          "NFTs",
+          "DAOs",
+          "Metaverse",
+          "GameFi",
+          "FinTech",
+          "Artificial_Intelligence",
+          "Machine_Learning",
+          "SaaS",
+          "Cloud_Computing",
+          "Cybersecurity",
+          "E_Commerce",
+          "EdTech",
+          "HealthTech",
+          "Enterprise_Software",
+          "Developer_Tools",
+          "Open_Source_Software",
+          "Social_Media",
+          "Creator_Economy",
+          "Marketplace",
+          "Infrastructure_Tech",
+          "Investment_Banking",
+          "Venture_Capital",
+          "Private_Equity",
+          "Consulting_Tech",
+          "Legal_Tech",
+          "Supply_Chain_Logistics",
+          "Sustainability_GreenTech",
+          "Research_Development",
+          "Telecommunications"
+        ]
+      }
+    },
+    "hobbies": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Reading",
+          "Hiking",
+          "Gaming",
+          "Board_Games",
+          "Tabletop_RPGs",
+          "Cooking",
+          "Baking",
+          "Traveling",
+          "Photography",
+          "Music_Production",
+          "Playing_Instrument",
+          "DJing",
+          "Painting",
+          "Drawing",
+          "Writing",
+          "Yoga",
+          "Meditation",
+          "Running",
+          "Cycling",
+          "Gym",
+          "Climbing",
+          "Team_Sports",
+          "Volunteering",
+          "Open_Source_Contribution",
+          "Attending_Meetups",
+          "Learning_Languages",
+          "Astronomy",
+          "History",
+          "Philosophy",
+          "Investing",
+          "Crypto_Trading",
+          "Collecting_NFTs",
+          "Collecting_Comics_Cards"
+        ]
+      }
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "organization": {
+            "type": "object",
+            "properties": {
+              "org_type": {
+                "enum": [
+                  "STARTUP_EARLY_STAGE",
+                  "STARTUP_GROWTH_STAGE",
+                  "SCALE_UP",
+                  "ENTERPRISE",
+                  "SME",
+                  "NONPROFIT_NGO",
+                  "GOVERNMENT",
+                  "ACADEMIA_UNIVERSITY",
+                  "RESEARCH_INSTITUTE",
+                  "OPEN_SOURCE_PROJECT",
+                  "DAO",
+                  "SELF_EMPLOYED_FREELANCE",
+                  "CONSULTANCY",
+                  "INVESTMENT_FIRM_VC_PE",
+                  null
+                ]
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "url": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "industries": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "Web3",
+                    "Blockchain",
+                    "Cryptocurrency",
+                    "DeFi",
+                    "NFTs",
+                    "DAOs",
+                    "Metaverse",
+                    "GameFi",
+                    "FinTech",
+                    "Artificial_Intelligence",
+                    "Machine_Learning",
+                    "SaaS",
+                    "Cloud_Computing",
+                    "Cybersecurity",
+                    "E_Commerce",
+                    "EdTech",
+                    "HealthTech",
+                    "Enterprise_Software",
+                    "Developer_Tools",
+                    "Open_Source_Software",
+                    "Social_Media",
+                    "Creator_Economy",
+                    "Marketplace",
+                    "Infrastructure_Tech",
+                    "Investment_Banking",
+                    "Venture_Capital",
+                    "Private_Equity",
+                    "Consulting_Tech",
+                    "Legal_Tech",
+                    "Supply_Chain_Logistics",
+                    "Sustainability_GreenTech",
+                    "Research_Development",
+                    "Telecommunications"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "org_type",
+              "name",
+              "url",
+              "industries"
+            ],
+            "additionalProperties": false
+          },
+          "category": {
+            "enum": [
+              null
+            ]
+          },
+          "sub_category": {
+            "enum": [
+              null
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "seniority": {
+            "enum": [
+              "INTERN",
+              "JUNIOR",
+              "MID_LEVEL",
+              "SENIOR",
+              "STAFF",
+              "PRINCIPAL",
+              "LEAD",
+              "MANAGER",
+              "DIRECTOR",
+              "VP",
+              "C_LEVEL",
+              "FOUNDER",
+              null
+            ]
+          },
+          "engagement": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "enum": [
+                  "EMPLOYMENT",
+                  "CONTRACT",
+                  "VOLUNTEER",
+                  "ADVISORY",
+                  "INTERNSHIP",
+                  "FOUNDER_COFOUNDER",
+                  "SELF_EMPLOYED",
+                  null
+                ]
+              },
+              "commitment": {
+                "enum": [
+                  "FULL_TIME",
+                  "PART_TIME",
+                  "CONTRACT_SHORT_TERM",
+                  "CONTRACT_LONG_TERM",
+                  "ADVISORY",
+                  "INTERNSHIP",
+                  "VOLUNTEER",
+                  "PROJECT_BASED",
+                  "AD_HOC",
+                  null
+                ]
+              },
+              "work_mode": {
+                "enum": [
+                  "ON_SITE",
+                  "REMOTE",
+                  "HYBRID",
+                  "REMOTE_FIRST",
+                  "OFFICE_FIRST",
+                  null
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "commitment",
+              "work_mode"
+            ],
+            "additionalProperties": false
+          },
+          "skills": {
+            "type": "object",
+            "properties": {
+              "hard": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "skill": {
+                      "enum": [
+                        "JavaScript",
+                        "TypeScript",
+                        "Python",
+                        "Go",
+                        "Rust",
+                        "Java",
+                        "C#",
+                        "C++",
+                        "Solidity",
+                        "Move",
+                        "React",
+                        "Vue",
+                        "Angular",
+                        "Svelte",
+                        "Node.js",
+                        "Next.js",
+                        "GraphQL",
+                        "REST_APIs",
+                        "gRPC",
+                        "Docker",
+                        "Kubernetes",
+                        "AWS",
+                        "GCP",
+                        "Azure",
+                        "Terraform",
+                        "Ansible",
+                        "CI_CD",
+                        "Jenkins",
+                        "Github_Actions",
+                        "PostgreSQL",
+                        "MySQL",
+                        "MongoDB",
+                        "Redis",
+                        "Cassandra",
+                        "SQL",
+                        "NoSQL",
+                        "System_Design",
+                        "Microservices",
+                        "Serverless",
+                        "Smart_Contracts",
+                        "Ethereum",
+                        "Solana",
+                        "Polygon",
+                        "Cosmos_SDK",
+                        "Substrate",
+                        "EVM",
+                        "WASM",
+                        "DeFi",
+                        "NFTs",
+                        "DAOs",
+                        "Cryptography",
+                        "Zero_Knowledge_Proofs",
+                        "Tokenomics",
+                        "Machine_Learning",
+                        "Deep_Learning",
+                        "NLP",
+                        "Computer_Vision",
+                        "PyTorch",
+                        "TensorFlow",
+                        "Data_Analysis",
+                        "Big_Data",
+                        "Spark",
+                        "Kafka",
+                        "iOS_Development",
+                        "Android_Development",
+                        "Swift",
+                        "Kotlin",
+                        "Game_Development",
+                        "Unity",
+                        "Unreal_Engine",
+                        "Cybersecurity",
+                        "Network_Security",
+                        "Cloud_Security",
+                        "Penetration_Testing",
+                        "Financial_Modeling",
+                        "Market_Analysis",
+                        "Agile_Methodologies",
+                        "Scrum",
+                        "Product_Roadmapping",
+                        null
+                      ]
+                    },
+                    "level": {
+                      "enum": [
+                        "BEGINNER",
+                        "INTERMEDIATE",
+                        "ADVANCED",
+                        "EXPERT",
+                        "FAMILIAR",
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "skill",
+                    "level"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "soft": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "skill": {
+                      "enum": [
+                        "Communication",
+                        "Teamwork",
+                        "Collaboration",
+                        "Problem_Solving",
+                        "Critical_Thinking",
+                        "Adaptability",
+                        "Resilience",
+                        "Time_Management",
+                        "Leadership",
+                        "Mentorship",
+                        "Negotiation",
+                        "Presentation_Skills",
+                        "Public_Speaking",
+                        "Conflict_Resolution",
+                        "Creativity",
+                        "Networking",
+                        "Strategic_Thinking",
+                        "Decision_Making",
+                        "Empathy",
+                        "Active_Listening",
+                        "Feedback_Delivery_Receiving",
+                        "Project_Management",
+                        "Stakeholder_Management",
+                        null
+                      ]
+                    },
+                    "level": {
+                      "enum": [
+                        "BEGINNER",
+                        "INTERMEDIATE",
+                        "ADVANCED",
+                        "EXPERT",
+                        "FAMILIAR",
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "skill",
+                    "level"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "hard",
+              "soft"
+            ],
+            "additionalProperties": false
+          },
+          "highlights": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "organization",
+          "category",
+          "sub_category",
+          "title",
+          "seniority",
+          "engagement",
+          "skills",
+          "highlights",
+          "active"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "event_context": {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string"
+        },
+        "goals": {
+          "type": "object",
+          "properties": {
+            "looking_for": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "NETWORKING",
+                  "FIND_COFOUNDER",
+                  "FIND_INVESTMENT",
+                  "FIND_CLIENTS",
+                  "FIND_PARTNERS",
+                  "FIND_EMPLOYEES",
+                  "FIND_MENTOR",
+                  "OFFER_MENTORSHIP",
+                  "FIND_JOB",
+                  "RECRUITING",
+                  "LEARNING",
+                  "ATTEND_WORKSHOPS",
+                  "GIVE_TALK",
+                  "PRESENT_PROJECT",
+                  "HACKATHON_PARTICIPATION",
+                  "FIND_HACKATHON_TEAM",
+                  "GET_FEEDBACK",
+                  "EXPLORE_NEW_TECH",
+                  "INDUSTRY_INSIGHTS",
+                  "BRAND_AWARENESS",
+                  "LEAD_GENERATION",
+                  "COLLABORATION_OPPORTUNITIES",
+                  "PROBLEM_SOLVING",
+                  "SOCIALIZING",
+                  "EXPLORE_ECOSYSTEM",
+                  "VALIDATE_IDEA",
+                  "PROMOTE_PRODUCT_SERVICE"
+                ]
+              }
+            },
+            "offering": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "NETWORKING",
+                  "FIND_COFOUNDER",
+                  "FIND_INVESTMENT",
+                  "FIND_CLIENTS",
+                  "FIND_PARTNERS",
+                  "FIND_EMPLOYEES",
+                  "FIND_MENTOR",
+                  "OFFER_MENTORSHIP",
+                  "FIND_JOB",
+                  "RECRUITING",
+                  "LEARNING",
+                  "ATTEND_WORKSHOPS",
+                  "GIVE_TALK",
+                  "PRESENT_PROJECT",
+                  "HACKATHON_PARTICIPATION",
+                  "FIND_HACKATHON_TEAM",
+                  "GET_FEEDBACK",
+                  "EXPLORE_NEW_TECH",
+                  "INDUSTRY_INSIGHTS",
+                  "BRAND_AWARENESS",
+                  "LEAD_GENERATION",
+                  "COLLABORATION_OPPORTUNITIES",
+                  "PROBLEM_SOLVING",
+                  "SOCIALIZING",
+                  "EXPLORE_ECOSYSTEM",
+                  "VALIDATE_IDEA",
+                  "PROMOTE_PRODUCT_SERVICE"
+                ]
+              }
+            }
+          },
+          "required": [
+            "looking_for",
+            "offering"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "goals"
+      ],
+      "additionalProperties": false
+    },
+    "extra_notes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "raw_input",
+    "personal",
+    "skills",
+    "industries",
+    "hobbies",
+    "roles",
+    "event_context",
+    "extra_notes"
+  ],
+  "additionalProperties": false
+}

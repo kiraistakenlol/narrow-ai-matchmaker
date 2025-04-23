@@ -10,7 +10,7 @@ import { TestDataModule } from './test-data/test-data.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '../../../../.env',
+      envFilePath: '../../../../../.env',
     }),
     TestDataModule,
   ],

@@ -1,0 +1,55 @@
+{
+    "raw_input": "<user’s free text or voice transcript>",
+    "personal": {
+      "name": "Homer Simpson",
+      "headline": "A web3 enthusiast",
+      "visiting_status": null
+    },
+    "skills": {
+      "hard": [
+        { "skill": null, "level": null }
+      ],
+      "soft": [
+        { "skill": null, "level": null }
+      ]
+    },
+    "industries": [],
+    "hobbies": [],
+    "roles": [
+      {
+        "organization": {
+          "org_type": null,
+          "name": null,
+          "url": null,
+          "industries": []
+        },
+        "category": null,
+        "sub_category": null,
+        "title": null,
+        "seniority": null,
+        "engagement": {
+          "type": null,
+          "commitment": null,
+          "work_mode": null
+        },
+        "skills": {
+          "hard": [
+            { "skill": null, "level": null }
+          ],
+          "soft": [
+            { "skill": null, "level": null }
+          ]
+        },
+        "highlights": [],
+        "active": true
+      }
+    ],
+    "event_context": {
+      "event_id": "<TechConf2025>",
+      "goals": {
+        "looking_for": [],
+        "offering": []
+      }
+    },
+    "extra_notes": null
+  }
