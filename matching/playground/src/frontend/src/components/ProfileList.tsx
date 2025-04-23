@@ -125,7 +125,7 @@ export default function ProfileList({ profiles, loading, error, onGenerationComp
               disabled={isGenerating || isEmbeddingBase || generationCount <= 0 || generationCount > 500}
               style={{ padding: '5px 10px' }}
             >
-              {isGenerating ? 'Generating...' : 'Go'}
+              {isGenerating ? 'Generating...' : 'Generate Base Audience'}
             </button>
             {generationError && <span style={{ color: 'red', marginLeft: '10px', fontSize: '0.8em' }}>{generationError}</span>}
           </div>

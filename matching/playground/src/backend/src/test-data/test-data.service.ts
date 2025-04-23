@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import Anthropic from '@anthropic-ai/sdk';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import * as util from 'util';
 import { FullProfile, FullProfilesData } from '../../../common/src/types/full-profile.types';
 import { MatchScenario, MatchScenarioCategories } from '../../../common/src/types/match-scenarios.types';
 
@@ -347,13 +348,50 @@ export class TestDataService implements OnModuleInit {
   }
 
   /**
-   * Returns the parsed match scenarios object.
+   * Returns the parsed match scenarios object with test case data if available.
    */
-  getMatchScenarios(): MatchScenarioCategories {
+  async getMatchScenarios(): Promise<MatchScenarioCategories> {
     if (!this.parsedMatchScenarios) {
       this.logger.warn('Match scenarios requested but not loaded/parsed. Client initialized?')
       throw new InternalServerErrorException('Match scenarios are not available.')
     }
-    return this.parsedMatchScenarios;
+    
+    // Create a deep copy to avoid modifying the original
+    const scenariosWithTestCases = JSON.parse(JSON.stringify(this.parsedMatchScenarios)) as MatchScenarioCategories;
+    
+    // Check for test case files and add them to the scenarios
+    for (const category in scenariosWithTestCases) {
+      for (const scenario of scenariosWithTestCases[category]) {
+        try {
+          // Build path to potential test case file
+          const testCasePath = path.join(__dirname, '../../../../test_cases', `${scenario.id}.json`);
+          
+          // Check if file exists
+          try {
+            await fs.access(testCasePath);
+            // File exists, read and parse it
+            const testCaseContent = await fs.readFile(testCasePath, 'utf-8');
+            const testCaseData = JSON.parse(testCaseContent);
+            
+            // Add test case data to the scenario
+            scenario.testCase = {
+              profiles: testCaseData.profiles || []
+            };
+            
+            this.logger.log(`Added test case data for scenario ${scenario.id}`);
+          } catch (accessError) {
+            // File doesn't exist, set testCase to null
+            scenario.testCase = null;
+            this.logger.debug(`No test case file found for scenario ${scenario.id}`);
+          }
+        } catch (error) {
+          // If there's an error reading or parsing, log it but continue
+          this.logger.error(`Error loading test case for scenario ${scenario.id}: ${error.message}`);
+          scenario.testCase = null;
+        }
+      }
+    }
+    
+    return scenariosWithTestCases;
   }
 } 

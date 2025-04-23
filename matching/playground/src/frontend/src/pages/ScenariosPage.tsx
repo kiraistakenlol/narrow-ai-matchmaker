@@ -1,14 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ScenarioCard from '../components/ScenarioCard';
-
-// Assuming types might be shared eventually, but define locally for now
-interface MatchScenario {
-  id: string;
-  scenario: string;
-  match_description: string;
-}
-
-type MatchScenarioCategories = Record<string, MatchScenario[]>;
+import { MatchScenario, MatchScenarioCategories } from '../../../common/src/types/match-scenarios.types';
 
 // Type for storing generation status per scenario
 interface GenerationStatus {

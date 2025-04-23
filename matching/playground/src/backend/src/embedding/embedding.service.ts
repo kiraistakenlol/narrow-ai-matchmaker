@@ -521,7 +521,7 @@ export class EmbeddingService {
       const exists = collections.collections.some(collection => collection.name === collectionName);
       if (exists) {
           this.logger.log(`Collection '${collectionName}' exists. Deleting...`);
-          await this.qdrantClient.deleteCollection(collectionName);
+      await this.qdrantClient.deleteCollection(collectionName);
           this.logger.log(`Collection '${collectionName}' deleted.`);
       } else {
           this.logger.log(`Collection '${collectionName}' does not exist. Skipping deletion.`);

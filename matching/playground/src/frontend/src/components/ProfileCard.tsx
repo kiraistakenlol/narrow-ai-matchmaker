@@ -1,5 +1,5 @@
 import React from 'react';
-import { FullProfile, Role, HardSkillEntry, SoftSkillEntry, Engagement } from '../../../../common/src/types/full-profile.types';
+import { FullProfile, Role, HardSkillEntry, SoftSkillEntry, Engagement } from '../../../common/src/types/full-profile.types';
 
 interface ProfileCardProps {
   profile: FullProfile;

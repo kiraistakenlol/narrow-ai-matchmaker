@@ -47,7 +47,7 @@ export class TestDataController {
   @HttpCode(HttpStatus.OK)
   async getMatchScenarios(): Promise<MatchScenarioCategories> {
     try {
-      return this.testDataService.getMatchScenarios();
+      return await this.testDataService.getMatchScenarios();
     } catch (error) {
       console.error('Error fetching match scenarios:', error);
       throw new InternalServerErrorException('Failed to fetch match scenarios.');

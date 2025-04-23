@@ -1,3 +1,5 @@
+import { FullProfile } from './full-profile.types';
+
 /**
  * Represents a single matching scenario.
  */
@@ -5,6 +7,9 @@ export interface MatchScenario {
   id: string;
   scenario: string;
   match_description: string;
+  testCase?: {
+    profiles: FullProfile[];
+  } | null;
 }
 
 /**

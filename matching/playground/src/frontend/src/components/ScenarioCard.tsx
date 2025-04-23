@@ -1,13 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
+import ProfileCard from './ProfileCard';
+import { MatchScenario } from '../../../common/src/types/match-scenarios.types';
 
 // Assuming types might be shared eventually, but define locally for now
 // Mirroring types from ScenariosPage for consistency
-interface MatchScenario {
-    id: string;
-    scenario: string;
-    match_description: string;
-}
-
 interface GenerationStatus {
     isLoading: boolean;
     error: string | null;
@@ -40,9 +36,15 @@ const cardStyle: React.CSSProperties = {
     color: '#333',
     fontFamily: 'sans-serif',
     display: 'flex',       // Use flexbox for layout
-    justifyContent: 'space-between', // Separate info and actions
-    alignItems: 'flex-start', // Align items at the top
-    gap: '15px',           // Add gap between info and actions
+    flexDirection: 'column', // Change to column layout
+    gap: '15px',           // Add gap between sections
+};
+
+const headerStyle: React.CSSProperties = {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    width: '100%',
 };
 
 const infoStyle: React.CSSProperties = {
@@ -83,6 +85,24 @@ const embedButtonStyle: React.CSSProperties = {
     marginLeft: '10px', // Space between buttons
 };
 
+const showProfilesButtonStyle: React.CSSProperties = {
+    padding: '5px 10px',
+    background: '#f0f0f0',
+    border: '1px solid #ccc',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '0.9em',
+    marginTop: '5px',
+    color: '#333', // Add dark text color for contrast
+};
+
+const profilesContainerStyle: React.CSSProperties = {
+    marginTop: '10px',
+    padding: '10px',
+    borderTop: '1px dashed #ccc',
+    background: '#f5f5f5',
+};
+
 export default function ScenarioCard({ 
     scenario, 
     generationStatus, 
@@ -90,46 +110,75 @@ export default function ScenarioCard({
     onGenerate, 
     onEmbed 
 }: ScenarioCardProps) { // Updated props destructuring
+    const [showProfiles, setShowProfiles] = useState(false);
+    
+    const hasTestCases = scenario.testCase?.profiles && scenario.testCase.profiles.length > 0;
+    
     return (
         <li style={cardStyle}>
-            {/* Scenario Information Section */}
-            <div style={infoStyle}>
-                <strong style={{ fontSize: '1.1em' }}>{scenario.id}: {scenario.scenario}</strong>
-                <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: '#555' }}>
-                    {scenario.match_description}
-                </p>
-            </div>
-
-            {/* Scenario Actions Section */}
-            <div style={actionsStyle}>
-                {/* Generate Button and Status */}
-                <div>
-                    <button 
-                        onClick={() => onGenerate(scenario.id)}
-                        disabled={generationStatus.isLoading || embeddingStatus.isLoading} // Disable if either is loading
-                        style={buttonStyle}
-                        title="Generate scenario profile JSON file"
-                    >
-                        {generationStatus.isLoading ? 'Generating...' : 'Generate Profiles'}
-                    </button>
-                    {generationStatus.error && <p style={errorStyle}>{generationStatus.error}</p>}
-                    {generationStatus.message && <p style={successStyle}>{generationStatus.message}</p>}
+            {/* Header Section with Info and Actions */}
+            <div style={headerStyle}>
+                {/* Scenario Information Section */}
+                <div style={infoStyle}>
+                    <strong style={{ fontSize: '1.1em' }}>{scenario.id}: {scenario.scenario}</strong>
+                    <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: '#555' }}>
+                        {scenario.match_description}
+                    </p>
+                    
+                    {/* Toggle button for profiles */}
+                    {hasTestCases && (
+                        <button 
+                            onClick={() => setShowProfiles(prev => !prev)}
+                            style={showProfilesButtonStyle}
+                        >
+                            {showProfiles ? 'Hide Profiles' : 'Show Profiles'}
+                        </button>
+                    )}
                 </div>
 
-                {/* Embed Button and Status */}
-                <div style={{ marginTop: '10px' }}> {/* Add margin for spacing */}
-                    <button 
-                        onClick={() => onEmbed(scenario.id)}
-                        disabled={generationStatus.isLoading || embeddingStatus.isLoading} // Disable if either is loading
-                        style={embedButtonStyle}
-                        title="Embed generated scenario profiles into vector DB"
-                    >
-                        {embeddingStatus.isLoading ? 'Embedding...' : 'Embed Profiles'}
-                    </button>
-                    {embeddingStatus.error && <p style={errorStyle}>{embeddingStatus.error}</p>}
-                    {embeddingStatus.message && <p style={successStyle}>{embeddingStatus.message}</p>}
+                {/* Scenario Actions Section */}
+                <div style={actionsStyle}>
+                    {/* Generate Button and Status */}
+                    <div>
+                        <button 
+                            onClick={() => onGenerate(scenario.id)}
+                            disabled={generationStatus.isLoading || embeddingStatus.isLoading} // Disable if either is loading
+                            style={buttonStyle}
+                            title="Generate scenario profile JSON file"
+                        >
+                            {generationStatus.isLoading ? 'Generating...' : 'Generate Profiles'}
+                        </button>
+                        {generationStatus.error && <p style={errorStyle}>{generationStatus.error}</p>}
+                        {generationStatus.message && <p style={successStyle}>{generationStatus.message}</p>}
+                    </div>
+
+                    {/* Embed Button and Status */}
+                    <div style={{ marginTop: '10px' }}> {/* Add margin for spacing */}
+                        <button 
+                            onClick={() => onEmbed(scenario.id)}
+                            disabled={generationStatus.isLoading || embeddingStatus.isLoading} // Disable if either is loading
+                            style={embedButtonStyle}
+                            title="Embed generated scenario profiles into vector DB"
+                        >
+                            {embeddingStatus.isLoading ? 'Embedding...' : 'Embed Profiles'}
+                        </button>
+                        {embeddingStatus.error && <p style={errorStyle}>{embeddingStatus.error}</p>}
+                        {embeddingStatus.message && <p style={successStyle}>{embeddingStatus.message}</p>}
+                    </div>
                 </div>
             </div>
+            
+            {/* Profiles Section (conditionally rendered) */}
+            {showProfiles && hasTestCases && (
+                <div style={profilesContainerStyle}>
+                    <h4 style={{ marginTop: 0, marginBottom: '10px' }}>Test Case Profiles</h4>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                        {scenario.testCase!.profiles.map((profile, index) => (
+                            <ProfileCard key={profile.id || index} profile={profile} />
+                        ))}
+                    </ul>
+                </div>
+            )}
         </li>
     );
 } 
