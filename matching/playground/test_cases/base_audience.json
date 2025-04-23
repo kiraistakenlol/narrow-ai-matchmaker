@@ -2,31 +2,31 @@
   "profiles": [
     {
       "id": "base-set-1",
-      "raw_input": "Hi, I'm Sarah Chen. I'm a frontend developer with experience in React. Currently working at TechSolutions as a mid-level engineer. I enjoy hiking and board games in my free time.",
+      "raw_input": "Hi, I'm Alex Chen, a software developer with experience in frontend technologies. I enjoy collaborating on projects and learning new technologies.",
       "personal": {
-        "name": "Sarah Chen",
-        "headline": "Frontend Developer",
+        "name": "Alex Chen",
+        "headline": "Software Developer",
         "visiting_status": "LOCAL"
       },
       "skills": {
         "hard": [
           {
-            "skill": "React",
-            "level": "INTERMEDIATE"
+            "skill": "JavaScript",
+            "level": "ADVANCED"
           },
           {
-            "skill": "JavaScript",
+            "skill": "React",
             "level": "INTERMEDIATE"
           }
         ],
         "soft": [
           {
-            "skill": "Teamwork",
+            "skill": "Communication",
             "level": "INTERMEDIATE"
           },
           {
-            "skill": "Problem_Solving",
-            "level": "INTERMEDIATE"
+            "skill": "Teamwork",
+            "level": "ADVANCED"
           }
         ]
       },
@@ -34,15 +34,15 @@
         "SaaS"
       ],
       "hobbies": [
-        "Hiking",
-        "Board_Games"
+        "Reading",
+        "Hiking"
       ],
       "roles": [
         {
           "organization": {
-            "org_type": "ENTERPRISE",
-            "name": "TechSolutions",
-            "url": "https://techsolutions.com",
+            "org_type": "STARTUP_GROWTH_STAGE",
+            "name": "TechSolutions Inc",
+            "url": "https://techsolutions.example.com",
             "industries": [
               "SaaS"
             ]
@@ -59,24 +59,24 @@
           "skills": {
             "hard": [
               {
-                "skill": "React",
-                "level": "INTERMEDIATE"
+                "skill": "JavaScript",
+                "level": "ADVANCED"
               },
               {
-                "skill": "JavaScript",
+                "skill": "React",
                 "level": "INTERMEDIATE"
               }
             ],
             "soft": [
               {
-                "skill": "Teamwork",
+                "skill": "Communication",
                 "level": "INTERMEDIATE"
               }
             ]
           },
           "highlights": [
-            "Developed responsive web applications",
-            "Collaborated with design and backend teams"
+            "Built responsive web applications",
+            "Improved site performance by 30%"
           ],
           "active": true
         }
@@ -92,21 +92,21 @@
           ]
         }
       },
-      "extra_notes": "Looking forward to meeting other developers at the conference."
+      "extra_notes": "Interested in exploring new JavaScript frameworks"
     },
     {
       "id": "base-set-2",
-      "raw_input": "Michael Johnson, UX/UI Designer at CreativeHub. Experience with design systems and user research. I like photography and playing guitar.",
+      "raw_input": "Sarah Johnson here, UX/UI designer with a passion for creating intuitive user experiences.",
       "personal": {
-        "name": "Michael Johnson",
+        "name": "Sarah Johnson",
         "headline": "UX/UI Designer",
         "visiting_status": "LOCAL"
       },
       "skills": {
         "hard": [
           {
-            "skill": "System_Design",
-            "level": "INTERMEDIATE"
+            "skill": "Figma",
+            "level": "EXPERT"
           }
         ],
         "soft": [
@@ -118,36 +118,36 @@
       },
       "industries": [
         "SaaS",
-        "Enterprise_Software"
+        "E_Commerce"
       ],
       "hobbies": [
         "Photography",
-        "Playing_Instrument"
+        "Drawing"
       ],
       "roles": [
         {
           "organization": {
-            "org_type": "SCALE_UP",
-            "name": "CreativeHub",
-            "url": "https://creativehub.io",
+            "org_type": "ENTERPRISE",
+            "name": "GlobalTech",
+            "url": "https://globaltech.example.com",
             "industries": [
-              "SaaS"
+              "E_Commerce"
             ]
           },
           "category": "DESIGN",
           "sub_category": "UX_UI_DESIGNER",
-          "title": "UX/UI Designer",
-          "seniority": "MID_LEVEL",
+          "title": "Senior UX Designer",
+          "seniority": "SENIOR",
           "engagement": {
             "type": "EMPLOYMENT",
             "commitment": "FULL_TIME",
-            "work_mode": "HYBRID"
+            "work_mode": "REMOTE"
           },
           "skills": {
             "hard": [
               {
-                "skill": "System_Design",
-                "level": "INTERMEDIATE"
+                "skill": "Figma",
+                "level": "EXPERT"
               }
             ],
             "soft": [
@@ -158,8 +158,8 @@
             ]
           },
           "highlights": [
-            "Created design systems for multiple products",
-            "Conducted user research and testing"
+            "Led redesign of main product interface",
+            "Implemented user research program"
           ],
           "active": true
         }
@@ -175,14 +175,14 @@
           ]
         }
       },
-      "extra_notes": "Interested in connecting with other designers and developers."
+      "extra_notes": "Enjoy collaborating with development teams"
     },
     {
       "id": "base-set-3",
-      "raw_input": "Hello! I'm David Park, Product Manager at CloudTech. I have experience in agile methodologies and stakeholder management. I enjoy running and reading in my spare time.",
+      "raw_input": "Michael Williams, project manager with 5 years of experience in tech startups.",
       "personal": {
-        "name": "David Park",
-        "headline": "Product Manager",
+        "name": "Michael Williams",
+        "headline": "Project Manager",
         "visiting_status": "LOCAL"
       },
       "skills": {
@@ -190,35 +190,39 @@
           {
             "skill": "Agile_Methodologies",
             "level": "ADVANCED"
+          },
+          {
+            "skill": "Scrum",
+            "level": "ADVANCED"
           }
         ],
         "soft": [
           {
-            "skill": "Stakeholder_Management",
-            "level": "ADVANCED"
+            "skill": "Leadership",
+            "level": "INTERMEDIATE"
           }
         ]
       },
       "industries": [
-        "Cloud_Computing"
+        "SaaS"
       ],
       "hobbies": [
-        "Running",
+        "Cycling",
         "Reading"
       ],
       "roles": [
         {
           "organization": {
-            "org_type": "SCALE_UP",
-            "name": "CloudTech",
-            "url": "https://cloudtech.com",
+            "org_type": "STARTUP_GROWTH_STAGE",
+            "name": "InnovateTech",
+            "url": "https://innovatetech.example.com",
             "industries": [
-              "Cloud_Computing"
+              "SaaS"
             ]
           },
           "category": "MANAGEMENT",
-          "sub_category": "PRODUCT_MANAGER",
-          "title": "Product Manager",
+          "sub_category": "PROJECT_MANAGER",
+          "title": "Senior Project Manager",
           "seniority": "SENIOR",
           "engagement": {
             "type": "EMPLOYMENT",
@@ -234,14 +238,14 @@
             ],
             "soft": [
               {
-                "skill": "Stakeholder_Management",
-                "level": "ADVANCED"
+                "skill": "Leadership",
+                "level": "INTERMEDIATE"
               }
             ]
           },
           "highlights": [
-            "Led development of cloud-based solutions",
-            "Managed product roadmap and backlog"
+            "Successfully delivered projects on time and within budget",
+            "Managed cross-functional teams"
           ],
           "active": true
         }
@@ -257,13 +261,13 @@
           ]
         }
       },
-      "extra_notes": "Looking to connect with other product managers and technical teams."
+      "extra_notes": "Always looking to improve project management practices"
     },
     {
       "id": "base-set-4",
-      "raw_input": "Emily Rodriguez, Computer Science student at State University. Learning Python and web development. I enjoy gaming and contributing to open source projects.",
+      "raw_input": "Emily Zhang, computer science student interested in software development and AI.",
       "personal": {
-        "name": "Emily Rodriguez",
+        "name": "Emily Zhang",
         "headline": "Computer Science Student",
         "visiting_status": "LOCAL"
       },
@@ -276,26 +280,26 @@
         ],
         "soft": [
           {
-            "skill": "Collaboration",
-            "level": "BEGINNER"
+            "skill": "Problem_Solving",
+            "level": "INTERMEDIATE"
           }
         ]
       },
       "industries": [
-        "Open_Source_Software"
+        "Artificial_Intelligence"
       ],
       "hobbies": [
         "Gaming",
-        "Open_Source_Contribution"
+        "Attending_Meetups"
       ],
       "roles": [
         {
           "organization": {
             "org_type": "ACADEMIA_UNIVERSITY",
             "name": "State University",
-            "url": "https://stateuniversity.edu",
+            "url": "https://stateuniversity.example.edu",
             "industries": [
-              "EdTech"
+              "Artificial_Intelligence"
             ]
           },
           "category": "STUDENT",
@@ -303,8 +307,8 @@
           "title": "Computer Science Student",
           "seniority": "JUNIOR",
           "engagement": {
-            "type": "EMPLOYMENT",
-            "commitment": "FULL_TIME",
+            "type": "INTERNSHIP",
+            "commitment": "PART_TIME",
             "work_mode": "ON_SITE"
           },
           "skills": {
@@ -316,14 +320,14 @@
             ],
             "soft": [
               {
-                "skill": "Collaboration",
-                "level": "BEGINNER"
+                "skill": "Problem_Solving",
+                "level": "INTERMEDIATE"
               }
             ]
           },
           "highlights": [
-            "Currently working on a web application project",
-            "Active contributor to open source projects"
+            "Research assistant in AI lab",
+            "Developing machine learning projects"
           ],
           "active": true
         }
@@ -339,25 +343,25 @@
           ]
         }
       },
-      "extra_notes": "Seeking internship opportunities and mentorship."
+      "extra_notes": "Eager to learn and connect with industry professionals"
     },
     {
       "id": "base-set-5",
-      "raw_input": "James Wilson, DevOps Engineer at DataSystems. Experienced with AWS, Docker, and CI/CD pipelines. I enjoy cycling and learning new technologies in my spare time.",
+      "raw_input": "David Smith, backend developer specializing in cloud infrastructure and databases.",
       "personal": {
-        "name": "James Wilson",
-        "headline": "DevOps Engineer",
-        "visiting_status": "LOCAL"
+        "name": "David Smith",
+        "headline": "Backend Developer",
+        "visiting_status": "TEMPORARY_VISITOR"
       },
       "skills": {
         "hard": [
           {
-            "skill": "AWS",
+            "skill": "Python",
             "level": "ADVANCED"
           },
           {
-            "skill": "Docker",
-            "level": "ADVANCED"
+            "skill": "AWS",
+            "level": "INTERMEDIATE"
           }
         ],
         "soft": [
@@ -371,22 +375,22 @@
         "Cloud_Computing"
       ],
       "hobbies": [
-        "Cycling"
+        "Hiking",
+        "Open_Source_Contribution"
       ],
       "roles": [
         {
           "organization": {
-            "org_type": "ENTERPRISE",
-            "name": "DataSystems",
-            "url": "https://datasystems.com",
+            "org_type": "SCALE_UP",
+            "name": "CloudServices Inc",
+            "url": "https://cloudservices.example.com",
             "industries": [
-              "Cloud_Computing",
-              "Big_Data"
+              "Cloud_Computing"
             ]
           },
           "category": "ENGINEERING",
-          "sub_category": "DEVOPS_ENGINEER",
-          "title": "DevOps Engineer",
+          "sub_category": "BACKEND_DEVELOPER",
+          "title": "Senior Backend Engineer",
           "seniority": "SENIOR",
           "engagement": {
             "type": "EMPLOYMENT",
@@ -396,11 +400,7 @@
           "skills": {
             "hard": [
               {
-                "skill": "AWS",
-                "level": "ADVANCED"
-              },
-              {
-                "skill": "Docker",
+                "skill": "Python",
                 "level": "ADVANCED"
               }
             ],
@@ -412,8 +412,8 @@
             ]
           },
           "highlights": [
-            "Implemented CI/CD pipelines for multiple projects",
-            "Managed cloud infrastructure and deployments"
+            "Architected scalable cloud solutions",
+            "Optimized database performance"
           ],
           "active": true
         }
@@ -429,7 +429,440 @@
           ]
         }
       },
-      "extra_notes": "Interested in cloud architecture discussions and best practices."
+      "extra_notes": "Interested in discussing system design patterns"
+    },
+    {
+      "id": "base-set-6",
+      "raw_input": "Jennifer Lee, product manager with a background in marketing. I love connecting user needs with technical solutions.",
+      "personal": {
+        "name": "Jennifer Lee",
+        "headline": "Product Manager",
+        "visiting_status": "LOCAL"
+      },
+      "skills": {
+        "hard": [
+          {
+            "skill": "Product_Roadmapping",
+            "level": "ADVANCED"
+          }
+        ],
+        "soft": [
+          {
+            "skill": "Communication",
+            "level": "ADVANCED"
+          },
+          {
+            "skill": "Stakeholder_Management",
+            "level": "INTERMEDIATE"
+          }
+        ]
+      },
+      "industries": [
+        "SaaS",
+        "E_Commerce"
+      ],
+      "hobbies": [
+        "Traveling",
+        "Reading"
+      ],
+      "roles": [
+        {
+          "organization": {
+            "org_type": "SCALE_UP",
+            "name": "ProductSphere",
+            "url": "https://productsphere.example.com",
+            "industries": [
+              "SaaS"
+            ]
+          },
+          "category": "MANAGEMENT",
+          "sub_category": "PRODUCT_MANAGER",
+          "title": "Senior Product Manager",
+          "seniority": "SENIOR",
+          "engagement": {
+            "type": "EMPLOYMENT",
+            "commitment": "FULL_TIME",
+            "work_mode": "HYBRID"
+          },
+          "skills": {
+            "hard": [
+              {
+                "skill": "Product_Roadmapping",
+                "level": "ADVANCED"
+              }
+            ],
+            "soft": [
+              {
+                "skill": "Communication",
+                "level": "ADVANCED"
+              }
+            ]
+          },
+          "highlights": [
+            "Led product strategy for SaaS platform",
+            "Conducted user research to inform product decisions"
+          ],
+          "active": true
+        }
+      ],
+      "event_context": {
+        "event_id": "tech_conf_2023",
+        "goals": {
+          "looking_for": [
+            "NETWORKING"
+          ],
+          "offering": [
+            "NETWORKING"
+          ]
+        }
+      },
+      "extra_notes": "Passionate about user-centered design"
+    },
+    {
+      "id": "base-set-7",
+      "raw_input": "Robert Kim, full-stack developer with experience in web and mobile applications.",
+      "personal": {
+        "name": "Robert Kim",
+        "headline": "Full-Stack Developer",
+        "visiting_status": "LOCAL"
+      },
+      "skills": {
+        "hard": [
+          {
+            "skill": "JavaScript",
+            "level": "ADVANCED"
+          },
+          {
+            "skill": "React",
+            "level": "ADVANCED"
+          }
+        ],
+        "soft": [
+          {
+            "skill": "Problem_Solving",
+            "level": "ADVANCED"
+          }
+        ]
+      },
+      "industries": [
+        "SaaS"
+      ],
+      "hobbies": [
+        "Gaming",
+        "Cooking"
+      ],
+      "roles": [
+        {
+          "organization": {
+            "org_type": "STARTUP_GROWTH_STAGE",
+            "name": "WebWorks",
+            "url": "https://webworks.example.com",
+            "industries": [
+              "SaaS"
+            ]
+          },
+          "category": "ENGINEERING",
+          "sub_category": "FULLSTACK_DEVELOPER",
+          "title": "Full-Stack Developer",
+          "seniority": "MID_LEVEL",
+          "engagement": {
+            "type": "EMPLOYMENT",
+            "commitment": "FULL_TIME",
+            "work_mode": "HYBRID"
+          },
+          "skills": {
+            "hard": [
+              {
+                "skill": "JavaScript",
+                "level": "ADVANCED"
+              }
+            ],
+            "soft": [
+              {
+                "skill": "Problem_Solving",
+                "level": "ADVANCED"
+              }
+            ]
+          },
+          "highlights": [
+            "Developed responsive web applications",
+            "Built RESTful APIs"
+          ],
+          "active": true
+        }
+      ],
+      "event_context": {
+        "event_id": "tech_conf_2023",
+        "goals": {
+          "looking_for": [
+            "NETWORKING"
+          ],
+          "offering": [
+            "NETWORKING"
+          ]
+        }
+      },
+      "extra_notes": "Enjoy learning new programming languages"
+    },
+    {
+      "id": "base-set-8",
+      "raw_input": "Amanda Martinez, marketing manager specializing in digital marketing for tech companies.",
+      "personal": {
+        "name": "Amanda Martinez",
+        "headline": "Marketing Manager",
+        "visiting_status": "LOCAL"
+      },
+      "skills": {
+        "hard": [
+          {
+            "skill": "Market_Analysis",
+            "level": "ADVANCED"
+          }
+        ],
+        "soft": [
+          {
+            "skill": "Communication",
+            "level": "EXPERT"
+          },
+          {
+            "skill": "Creativity",
+            "level": "ADVANCED"
+          }
+        ]
+      },
+      "industries": [
+        "SaaS",
+        "Enterprise_Software"
+      ],
+      "hobbies": [
+        "Photography",
+        "Traveling"
+      ],
+      "roles": [
+        {
+          "organization": {
+            "org_type": "SCALE_UP",
+            "name": "TechMarketing Solutions",
+            "url": "https://techmarketing.example.com",
+            "industries": [
+              "SaaS"
+            ]
+          },
+          "category": "SALES_MARKETING_COMMUNITY",
+          "sub_category": "MARKETING_MANAGER",
+          "title": "Digital Marketing Manager",
+          "seniority": "MANAGER",
+          "engagement": {
+            "type": "EMPLOYMENT",
+            "commitment": "FULL_TIME",
+            "work_mode": "HYBRID"
+          },
+          "skills": {
+            "hard": [
+              {
+                "skill": "Market_Analysis",
+                "level": "ADVANCED"
+              }
+            ],
+            "soft": [
+              {
+                "skill": "Communication",
+                "level": "EXPERT"
+              }
+            ]
+          },
+          "highlights": [
+            "Developed digital marketing strategies",
+            "Managed successful product launches"
+          ],
+          "active": true
+        }
+      ],
+      "event_context": {
+        "event_id": "tech_conf_2023",
+        "goals": {
+          "looking_for": [
+            "NETWORKING"
+          ],
+          "offering": [
+            "NETWORKING"
+          ]
+        }
+      },
+      "extra_notes": "Interested in content marketing strategies"
+    },
+    {
+      "id": "base-set-9",
+      "raw_input": "James Wilson, data scientist with background in machine learning and data analysis.",
+      "personal": {
+        "name": "James Wilson",
+        "headline": "Data Scientist",
+        "visiting_status": "TEMPORARY_VISITOR"
+      },
+      "skills": {
+        "hard": [
+          {
+            "skill": "Python",
+            "level": "EXPERT"
+          },
+          {
+            "skill": "Machine_Learning",
+            "level": "ADVANCED"
+          }
+        ],
+        "soft": [
+          {
+            "skill": "Problem_Solving",
+            "level": "ADVANCED"
+          }
+        ]
+      },
+      "industries": [
+        "Artificial_Intelligence",
+        "Machine_Learning"
+      ],
+      "hobbies": [
+        "Reading",
+        "Hiking"
+      ],
+      "roles": [
+        {
+          "organization": {
+            "org_type": "ENTERPRISE",
+            "name": "DataInsights Inc",
+            "url": "https://datainsights.example.com",
+            "industries": [
+              "Machine_Learning"
+            ]
+          },
+          "category": "SCIENCE",
+          "sub_category": "DATA_SCIENTIST",
+          "title": "Senior Data Scientist",
+          "seniority": "SENIOR",
+          "engagement": {
+            "type": "EMPLOYMENT",
+            "commitment": "FULL_TIME",
+            "work_mode": "HYBRID"
+          },
+          "skills": {
+            "hard": [
+              {
+                "skill": "Python",
+                "level": "EXPERT"
+              }
+            ],
+            "soft": [
+              {
+                "skill": "Problem_Solving",
+                "level": "ADVANCED"
+              }
+            ]
+          },
+          "highlights": [
+            "Developed ML models for predictive analytics",
+            "Led data science projects for enterprise clients"
+          ],
+          "active": true
+        }
+      ],
+      "event_context": {
+        "event_id": "tech_conf_2023",
+        "goals": {
+          "looking_for": [
+            "NETWORKING"
+          ],
+          "offering": [
+            "NETWORKING"
+          ]
+        }
+      },
+      "extra_notes": "Interested in discussing ML applications"
+    },
+    {
+      "id": "base-set-10",
+      "raw_input": "Lisa Brown, DevOps engineer focusing on cloud infrastructure and CI/CD pipelines.",
+      "personal": {
+        "name": "Lisa Brown",
+        "headline": "DevOps Engineer",
+        "visiting_status": "LOCAL"
+      },
+      "skills": {
+        "hard": [
+          {
+            "skill": "Docker",
+            "level": "ADVANCED"
+          },
+          {
+            "skill": "Kubernetes",
+            "level": "INTERMEDIATE"
+          }
+        ],
+        "soft": [
+          {
+            "skill": "Problem_Solving",
+            "level": "ADVANCED"
+          }
+        ]
+      },
+      "industries": [
+        "Cloud_Computing"
+      ],
+      "hobbies": [
+        "Gaming",
+        "Open_Source_Contribution"
+      ],
+      "roles": [
+        {
+          "organization": {
+            "org_type": "ENTERPRISE",
+            "name": "CloudOps Solutions",
+            "url": "https://cloudops.example.com",
+            "industries": [
+              "Cloud_Computing"
+            ]
+          },
+          "category": "ENGINEERING",
+          "sub_category": "DEVOPS_ENGINEER",
+          "title": "Senior DevOps Engineer",
+          "seniority": "SENIOR",
+          "engagement": {
+            "type": "EMPLOYMENT",
+            "commitment": "FULL_TIME",
+            "work_mode": "REMOTE"
+          },
+          "skills": {
+            "hard": [
+              {
+                "skill": "Docker",
+                "level": "ADVANCED"
+              }
+            ],
+            "soft": [
+              {
+                "skill": "Problem_Solving",
+                "level": "ADVANCED"
+              }
+            ]
+          },
+          "highlights": [
+            "Implemented CI/CD pipelines",
+            "Managed containerized environments"
+          ],
+          "active": true
+        }
+      ],
+      "event_context": {
+        "event_id": "tech_conf_2023",
+        "goals": {
+          "looking_for": [
+            "NETWORKING"
+          ],
+          "offering": [
+            "NETWORKING"
+          ]
+        }
+      },
+      "extra_notes": "Passionate about automation and infrastructure as code"
     }
   ]
 }

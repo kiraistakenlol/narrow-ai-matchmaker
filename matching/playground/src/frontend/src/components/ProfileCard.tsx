@@ -73,18 +73,38 @@ export default function ProfileCard({ profile }: ProfileCardProps) {
      borderLeft: '3px solid #007bff', // Use a different color for active role
    };
 
+  const rawInputStyle: React.CSSProperties = {
+    marginTop: '15px',
+    paddingTop: '10px',
+    borderTop: '1px solid #eee',
+    fontSize: '0.9em',
+    lineHeight: '1.4',
+    color: '#333',
+  };
+
   return (
     <li style={cardStyle}>
       {/* Personal Info */}
       <div style={{ marginBottom: '12px' }}>
         <h3 style={headingStyle}>{profile.personal?.name ?? 'No Name'}</h3>
         <p style={paragraphStyle}>{profile.personal?.headline ?? 'No Headline'}</p>
-        {profile.personal?.visiting_status && (
-          <p style={{ ...paragraphStyle, marginTop: '5px', fontSize: '0.8em', color: '#777' }}>
-            Status: {profile.personal.visiting_status}
-          </p>
-        )}
+        <p style={{ ...paragraphStyle, marginTop: '5px', fontSize: '0.8em', color: '#777' }}>
+          ID: {profile.id}
+          {profile.personal?.visiting_status && (
+            <span style={{ marginLeft: '10px' }}>
+              Status: {profile.personal.visiting_status}
+            </span>
+          )}
+        </p>
       </div>
+
+      {/* Raw Input */}
+      {profile.raw_input && (
+        <div style={rawInputStyle}>
+          <strong style={labelStyle}>Profile Description:</strong>
+          <p style={{ margin: '5px 0 0 0' }}>{profile.raw_input}</p>
+        </div>
+      )}
 
       {/* Roles - Display All */}
       <div style={roleContainerStyle}>
@@ -149,7 +169,7 @@ export default function ProfileCard({ profile }: ProfileCardProps) {
       {/* Extra Notes */}
       {profile.extra_notes && (
           <div style={{ ...detailStyle, marginTop: '10px' }}>
-            <strong style={labelStyle}>Notes:</strong> {profile.extra_notes.substring(0, 100)}{profile.extra_notes.length > 100 ? '...' : ''}
+            <strong style={labelStyle}>Notes:</strong> {profile.extra_notes}
           </div>
       )}
     </li>

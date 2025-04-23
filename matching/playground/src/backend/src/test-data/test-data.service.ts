@@ -264,8 +264,11 @@ export class TestDataService implements OnModuleInit {
           \`\`\`json
           ${baseAudienceContentString}
           \`\`\`
-      4.  **Content - Realism:** While specific to the scenario, the profiles should still be realistic representations of individuals one might encounter at a professional event. Fill fields appropriately and plausibly. Keep text inputs concise but informative.
-      5.  **Output Purity:** Your response MUST contain ONLY the JSON array, starting with '[' and ending with ']'. Do not include any introductory text, explanations, markdown formatting, code block indicators (\`\`\`json), or anything else outside the JSON array.
+      4.  **Content - Array Lengths:** For all fields that are arrays of strings or simple objects (like skills, industries, hobbies), include a maximum of TWO or THREE items to keep profiles focused and manageable. Keep them concise and relevant to the scenario.
+      5.  **Content - Roles:** The \`roles\` array should contain ONE or TWO role objects. For each profile, at least one role MUST have its \`active\` property set to \`true\`. Past roles (where active is false) are optional but may be included if relevant to the scenario.
+      6.  **Content - Goals:** The \`event_context.goals.looking_for\` and \`event_context.goals.offering\` arrays MUST contain values that directly reflect the target scenario. These should NOT be generic "NETWORKING" goals, but specific intentions related to the match description. For example, in a "Founder ⇄ CTO" scenario, one profile might have "FIND_COFOUNDER" in looking_for, while the other has "JOIN_STARTUP" or similar.
+      7.  **Content - Realism:** While specific to the scenario, the profiles should still be realistic representations of individuals one might encounter at a professional event. Fill fields appropriately and plausibly. Keep text inputs concise but informative.
+      8.  **Output Purity:** Your response MUST contain ONLY the JSON array, starting with '[' and ending with ']'. Do not include any introductory text, explanations, markdown formatting, code block indicators (\`\`\`json), or anything else outside the JSON array.
     `;
 
     // Estimate tokens: Base audience size + 2 profiles (~3000 tokens) + prompt overhead
