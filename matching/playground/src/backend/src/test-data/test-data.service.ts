@@ -329,13 +329,12 @@ export class TestDataService implements OnModuleInit {
       };
 
       // 6. Determine Output Path and Save
-      const categorySlug = slugify(categoryName);
-      const scenarioFileSlug = slugify(`${targetScenario.id}_${targetScenario.scenario}`);
-      const outputDir = path.join(__dirname, '../../../../test_cases', categorySlug);
-      const filePath = path.join(outputDir, `${scenarioFileSlug}.json`);
+      const outputDir = path.join(__dirname, '../../../../test_cases'); // Save directly in test_cases
+      // Use scenarioId directly for the filename
+      const filePath = path.join(outputDir, `${scenarioId}.json`); 
 
       this.logger.log(`Saving scenario bundle [${scenarioId}] to ${filePath}...`);
-      await fs.mkdir(outputDir, { recursive: true });
+      await fs.mkdir(outputDir, { recursive: true }); // Ensure base test_cases dir exists
       await fs.writeFile(filePath, JSON.stringify(outputData, null, 2));
       this.logger.log(`Successfully saved scenario bundle for ${scenarioId}.`);
 
