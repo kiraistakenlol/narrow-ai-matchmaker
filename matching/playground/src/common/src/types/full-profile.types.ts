@@ -57,7 +57,7 @@ export interface EventContext {
 }
 
 // --- Main FullProfile Interface ---
-export interface FullProfile {
+export interface Profile {
     id: string; // Added ID field for database/lookup purposes
     raw_input: string | null;
     personal: {
@@ -77,8 +77,8 @@ export interface FullProfile {
 }
 
 // Interface for the structure stored in the JSON file
-export interface FullProfilesData {
-    profiles: FullProfile[];
+export interface FullProfilesWithEmbeddings {
+    profiles: Profile[];
     embeddings?: {
         [profileId: string]: number[];
     };

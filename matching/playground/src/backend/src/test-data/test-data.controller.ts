@@ -1,94 +1,93 @@
 import {
+  BadRequestException,
   Controller,
-  Post,
-  Query,
+  DefaultValuePipe,
+  Get,
   HttpCode,
   HttpStatus,
-  DefaultValuePipe,
-  ParseIntPipe,
-  Injectable,
-  Inject,
   InternalServerErrorException,
-  BadRequestException,
-  Get,
-  Param,
   NotFoundException,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
 } from '@nestjs/common';
-import { TestDataService } from './test-data.service';
-import { MatchScenarioCategories } from '../../common/src/types/match-scenarios.types';
-import { FullProfile } from '../../../common/src/types/full-profile.types';
+import {TestDataService} from './test-data.service';
+import {MatchScenarioCategories} from 'narrow-ai-matchmaker-common';
+import {Profile} from 'narrow-ai-matchmaker-common';
 
 @Controller('test-data')
 export class TestDataController {
-  constructor(private readonly testDataService: TestDataService) {}
+    constructor(private readonly testDataService: TestDataService) {
+    }
 
-  @Post('generate-base-set')
-  @HttpCode(HttpStatus.OK) // Use OK for successful action, even if it creates a file
-  async generateBaseSet(
-    @Query('count', new DefaultValuePipe(50), ParseIntPipe) count: number,
-  ) {
-    if (count <= 0 || count > 500) { // Add some reasonable limits
-      throw new BadRequestException('Count must be between 1 and 500.');
+    @Post('generate-base-set')
+    @HttpCode(HttpStatus.OK) // Use OK for successful action, even if it creates a file
+    async generateBaseSet(
+        @Query('count', new DefaultValuePipe(50), ParseIntPipe) count: number,
+    ) {
+        if (count <= 0 || count > 500) { // Add some reasonable limits
+            throw new BadRequestException('Count must be between 1 and 500.');
+        }
+        try {
+            const result = await this.testDataService.generateAndSaveBaseSet(count);
+            return {
+                message: `Successfully generated and saved ${result.count} profiles.`,
+                filePath: result.filePath,
+            };
+        } catch (error) {
+            console.error('Error generating base set:', error);
+            // Avoid exposing raw error details to the client
+            throw new InternalServerErrorException('Failed to generate base set.');
+        }
     }
-    try {
-      const result = await this.testDataService.generateAndSaveBaseSet(count);
-      return {
-        message: `Successfully generated and saved ${result.count} profiles.`,
-        filePath: result.filePath,
-      };
-    } catch (error) {
-      console.error('Error generating base set:', error);
-      // Avoid exposing raw error details to the client
-      throw new InternalServerErrorException('Failed to generate base set.');
-    }
-  }
 
-  @Get('scenarios')
-  @HttpCode(HttpStatus.OK)
-  async getMatchScenarios(): Promise<MatchScenarioCategories> {
-    try {
-      return await this.testDataService.getMatchScenarios();
-    } catch (error) {
-      console.error('Error fetching match scenarios:', error);
-      throw new InternalServerErrorException('Failed to fetch match scenarios.');
+    @Get('scenarios')
+    @HttpCode(HttpStatus.OK)
+    async getMatchScenarios(): Promise<MatchScenarioCategories> {
+        try {
+            return await this.testDataService.getMatchScenarios();
+        } catch (error) {
+            console.error('Error fetching match scenarios:', error);
+            throw new InternalServerErrorException('Failed to fetch match scenarios.');
+        }
     }
-  }
 
-  @Post('generate-scenario/:scenarioId')
-  @HttpCode(HttpStatus.OK)
-  async generateScenarioBundle(
-    @Param('scenarioId') scenarioId: string,
-  ) {
-    if (!scenarioId) {
-      throw new BadRequestException('Scenario ID must be provided.');
+    @Post('generate-scenario/:scenarioId')
+    @HttpCode(HttpStatus.OK)
+    async generateScenarioBundle(
+        @Param('scenarioId') scenarioId: string,
+    ) {
+        if (!scenarioId) {
+            throw new BadRequestException('Scenario ID must be provided.');
+        }
+        try {
+            const result = await this.testDataService.generateAndSaveScenarioBundle(scenarioId);
+            return {
+                message: `Successfully generated ${result.profilesGenerated} profiles for scenario ${scenarioId}.`,
+                filePath: result.filePath,
+            };
+        } catch (error) {
+            console.error(`Error generating scenario bundle for ${scenarioId}:`, error);
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException(error.message);
+            }
+            // Avoid exposing raw error details for other errors
+            throw new InternalServerErrorException(`Failed to generate scenario bundle for ${scenarioId}.`);
+        }
     }
-    try {
-      const result = await this.testDataService.generateAndSaveScenarioBundle(scenarioId);
-      return {
-        message: `Successfully generated ${result.profilesGenerated} profiles for scenario ${scenarioId}.`,
-        filePath: result.filePath,
-      };
-    } catch (error) {
-      console.error(`Error generating scenario bundle for ${scenarioId}:`, error);
-      if (error instanceof NotFoundException) {
-        throw new NotFoundException(error.message);
-      }
-      // Avoid exposing raw error details for other errors
-      throw new InternalServerErrorException(`Failed to generate scenario bundle for ${scenarioId}.`);
-    }
-  }
 
-  @Get('get-base-set')
-  @HttpCode(HttpStatus.OK)
-  async getBaseSet(): Promise<FullProfile[]> {
-    try {
-      return await this.testDataService.getBaseAudienceProfiles();
-    } catch (error) {
-      console.error('Error fetching base set:', error);
-      if (error instanceof NotFoundException) {
-        throw new NotFoundException(error.message);
-      }
-      throw new InternalServerErrorException('Failed to fetch base set profiles.');
+    @Get('get-base-set')
+    @HttpCode(HttpStatus.OK)
+    async getBaseSet(): Promise<Profile[]> {
+        try {
+            return await this.testDataService.getBaseAudienceProfiles();
+        } catch (error) {
+            console.error('Error fetching base set:', error);
+            if (error instanceof NotFoundException) {
+                throw new NotFoundException(error.message);
+            }
+            throw new InternalServerErrorException('Failed to fetch base set profiles.');
+        }
     }
-  }
 } 

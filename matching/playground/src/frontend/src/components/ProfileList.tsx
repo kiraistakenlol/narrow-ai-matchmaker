@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { FullProfile } from '../../../../common/src/types/full-profile.types';
+import { Profile } from 'narrow-ai-matchmaker-common/src/types/full-profile.types';
+import styles from './ProfileList.module.css';
 import ProfileCard from './ProfileCard';
 
 interface ProfileListProps {
-  profiles: FullProfile[];
+  profiles: Profile[];
   loading: boolean;
   error: string | null;
   onGenerationComplete: () => void;

@@ -1,4 +1,4 @@
-import { FullProfile } from './full-profile.types';
+import { Profile } from './full-profile.types';
 
 /**
  * Represents a single matching scenario.
@@ -8,7 +8,7 @@ export interface MatchScenario {
   scenario: string;
   match_description: string;
   testCase?: {
-    profiles: FullProfile[];
+    profiles: Profile[];
   } | null;
 }
 

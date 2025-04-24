@@ -1,4 +1,4 @@
-export interface EmbedProfileDto {
-  profileId: string;
-  collectionName: string;
+export class EmbedProfileDto {
+  declare collectionName: string;
+  declare description: string;
 } 

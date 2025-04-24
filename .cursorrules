@@ -1,5 +1,3 @@
-
-
 Only leave comments when absolutely necessary.
 
 When asked to remove something - remove it completely instead of commending out.
@@ -13,3 +11,6 @@ High level project overview is in README.md in the root of the project.
 ## Typescript
 
 Always try to use types  
+
+## Formatting
+Use 4 spaces for indentation.  
