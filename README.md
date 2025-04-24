@@ -4,15 +4,8 @@ A platform leveraging AI and LLMs to facilitate connections between people based
 
 ## Documentation
 
-*   [Project Idea and Roadmap](idea.md): Detailed concepts, MVP definition, and initial test plans.
 *   [Technical Overview](technical_overview.md): High-level technical design.
 *   [Notes & TODOs](NOTES.md): Miscellaneous ideas and tasks.
-*   Matching Deep Dive:
-    *   [Detailed Matching Process](matching/detailed_matching_process.md)
-    *   [Matching Strategies and Challenges](matching/matching_strategies_and_challenges.md)
-    *   [Vector Database Fundamentals](matching/vector_database_fundamentals.md)
-    *   [Vector vs Graph Databases](matching/vector_vs_graph_databases.md)
-    *   [Example Match Scenarios](matching/example_match_scenarios.md)
 
 ## Setup
 
@@ -20,21 +13,18 @@ A platform leveraging AI and LLMs to facilitate connections between people based
     *   See specific component READMEs (like the Test Data Generator) for component-specific `.env` requirements.
     *   **Important:** Ensure relevant `.env` files are added to your `.gitignore` file.
 
-## Test Data Generation
+## Project Idea and Roadmap
 
-A script for generating synthetic test data using the Anthropic API is located in `matching/playground/test_data/generator/`. See the [Test Data Generator README](matching/playground/test_data/generator/README.md) for setup and usage instructions.
+### 1. Brainstorming & Broad Vision
 
-## Testing Methodology (Matching System)
+This section serves as a repository for all ideas related to the platform, without commitment to immediate implementation.
 
-The evaluation of the matching system relies on predefined scenarios, each designed to test specific matching capabilities.
+#### Core Concept
+A unified platform designed to connect individuals based on diverse needs and goals, moving beyond rigid forms by leveraging AI/LLM analysis of free-form user input (text, audio).
 
-1.  **Base Set:** A pre-generated set of N profiles representing 'non-descript' or generic event participants. This set forms the background noise against which specific matches are tested.
-2.  **Scenario Bundles:** Each test scenario has a corresponding bundle of specific profiles ("signal" profiles) designed to interact in predictable ways (e.g., expected matches).
-3.  **Test Execution:**
-    *   **Pre-condition:** The Base Set profiles are assumed to be already generated and embedded within the vector database.
-    *   **Scenario Setup:** For a given scenario, the specific profiles from its bundle are embedded into the vector database.
-    *   **Query & Evaluation:** Queries are performed using one or more signal profiles from the bundle to find the top K matches.
-    *   **Assertion:** The returned match results are compared against the expected results defined for that specific scenario.
-    *   **Metrics:** Performance metrics (e.g., precision, recall, MRR) are calculated based on the comparison.
-
-This approach allows for isolated testing of different matching situations by combining a consistent background dataset with scenario-specific signal profiles.
+#### Potential Use Cases
+The platform's flexibility allows for a wide range of applications:
+- **Professional Networking:** Finding hackathon teammates, conference connections, co-founders, mentors, industry peers.
+- **Services:** Connecting users with local service providers (nannies, tutors, handymen, etc.).
+- **Hobbies & Social:** Matching language exchange partners, running buddies, members for hobby groups, local event attendees.
+- **Community Building:** Facilitating connections within specific communities (co-working spaces, alumni groups, local neighborhoods).
