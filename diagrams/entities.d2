@@ -1,0 +1,176 @@
+# Entity Relationship Diagram
+direction: down
+
+# Define styles
+styles: {
+  entity: {
+    shape: rectangle
+    style: {
+      fill: "#e1f5fe"
+      stroke: "#0277bd"
+      stroke-width: 2
+      border-radius: 5
+    }
+  }
+  
+  field: {
+    shape: text
+    style: {
+      font-size: 14
+    }
+  }
+  
+  relationship: {
+    style: {
+      stroke: "#333"
+      stroke-width: 2
+    }
+  }
+}
+
+# Define entities
+User: {
+  class: entity
+  label: "User"
+  
+  # User fields
+  id: {
+    class: field
+    label: "id: UUID (PK)"
+  }
+  name: {
+    class: field
+    label: "name: string"
+  }
+  email: {
+    class: field
+    label: "email: string"
+  }
+  general_vector: {
+    class: field
+    label: "general_vector: float[]"
+  }
+  goals_vector: {
+    class: field
+    label: "goals_vector: float[]"
+  }
+  hobbies_vector: {
+    class: field
+    label: "hobbies_vector: float[]"
+  }
+  created_at: {
+    class: field
+    label: "created_at: timestamp"
+  }
+  updated_at: {
+    class: field
+    label: "updated_at: timestamp"
+  }
+}
+
+Event: {
+  class: entity
+  label: "Event"
+  
+  # Event fields
+  id: {
+    class: field
+    label: "id: UUID (PK)"
+  }
+  name: {
+    class: field
+    label: "name: string"
+  }
+  description: {
+    class: field
+    label: "description: string"
+  }
+  location: {
+    class: field
+    label: "location: string"
+  }
+  start_date: {
+    class: field
+    label: "start_date: timestamp"
+  }
+  end_date: {
+    class: field
+    label: "end_date: timestamp"
+  }
+  created_at: {
+    class: field
+    label: "created_at: timestamp"
+  }
+  updated_at: {
+    class: field
+    label: "updated_at: timestamp"
+  }
+}
+
+Match: {
+  class: entity
+  label: "Match"
+  
+  # Match fields
+  id: {
+    class: field
+    label: "id: UUID (PK)"
+  }
+  user1_id: {
+    class: field
+    label: "user1_id: UUID (FK)"
+  }
+  user2_id: {
+    class: field
+    label: "user2_id: UUID (FK)"
+  }
+  event_id: {
+    class: field
+    label: "event_id: UUID (FK)"
+  }
+  match_score: {
+    class: field
+    label: "match_score: float"
+  }
+  status: {
+    class: field
+    label: "status: enum (pending/accepted/rejected)"
+  }
+  created_at: {
+    class: field
+    label: "created_at: timestamp"
+  }
+  updated_at: {
+    class: field
+    label: "updated_at: timestamp"
+  }
+}
+
+# Define relationships
+User -> Event: "participates in" {
+  class: relationship
+  label: "1:N"
+  style.stroke-dash: 5
+}
+
+Event -> Match: "has" {
+  class: relationship
+  label: "1:N"
+  style.stroke-dash: 5
+}
+
+# Add explanatory note
+Note: |md
+  ## Entity Relationships
+  - User can participate in multiple matches (1:N)
+  - Event can have multiple matches (1:N)
+  - Match connects two users within an event
+  - Match includes a score and status
+|
+
+Note.style: {
+  fill: "#f5f5f5"
+  stroke: "#333"
+  stroke-width: 1
+  border-radius: 5
+} 
