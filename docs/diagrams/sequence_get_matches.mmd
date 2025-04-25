@@ -1,0 +1,24 @@
+sequenceDiagram
+    participant Client as Client Interface
+    participant API as API Gateway
+    participant Matcher as Matching Engine
+    participant Qdrant as Qdrant Cloud
+    participant RDS as RDS Database
+    participant LLM as LLM Service
+
+    Client->>+API: 1. GET /events/{eventId}/matches
+    API->>+Matcher: 2. getMatches(userId, eventId)
+    Matcher->>+Qdrant: 3. Get User Event Embedding
+    Qdrant-->>-Matcher: 4. User Embedding
+    Matcher->>+Qdrant: 5. Search Similar Embeddings
+    Qdrant-->>-Matcher: 6. List of Candidate User IDs + Scores
+    Matcher->>+RDS: 7. Fetch Profiles & Event Context (Candidates)
+    RDS-->>-Matcher: 8. Candidate Profiles & Context Data
+
+    loop For each Candidate
+        Matcher->>+LLM: 9. Generate Match Explanation
+        LLM-->>-Matcher: 10. Explanation Text
+    end
+
+    Matcher-->>-API: 11. Formatted Match List
+    API-->>-Client: 12. List of Matches

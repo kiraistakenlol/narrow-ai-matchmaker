@@ -1,0 +1,52 @@
+digraph AWSInfrastructure {
+    rankdir=LR;
+    node [shape=box, style=filled];
+    graph [label="AWS Infrastructure Diagram (Conceptual)", labelloc=t, fontsize=18];
+
+    User [label="User", shape=ellipse];
+
+    subgraph cluster_AWSCloud {
+        label = "AWS Cloud Region";
+        style = filled;
+        fillcolor = "#f5f5f5";
+        node [style=filled];
+
+        APIGatewayAWS [label="API Gateway\n(AWS Service)", shape=hexagon, fillcolor="#ffbb50"];
+
+        subgraph cluster_AppRunnerServices {
+            label = "App Runner Services";
+            fillcolor = "#dddddd";
+            node [shape=component, fillcolor="#ffffff"];
+            AppRunnerAPI [label="API Service"];
+            AppRunnerProfile [label="Profile Svc"];
+            AppRunnerEvent [label="Event Svc"];
+            AppRunnerMatcher [label="Matcher Svc"];
+        }
+
+        RDSInstance [label="RDS PostgreSQL Instance", shape=cylinder, fillcolor="#77aaff", tooltip="Contains User, Profile, Event, Participation tables"];
+        S3DataBucket [label="S3 Bucket", shape=cylinder, fillcolor="#aa77ff", tooltip="Stores raw audio files"]; // Cylinder often used for storage
+
+        // Internal AWS Connections
+        APIGatewayAWS -> AppRunnerAPI;
+        AppRunnerAPI -> AppRunnerProfile;
+        AppRunnerAPI -> AppRunnerEvent;
+        AppRunnerAPI -> AppRunnerMatcher;
+
+        AppRunnerProfile -> RDSInstance;
+        AppRunnerProfile -> S3DataBucket;
+        AppRunnerEvent -> RDSInstance;
+        AppRunnerMatcher -> RDSInstance;
+    }
+
+    // External Services (Connected to AWS)
+    QdrantCloudService [label="Qdrant Cloud", shape=ellipse, fillcolor="#f0d0f0"];
+    LLMProvider [label="LLM Service Provider", shape=ellipse, fillcolor="#f0e8d0"];
+
+    // Connections
+    User -> APIGatewayAWS [label=" HTTPS Requests"];
+
+    AppRunnerProfile -> LLMProvider [label=" API Call (Embed/Parse)"];
+    AppRunnerMatcher -> LLMProvider [label=" API Call (Explain Match)"];
+    AppRunnerEvent -> QdrantCloudService [label=" API Call (Store Embeddings)"];
+    AppRunnerMatcher -> QdrantCloudService [label=" API Call (Search Embeddings)"];
+} 

@@ -1,0 +1,80 @@
+sequenceDiagram
+    title Option 1 - Async Audio Upload Onboarding
+
+    participant Client as Client Interface
+    participant API as API Gateway
+    participant ProfileSvc as Profile Service
+    participant S3 as S3 Bucket
+    participant BG_Processor as Background Processor
+    participant STT as Speech-to-Text Svc
+    participant LLM as LLM Service
+    participant RDS as RDS Database
+    participant Qdrant as Qdrant Cloud
+
+    loop Until Profile is Good Enough
+        Client->>API: Request Audio Upload URL (for specific info)
+        activate API
+        API->>ProfileSvc: Generate Pre-signed S3 URL
+        activate ProfileSvc
+        ProfileSvc-->>API: Pre-signed URL
+        deactivate ProfileSvc
+        API-->>Client: Pre-signed URL
+        deactivate API
+
+        Client->>S3: Upload Audio File directly
+        Note over Client, S3: User records & uploads audio
+
+        Client->>API: Notify Upload Complete (s3_key, job_context)
+        activate API
+        API->>BG_Processor: Trigger Background Job (e.g., via SQS/Lambda)
+        Note over API, BG_Processor: Async trigger
+        API-->>Client: Accepted (jobId)
+        deactivate API
+
+        activate BG_Processor
+        BG_Processor->>S3: Get Audio File
+        BG_Processor->>STT: Transcribe
+        STT-->>BG_Processor: Transcript
+        BG_Processor->>LLM: Parse Transcript (provide schema)
+        LLM-->>BG_Processor: Parsed Profile Data
+        BG_Processor->>RDS: Save/Merge Profile Data
+        activate RDS
+        RDS-->>BG_Processor: DB Confirm
+        deactivate RDS
+        BG_Processor->>RDS: Update Job Status (e.g., PARSED, Check if Complete?)
+        
+        # Check if profile is now complete after this update
+        alt Profile Now Complete
+            BG_Processor->>LLM: Generate Final Embedding
+            LLM-->>BG_Processor: Embedding
+            BG_Processor->>Qdrant: Upsert Final Embedding
+            activate Qdrant
+            Qdrant-->>BG_Processor: Qdrant Confirm
+            deactivate Qdrant
+            BG_Processor->>RDS: Update Job Status (COMPLETED)
+        else Profile Needs More Info
+            BG_Processor->>RDS: Update Job Status (NEEDS_MORE_INFO)
+        end
+        deactivate BG_Processor
+
+        loop Poll for Status
+            Client->>API: GET /profile/status # Simplified message
+            activate API
+            API->>RDS: Check Job Status
+            activate RDS
+            RDS-->>API: Job Status & Payload (e.g., missing_fields if NEEDS_MORE_INFO)
+            deactivate RDS
+            API-->>Client: Job Status & Payload
+            deactivate API
+            alt Status is PROCESSING
+                Note over Client: Wait and poll again...
+            else Status is NEEDS_MORE_INFO or COMPLETED
+                Note over Client: Exit polling loop
+            end
+        end
+        Note over Client: Update UI based on Status
+        opt Status is NEEDS_MORE_INFO
+            Note over Client: Prompt user for next audio upload based on missing info
+        end
+    end
+    Note over Client: Profile onboarding complete!

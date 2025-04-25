@@ -1,0 +1,44 @@
+digraph SystemComponents {
+    rankdir=LR; // Layout Left to Right (similar to direction: right)
+    node [shape=box, style=filled];
+
+    // Client Interface
+    ClientInterface [label="Client Interface\n(Web, Mobile, Bot, ...)", shape=ellipse, fillcolor="#d0e0f0"];
+
+    // Backend Subgraph (Cluster for visual grouping)
+    subgraph cluster_Backend {
+        label = "Backend System (AWS App Runner)";
+        style = filled;
+        fillcolor = "#eeeeee";
+        node [shape=component, style=filled, fillcolor="#ffffff"];
+
+        APIGateway [label="API Gateway", shape=hexagon];
+        ProfileService [label="Profile Management Service"];
+        EventService [label="Event Management Service"];
+        MatchingEngine [label="Matching Engine Service"];
+    }
+
+    // External/Managed Services
+    LLMService [label="LLM Service\n(e.g., OpenAI, Anthropic)", shape=ellipse, fillcolor="#f0e8d0"];
+    RDSDatabase [label="RDS Database\n(PostgreSQL + JSONB)", shape=cylinder, fillcolor="#d0f0d0"];
+    QdrantCloud [label="Qdrant Cloud", shape=cylinder, fillcolor="#f0d0f0"];
+    S3Bucket [label="S3 Bucket", shape=cylinder, fillcolor="#f0f0d0"];
+
+    // Connections
+    ClientInterface -> APIGateway [label=" API"];
+
+    APIGateway -> ProfileService;
+    APIGateway -> EventService;
+    APIGateway -> MatchingEngine;
+
+    ProfileService -> LLMService [label=" Parse Data"];
+    ProfileService -> RDSDatabase [label=" R/W Profile"];
+    ProfileService -> S3Bucket [label=" Store Audio"];
+
+    EventService -> RDSDatabase [label=" R/W Event"];
+    EventService -> QdrantCloud [label=" Store Goals Emb"];
+
+    MatchingEngine -> QdrantCloud [label=" Find Cands"];
+    MatchingEngine -> RDSDatabase [label=" Fetch Cands"];
+    MatchingEngine -> LLMService [label=" Explain Match"];
+} 

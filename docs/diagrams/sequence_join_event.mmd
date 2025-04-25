@@ -1,0 +1,29 @@
+sequenceDiagram
+    participant Client as Client Interface
+    participant API as API Gateway
+    participant EventSvc as Event Service
+    participant RDS as RDS Database
+    participant LLM as LLM Service
+    participant Qdrant as Qdrant Cloud
+    participant ProfileSvc as Profile Service
+
+    Client->>+API: POST /events/{eventId}/join (Payload: goals, context)
+    API->>+EventSvc: joinEvent(userId, eventId, goals, context)
+    EventSvc->>+RDS: Create/Update EventParticipation Record
+    RDS-->>-EventSvc: DB Confirm
+
+    # Fetch relevant profile data via ProfileService
+    EventSvc->>+ProfileSvc: Get User Profile Summary(userId)
+    activate ProfileSvc
+    ProfileSvc->>+RDS: Get Profile Data (userId)
+    RDS-->>-ProfileSvc: Profile Data
+    ProfileSvc-->>-EventSvc: Profile Summary/Data
+    deactivate ProfileSvc
+    
+    # Generate combined embedding
+    EventSvc->>+LLM: Generate Embedding for (Profile + Event Context)
+    LLM-->>-EventSvc: Combined Embedding Vector
+    EventSvc->>+Qdrant: Upsert User-Event Vector (userId, eventId)
+    Qdrant-->>-EventSvc: Qdrant Confirm
+    EventSvc-->>-API: Successfully Joined/Updated
+    API-->>-Client: Success
