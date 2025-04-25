@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script to compile all .dot and .mmd files in this directory to SVG
+# Script to compile specified .dot/.mmd file or all files in this directory to SVG
 # Output files will be placed in a 'compiled' subdirectory.
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
@@ -9,41 +9,78 @@ OUTPUT_DIR="${SCRIPT_DIR}/compiled"
 # Create the output directory if it doesn't exist
 mkdir -p "${OUTPUT_DIR}"
 
-# --- Compile Graphviz (.dot) files ---
-echo "Compiling Graphviz (.dot) diagrams..."
-if ! command -v dot &> /dev/null; then
-    echo "Graphviz 'dot' command not found. Skipping .dot compilation." >&2
-else
-    find "${SCRIPT_DIR}" -maxdepth 1 -name '*.dot' | while read -r dotfile; do
-        if [ -f "$dotfile" ]; then
-            filename=$(basename "$dotfile" .dot)
-            output_svg="${OUTPUT_DIR}/${filename}.svg"
-            echo " - Compiling ${filename}.dot to ${filename}.svg..."
-            dot -Tsvg "$dotfile" -o "$output_svg"
-            if [ $? -ne 0 ]; then
-                echo "   Error compiling ${filename}.dot"
-            fi
-        fi
-    done
-fi
+# --- Function to compile a single file ---
+compile_single_file() {
+    local input_file="$1"
+    local filename=$(basename "$input_file")
+    local extension="${filename##*.}"
+    local base_filename="${filename%.*}"
+    local output_svg="${OUTPUT_DIR}/${base_filename}.svg"
 
-# --- Compile Mermaid (.mmd) files ---
-echo "Compiling Mermaid (.mmd) diagrams..."
-if ! command -v mmdc &> /dev/null; then
-    echo "Mermaid CLI 'mmdc' command not found. Skipping .mmd compilation." >&2
-    echo "Install via: npm install -g @mermaid-js/mermaid-cli" >&2
-else
-    find "${SCRIPT_DIR}" -maxdepth 1 -name '*.mmd' | while read -r mmdfile; do
-        if [ -f "$mmdfile" ]; then
-            filename=$(basename "$mmdfile" .mmd)
-            output_svg="${OUTPUT_DIR}/${filename}.svg"
-            echo " - Compiling ${filename}.mmd to ${filename}.svg..."
-            mmdc -i "$mmdfile" -o "$output_svg" -w 1024 # Set width for better rendering
-            if [ $? -ne 0 ]; then
-                echo "   Error compiling ${filename}.mmd"
-            fi
-        fi
-    done
-fi
+    echo "Compiling single file: $input_file"
 
-echo "Diagram compilation finished." 
+    case "$extension" in
+        dot)
+            if ! command -v dot &> /dev/null; then
+                echo "Error: Graphviz 'dot' command not found." >&2
+                return 1
+            fi
+            echo " - Compiling ${filename} to ${base_filename}.svg..."
+            dot -Tsvg "$input_file" -o "$output_svg"
+            if [ $? -ne 0 ]; then echo "   Error compiling ${filename}" >&2; return 1; fi
+            ;;
+        mmd)
+            if ! command -v mmdc &> /dev/null; then
+                echo "Error: Mermaid CLI 'mmdc' command not found." >&2
+                echo "Install via: npm install -g @mermaid-js/mermaid-cli" >&2
+                return 1
+            fi
+            echo " - Compiling ${filename} to ${base_filename}.svg..."
+            mmdc -i "$input_file" -o "$output_svg" -w 1024 # Set width
+            if [ $? -ne 0 ]; then echo "   Error compiling ${filename}" >&2; return 1; fi
+            ;;
+        *)
+            echo "Error: Unsupported file type: .$extension (expected .dot or .mmd)" >&2
+            return 1
+            ;;
+    esac
+    echo "Successfully created ${output_svg}"
+    return 0
+}
+
+# --- Main Logic ---
+if [ -n "$1" ]; then
+    # Single file mode
+    input_file="$1"
+    if [ ! -f "$input_file" ]; then
+        echo "Error: Input file not found: $input_file" >&2
+        exit 1
+    fi
+    compile_single_file "$input_file"
+    exit $?
+else
+    # Compile all mode
+    # --- Compile Graphviz (.dot) files ---
+    echo "Compiling Graphviz (.dot) diagrams..."
+    if ! command -v dot &> /dev/null; then
+        echo "Graphviz 'dot' command not found. Skipping .dot compilation." >&2
+    else
+        find "${SCRIPT_DIR}" -maxdepth 1 -name '*.dot' | while read -r dotfile; do
+            if [ -f "$dotfile" ]; then compile_single_file "$dotfile"; fi
+        done
+    fi
+
+    # --- Compile Mermaid (.mmd) files ---
+    echo "Compiling Mermaid (.mmd) diagrams..."
+    if ! command -v mmdc &> /dev/null; then
+        echo "Mermaid CLI 'mmdc' command not found. Skipping .mmd compilation." >&2
+        echo "Install via: npm install -g @mermaid-js/mermaid-cli" >&2
+    else
+        find "${SCRIPT_DIR}" -maxdepth 1 -name '*.mmd' | while read -r mmdfile; do
+            if [ -f "$mmdfile" ]; then compile_single_file "$mmdfile"; fi
+        done
+    fi
+
+    echo "Diagram compilation finished."
+    exit 0
+fi 

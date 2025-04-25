@@ -1,0 +1,226 @@
+sequenceDiagram
+    title Onboarding Flow
+
+    participant Human
+    participant Client as Client Interface
+    participant API as AWS API Gateway
+    participant OnboardingSvc as Onboarding Service (Backend)
+    participant AuthenticationSvc as Authentication Service (Backend)
+    participant UserService as User Service (Backend)
+    participant ProfileSvc as Profile Service (Backend)
+    participant EventSvc as Event Service (Backend)
+    participant ContentExtractionSvc as Content Extraction Service (Backend)
+    participant S3 as AWS S3 Bucket
+    participant STT as AWS Transcribe (STT)
+    participant LLM as LLM Service
+    participant RDS as AWS RDS Database
+    # participant Qdrant as Qdrant Cloud # Assuming Qdrant is used internally by Match/Profile/Event svcs, not directly here
+    participant AuthSvc as AWS Cognito
+
+    Human->>Client: Click 'Record Introduction' for Event X
+    activate Client
+    Note right of Client: Starts audio recording locally
+    Client->>API: POST /onboarding/initiate (Body: event_id, initial_context='general') # Conceptual combined endpoint
+    activate API
+    API->>OnboardingSvc: Initiate Onboarding & Get URL (event_id, initial_context)
+    activate OnboardingSvc
+
+    # --- User Creation --- #
+    OnboardingSvc->>UserService: Create Unauthenticated User
+    activate UserService
+    Note over UserService: Generate internal user_id (UUID)
+    UserService->>RDS: INSERT INTO User (user_id=internal_uuid, external_id=NULL)
+    RDS-->>UserService: internal_user_id
+    UserService-->>OnboardingSvc: internal_user_id
+    deactivate UserService
+
+    # --- Session & Linked Entities Creation --- #
+    OnboardingSvc->>RDS: Create OnboardingSession (event_id, user_id=internal_user_id, status=STARTED)
+    RDS-->>OnboardingSvc: onboarding_id
+
+    OnboardingSvc->>ProfileSvc: Create Initial Profile (user_id)
+    activate ProfileSvc
+    ProfileSvc->>RDS: INSERT INTO Profile (user_id=..., onboarding_id=...)
+    RDS-->>ProfileSvc: profile_id
+    ProfileSvc-->>OnboardingSvc: profile_id
+    deactivate ProfileSvc
+
+    OnboardingSvc->>EventSvc: Create Initial Participation (user_id, event_id)
+    activate EventSvc
+    EventSvc->>RDS: INSERT INTO EventParticipation (user_id=..., event_id=..., onboarding_id=...)
+    RDS-->>EventSvc: participation_id
+    EventSvc-->>OnboardingSvc: participation_id
+    deactivate EventSvc
+
+    OnboardingSvc->>RDS: Update OnboardingSession SET profile_id=..., participation_id=...
+
+    # --- Pre-signed URL Generation --- #
+    Note over OnboardingSvc: Generates S3 key based on context (e.g., 'general')
+    OnboardingSvc->>API: Return Onboarding ID & Pre-signed URL details
+    API-->>Client: 201 Created {onboarding_id, upload_url, s3_key, context='general'}
+    deactivate API
+    deactivate OnboardingSvc # Deactivate OnboardingSvc *after* API interaction complete
+
+    # --- Client receives URL, Uploads Recorded Audio --- #
+    Note right of Client: Recording finishes (if not already), gets upload_url
+    Client->>S3: PUT {upload_url} (Recorded Audio Data)
+    S3-->>Client: Upload OK
+    Client-->>Human: Show Upload Complete / In Progress
+
+    # --- Notify Upload & Synchronous Backend Processing --- #
+    Note right of Client: Automatically notifies backend after successful S3 upload
+    Client->>API: POST /onboarding/{onboarding_id}/notify-upload (Body: s3_key, context)
+    deactivate Client
+    activate API
+    API->>OnboardingSvc: Notify Upload & Process (onboarding_id, s3_key, context)
+    activate OnboardingSvc
+
+    OnboardingSvc->>RDS: Get OnboardingSession (for profile_id, participation_id)
+    RDS-->>OnboardingSvc: session(profile_id, participation_id)
+
+    alt context is 'general'
+        # --- Synchronous call to Profile Service --- #
+        OnboardingSvc->>ProfileSvc: Process Profile Audio (profile_id, s3_key)
+        activate ProfileSvc
+        ProfileSvc->>ContentExtractionSvc: ProcessAudio(s3_key, profile_schema)
+        activate ContentExtractionSvc
+        ContentExtractionSvc->>S3: Get Audio File (using s3_key)
+        ContentExtractionSvc->>STT: Transcribe
+        STT-->>ContentExtractionSvc: Transcript
+        ContentExtractionSvc->>LLM: Parse Transcript (using profile_schema)
+        LLM-->>ContentExtractionSvc: Parsed Profile Data
+        deactivate ContentExtractionSvc
+        ProfileSvc->>RDS: Update Profile SET data=Parsed Profile Data, # Calculate score internally
+        RDS-->>ProfileSvc: Updated Profile Data (including completeness_score)
+        ProfileSvc-->>OnboardingSvc: Updated Profile DTO {completeness_score, ...}
+        deactivate ProfileSvc
+        # Store profile score in OnboardingSvc context
+        Note right of OnboardingSvc: Stores profile_completeness_score
+
+    else context is 'event'
+        # --- Synchronous call to Event Service --- #
+        OnboardingSvc->>EventSvc: Process Event Audio (participation_id, s3_key)
+        activate EventSvc
+        EventSvc->>ContentExtractionSvc: ProcessAudio(s3_key, event_context_schema)
+        activate ContentExtractionSvc
+        ContentExtractionSvc->>S3: Get Audio File (using s3_key)
+        ContentExtractionSvc->>STT: Transcribe
+        STT-->>ContentExtractionSvc: Transcript
+        ContentExtractionSvc->>LLM: Parse Transcript (using event_context_schema)
+        LLM-->>ContentExtractionSvc: Parsed Event Context Data
+        deactivate ContentExtractionSvc
+        EventSvc->>RDS: Update EventParticipation SET context_data=Parsed Event Context Data, # Calculate score internally
+        RDS-->>EventSvc: Updated Participation Data (including completeness_score)
+        EventSvc-->>OnboardingSvc: Updated Participation DTO {completeness_score, ...}
+        deactivate EventSvc
+        # Store event score in OnboardingSvc context
+         Note right of OnboardingSvc: Stores event_completeness_score
+    end
+
+    # --- Update Overall Onboarding Status --- #
+    OnboardingSvc->>RDS: Update OnboardingSession Scores (profile_score?, event_score?)
+    OnboardingSvc->>RDS: Get OnboardingSession (scores, thresholds)
+    RDS-->>OnboardingSvc: session(scores, thresholds)
+    Note right of OnboardingSvc: Check if scores >= thresholds
+    alt Sufficient data collected
+         OnboardingSvc->>RDS: Update OnboardingSession SET status=READY_FOR_REVIEW
+         Note right of OnboardingSvc: Final Status: READY_FOR_REVIEW
+    else Needs more info
+         OnboardingSvc->>RDS: Update OnboardingSession SET status=NEEDS_MORE_INFO # or specific status
+         Note right of OnboardingSvc: Final Status: NEEDS_MORE_INFO
+    end
+
+    # --- Return Final Status to Client --- #
+    OnboardingSvc-->>API: Final Onboarding Status Response {status, missing_info_points?}
+    deactivate OnboardingSvc
+    API-->>Client: 200 OK {OnboardingStatusResponse}
+    Client-->>Human: Show Final Status (e.g., Ready for Review / Needs More Info)
+    activate Client # Reactivate client for subsequent actions
+    deactivate API
+
+    loop Until Onboarding Complete or Ready for Review # Check status received from notify or polling
+
+        # --- Status Polling (If needed, e.g., initial processing failed or took too long) --- #
+        # ... Polling loop can remain similar, but primarily for recovery or long waits ...
+        # ... It fetches status, which should reflect the final status set by the synchronous notify flow ...
+
+        # --- Decide Next Step based on Status --- #
+        alt Status requires more info (e.g., NEEDS_EVENT_CONTEXT)
+            # --- Subsequent Upload Flow (remains similar) --- #
+            Note over Human: Onboarding needs event context, prompting for upload.
+            Human->>Client: Request Audio Upload URL (context = 'event')
+            # ... Request URL -> Upload -> Notify (which triggers synchronous processing again) ...
+            Client->>API: POST /onboarding/{onboarding_id}/notify-upload (Body: s3_key, context='event')
+            # ... This notify call would block and return the *new* final status ...
+            API-->>Client: 200 OK {OnboardingStatusResponse} # Returns final status after processing event audio
+            Client-->>Human: Show Updated Status
+        else Status is READY_FOR_REVIEW or COMPLETED
+             Note over Human: Status is ready or complete. Loop will terminate.
+        else # Handle other unexpected statuses
+             Note over Human: Unexpected status received.
+        end
+    end
+
+    Note over Human: Onboarding Ready for Review or Complete!
+
+    # --- Review and Auth Flow remains the same --- #
+    Human->>Client: Request Profile Review
+    Client->>API: GET /onboarding/{onboarding_id}/profile
+    # ... review flow ...
+    API-->>Client: 200 OK {OnboardingReviewData}
+    Client-->>Human: Display combined data for review
+
+    # --- Authentication and Finalization Flow --- #
+    Human->>Client: Initiate Sign Up / Log In (Agrees with Profile)
+    Client->>AuthSvc: Initiate Sign Up Flow (pass onboarding_id in state)
+    Note over Human, AuthSvc: User authenticates externally
+    AuthSvc-->>Client: Redirect to Client Callback URL with Auth Code & state(onboarding_id)
+    # Client receives redirect
+    activate Client
+    Note right of Client: Extracts code and state (onboarding_id)
+    Client->>API: POST /auth/callback (Body: code, state)
+    deactivate Client
+    activate API
+
+    # API routes callback to Authentication Service
+    API->>AuthenticationSvc: Process Callback (Auth Code, state)
+    deactivate API
+    activate AuthenticationSvc
+    Note over AuthenticationSvc: Extracts onboarding_id from state
+
+    # Authentication Service handles token exchange
+    AuthenticationSvc->>AuthSvc: Exchange Code for Tokens (Server-to-Server)
+    activate AuthSvc
+    AuthSvc-->>AuthenticationSvc: ID Token (contains external_id=sub, email), Access/Refresh Tokens
+    deactivate AuthSvc
+
+    Note over AuthenticationSvc: Verify ID Token, Extract external_id (sub), email. Stores Tokens.
+
+    # Authentication Service asks OnboardingService to finalize
+    AuthenticationSvc->>OnboardingSvc: Finalize Onboarding (onboarding_id, external_id, email)
+    activate OnboardingSvc
+
+    # OnboardingService gets the internal user_id
+    OnboardingSvc->>RDS: Fetch OnboardingSession (onboarding_id)
+    RDS-->>OnboardingSvc: session(user_id)
+
+    # OnboardingService tells UserService to update the specific User record
+    OnboardingSvc->>UserService: Update User Auth Details (user_id, external_id, email)
+    activate UserService
+    UserService->>RDS: Update User SET external_id=..., email=... WHERE user_id=X
+    activate RDS
+    RDS-->>UserService: User Record Updated
+    deactivate RDS
+    UserService-->>OnboardingSvc: User Auth Updated OK
+    deactivate UserService
+
+    # OnboardingService marks the session as complete
+    OnboardingSvc->>RDS: Update OnboardingSession SET status=COMPLETED WHERE onboarding_id=X
+    OnboardingSvc-->>AuthenticationSvc: Onboarding Finalized OK
+    deactivate OnboardingSvc
+
+    # Authentication Service returns success and tokens to client
+    Note over AuthenticationSvc: Prepares response with auth tokens
+    AuthenticationSvc-->>Client: Login Success / Redirect to App (Returns Auth Tokens)
+    Client-->>Human: Logged In Successfully
+    deactivate AuthenticationSvc

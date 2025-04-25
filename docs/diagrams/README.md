@@ -57,17 +57,48 @@ Use the `mmdc` command:
 mmdc -i sequence_option1_async_upload.mmd -o compiled/sequence_option1_async_upload.svg
 ```
 
+## Automatic Compilation (Watching for Changes)
+
+To automatically recompile diagrams whenever you save changes to a `.dot` or `.mmd` file, you can use the `watch_diagrams.sh` script. This script requires `fswatch`.
+
+### fswatch Installation
+
+```bash
+# Install fswatch (macOS)
+brew install fswatch
+
+# Install fswatch (Debian/Ubuntu)
+sudo apt-get update && sudo apt-get install fswatch
+```
+
+### Running the Watcher
+
+1.  Make sure both scripts are executable:
+    ```bash
+    chmod +x compile_diagrams.sh
+    chmod +x watch_diagrams.sh
+    ```
+2.  Run the watch script from the project root:
+    ```bash
+    ./docs/diagrams/watch_diagrams.sh
+    ```
+    This will monitor the `docs/diagrams` directory and run `compile_diagrams.sh` for the specific file that was changed. Press `Ctrl+C` to stop the watcher.
+
 ## Diagram Types
 
-*   **Graphviz (.dot):**
-    *   System architecture (`system_components.dot`)
-    *   Conceptual data model (`conceptual_data_model.dot`)
-    *   AWS Infrastructure (`aws_infrastructure.dot`)
-*   **Mermaid (.mmd):**
-    *   Async Audio Upload Sequence (`sequence_option1_async_upload.mmd`)
-    *   Real-time Conversation Sequence (`sequence_option2_realtime_convo.mmd`)
-    *   Get Matches Sequence (`sequence_get_matches.mmd`) # Assumes .md was renamed
-    *   Join Event Sequence (`sequence_join_event.mmd`)   # Assumes .md was renamed
+### Graphviz (.dot)
+
+Used for static architecture and data models.
+
+*   `system_components.dot`: High-level system architecture.
+*   `conceptual_data_model.dot`: Conceptual data model.
+*   `aws_infrastructure.dot`: AWS infrastructure overview.
+
+### Mermaid (.mmd)
+
+Used for sequence diagrams and potentially other dynamic flows.
+
+*   `sequence_onboarding.mmd`: User onboarding flow.
 
 ## GitHub Integration
 
