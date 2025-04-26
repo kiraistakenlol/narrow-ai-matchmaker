@@ -1,0 +1,63 @@
+digraph BackendServices {
+    rankdir=TB; // Top-to-Bottom flow is often clearer for request sequences
+    node [shape=component, style=filled, fillcolor="#e0f7fa"]; // Default service style
+    graph [label="Backend Service Interactions (Derived from Onboarding Flow)", labelloc=t, fontsize=16];
+
+    // --- Entry Point ---
+    APIGateway [label="API Gateway", shape=hexagon, fillcolor="#ffbb50"];
+
+    // --- Core Application Services (Running in App Runner) ---
+    subgraph cluster_AppServices {
+        label = "Application Services";
+        style=filled;
+        color=lightgrey;
+        OnboardingService [label="Onboarding\nService"];
+        AuthenticationService [label="Authentication\nService"];
+        UserService [label="User\nService"];
+        ProfileService [label="Profile\nService"];
+        EventService [label="Event\nService"];
+        MatchService [label="Match\nService"];
+        ContentExtractionService [label="Content Extraction\nService"];
+    }
+
+    // --- AWS Managed / External Dependencies ---
+    RDS [label="RDS\n(PostgreSQL)", shape=cylinder, fillcolor="#a0c4ff"];
+    S3 [label="S3 Bucket", shape=cylinder, fillcolor="#ffbdbd"];
+    Transcribe [label="AWS Transcribe\n(STT)", shape=box, style="filled,rounded", fillcolor="#fff6a0"];
+    Cognito [label="AWS Cognito", shape=box, style="filled,rounded", fillcolor="#ffcaa0"];
+    LLMService [label="LLM Service", shape=box, style="filled,rounded", fillcolor="#caffbf"];
+    QdrantCloud [label="Qdrant Cloud", shape=cylinder, fillcolor="#bdb2ff"];
+
+    // --- Connections based on Onboarding Flow ---
+    APIGateway -> OnboardingService [label=" /onboarding/*"];
+    APIGateway -> AuthenticationService [label=" /auth/callback"]; // Implicit routing
+
+    OnboardingService -> UserService [label="Create/Update User"];
+    OnboardingService -> ProfileService [label="Create Profile,\nProcess Audio"];
+    OnboardingService -> EventService [label="Create Participation,\nProcess Audio"];
+    OnboardingService -> RDS [label="CRUD Session"];
+    OnboardingService -> S3 [label="Gen Presigned URL"]; // Assumed interaction for URL generation
+    OnboardingService -> MatchService [label="Trigger Matching"]; // At end of onboarding
+
+    AuthenticationService -> Cognito [label="Exchange Code"];
+    AuthenticationService -> OnboardingService [label="Finalize"];
+
+    UserService -> RDS [label="CRUD User"];
+
+    ProfileService -> RDS [label="CRUD Profile"];
+    ProfileService -> ContentExtractionService [label="Extract Profile Data"];
+    ProfileService -> QdrantCloud [label="Store Profile Emb."]; // Core function
+
+    EventService -> RDS [label="CRUD Participation"];
+    EventService -> ContentExtractionService [label="Extract Event Data"];
+    EventService -> QdrantCloud [label="Store Context Emb."]; // Core function
+
+    ContentExtractionService -> S3 [label="Get Audio"];
+    ContentExtractionService -> Transcribe [label="Transcribe"];
+    ContentExtractionService -> LLMService [label="Parse Transcript"];
+
+    MatchService -> RDS [label="Fetch Data"]; // For enrichment/filtering
+    MatchService -> QdrantCloud [label="Search Embeddings"]; // Core function
+    MatchService -> LLMService [label="Explain Match"]; // Core function
+
+} 

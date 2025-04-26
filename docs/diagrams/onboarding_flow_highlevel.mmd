@@ -1,0 +1,11 @@
+graph LR
+    A[Start Onboarding] --> B(Initiate & Get Upload URL);
+    B --> C{Record/Upload Audio};
+    C --> D[Notify Upload];
+    D --> E[Process Audio];
+    E --> F{Check Status};
+    F -- Needs More Info --> C;
+    F -- Ready --> G[Review Profile];
+    G -- Approve --> H{Authenticate};
+    H --> I[Finalize Onboarding];
+    I --> J([End]); 

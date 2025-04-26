@@ -9,6 +9,7 @@ sequenceDiagram
     participant UserService as User Service (Backend)
     participant ProfileSvc as Profile Service (Backend)
     participant EventSvc as Event Service (Backend)
+    participant MatchService as Match Service (Backend)
     participant ContentExtractionSvc as Content Extraction Service (Backend)
     participant S3 as AWS S3 Bucket
     participant STT as AWS Transcribe (STT)
@@ -202,7 +203,7 @@ sequenceDiagram
 
     # OnboardingService gets the internal user_id
     OnboardingSvc->>RDS: Fetch OnboardingSession (onboarding_id)
-    RDS-->>OnboardingSvc: session(user_id)
+    RDS-->>OnboardingSvc: session(user_id, event_id)
 
     # OnboardingService tells UserService to update the specific User record
     OnboardingSvc->>UserService: Update User Auth Details (user_id, external_id, email)
@@ -216,6 +217,15 @@ sequenceDiagram
 
     # OnboardingService marks the session as complete
     OnboardingSvc->>RDS: Update OnboardingSession SET status=COMPLETED WHERE onboarding_id=X
+
+    # --- Trigger Initial Matching --- #
+    OnboardingSvc->>MatchService: TriggerInitialMatching(user_id, event_id)
+    activate MatchService
+    Note right of MatchService: Starts async match calculation
+    MatchService-->>OnboardingSvc: Matching Triggered OK
+    deactivate MatchService
+    # --- End Trigger --- #
+
     OnboardingSvc-->>AuthenticationSvc: Onboarding Finalized OK
     deactivate OnboardingSvc
 

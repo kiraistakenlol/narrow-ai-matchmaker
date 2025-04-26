@@ -7,7 +7,8 @@ This file is a scratchpad for miscellaneous ideas, potential features, and actio
 
 ## Random Ideas
 
-*   (Add random thoughts and potential future directions here)
+* 
+
 
 ## TODOs
 

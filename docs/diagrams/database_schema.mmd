@@ -1,0 +1,64 @@
+erDiagram
+    USER {
+        uuid id PK "Internal user ID"
+        string external_id "ID from external auth provider (e.g., Cognito sub)"
+        string email "User's email (unique when not null)"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    ONBOARDING_SESSION {
+        uuid id PK "Onboarding session ID"
+        uuid user_id FK "Link to User"
+        uuid event_id FK "Link to Event"
+        uuid profile_id FK "Link to Profile created during onboarding"
+        uuid participation_id FK "Link to EventParticipation created"
+        string status "Current state (STARTED, PROCESSING, etc.)"
+        float profile_completeness_score "Profile completeness score"
+        float event_completeness_score "Event completeness score"
+        timestamp expires_at "Session expiry time"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    PROFILE {
+        uuid id PK "Profile record ID"
+        uuid user_id FK "Link to User (Unique)"
+        uuid onboarding_id FK "Link back to originating onboarding session (Optional)"
+        jsonb data "Structured profile data"
+        float completeness_score "Internal score after extraction"
+        timestamp embedding_updated_at "Last time embedding was generated"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    EVENT {
+        uuid id PK "Event ID"
+        string name
+        string description
+        timestamp start_time
+        timestamp end_time
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    EVENT_PARTICIPATION {
+        uuid id PK "Participation record ID"
+        uuid user_id FK "Link to User"
+        uuid event_id FK "Link to Event"
+        uuid onboarding_id FK "Link back to originating onboarding session (Optional)"
+        jsonb context_data "Event-specific structured data"
+        float completeness_score "Internal score after extraction"
+        timestamp joined_at "Time user joined event (often == created_at)"
+        timestamp embedding_updated_at "Last time event context embedding was generated"
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    USER ||--o{ PROFILE : "has"
+    USER ||--|{ EVENT_PARTICIPATION : "participates in"
+    EVENT ||--|{ EVENT_PARTICIPATION : "has"
+    USER ||--|| ONBOARDING_SESSION : "initiates"
+    EVENT ||--|| ONBOARDING_SESSION : "is for"
+    PROFILE ||--|| ONBOARDING_SESSION : "created by"
+    EVENT_PARTICIPATION ||--|| ONBOARDING_SESSION : "created by" 

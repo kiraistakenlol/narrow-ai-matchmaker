@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script to compile specified .dot/.mmd file or all files in this directory to SVG
+# Script to compile specified .dot/.mmd/.d2 file or all files in this directory to SVG
 # Output files will be placed in a 'compiled' subdirectory.
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
@@ -39,8 +39,18 @@ compile_single_file() {
             mmdc -i "$input_file" -o "$output_svg" -w 1024 # Set width
             if [ $? -ne 0 ]; then echo "   Error compiling ${filename}" >&2; return 1; fi
             ;;
+        d2)
+            if ! command -v d2 &> /dev/null; then
+                echo "Error: D2 CLI 'd2' command not found." >&2
+                echo "Install via: curl -fsSL https://d2lang.com/install.sh | sh -s --" >&2
+                return 1
+            fi
+            echo " - Compiling ${filename} to ${base_filename}.svg..."
+            d2 "$input_file" "$output_svg"
+            if [ $? -ne 0 ]; then echo "   Error compiling ${filename}" >&2; return 1; fi
+            ;;
         *)
-            echo "Error: Unsupported file type: .$extension (expected .dot or .mmd)" >&2
+            echo "Error: Unsupported file type: .$extension (expected .dot, .mmd, or .d2)" >&2
             return 1
             ;;
     esac
@@ -78,6 +88,17 @@ else
     else
         find "${SCRIPT_DIR}" -maxdepth 1 -name '*.mmd' | while read -r mmdfile; do
             if [ -f "$mmdfile" ]; then compile_single_file "$mmdfile"; fi
+        done
+    fi
+
+    # --- Compile D2 (.d2) files ---
+    echo "Compiling D2 (.d2) diagrams..."
+    if ! command -v d2 &> /dev/null; then
+        echo "D2 CLI 'd2' command not found. Skipping .d2 compilation." >&2
+        echo "Install via: curl -fsSL https://d2lang.com/install.sh | sh -s --" >&2
+    else
+        find "${SCRIPT_DIR}" -maxdepth 1 -name '*.d2' | while read -r d2file; do
+            if [ -f "$d2file" ]; then compile_single_file "$d2file"; fi
         done
     fi
 

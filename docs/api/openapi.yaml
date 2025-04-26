@@ -1,0 +1,910 @@
+openapi: 3.0.3
+info:
+  title: Narrow AI Matchmaker API
+  version: 0.1.0
+  description: >-
+    API for the Narrow AI Matchmaker platform, facilitating connections based on 
+    user input like audio and text.
+
+servers:
+  - url: http://localhost:8080/api/v1 # Example local development server
+    description: Local development server
+  # Add production server URL later
+
+tags:
+  - name: Onboarding
+    description: Operations related to the initial user onboarding flow.
+  - name: Authentication
+    description: Operations related to user authentication and session management.
+  - name: Profiles
+    description: Operations for managing user profiles.
+  - name: Events
+    description: Operations for managing events and participation.
+  - name: Matching
+    description: Operations related to viewing matches within events.
+
+paths:
+  /onboarding/initiate:
+    post:
+      summary: Initiate Onboarding & Get First Upload URL
+      description: >-
+        Starts a new onboarding session for an event, creates the initial
+        unauthenticated user and linked entities (Profile, Participation),
+        and returns the pre-signed URL for the *initial* audio context
+        (e.g., 'general introduction'). This replaces the separate /start
+        and the first /audio-upload-url call.
+      tags:
+        - Onboarding
+      operationId: initiateOnboarding
+      requestBody:
+        description: The event ID and the context for the first required audio.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitiateOnboardingRequest'
+      responses:
+        '201':
+          description: Onboarding session created and pre-signed URL generated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InitiateOnboardingResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound' # e.g., Event not found
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /onboarding/{onboarding_id}/audio-upload-url:
+    post:
+      summary: Request Subsequent Audio Upload URL
+      description: >-
+        Requests a pre-signed URL for uploading audio for *subsequent*
+        contexts (e.g., 'event context') after the initial onboarding
+        has been started via /initiate.
+      tags:
+        - Onboarding
+      operationId: requestAudioUploadUrl
+      parameters:
+        - $ref: '#/components/parameters/OnboardingIdPath'
+      requestBody:
+        description: Context for the audio upload (e.g., which question is being answered).
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AudioUploadContextRequest'
+      responses:
+        '200':
+          description: Pre-signed URL generated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PresignedUrlResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /onboarding/{onboarding_id}/notify-upload:
+    post:
+      summary: Notify Upload Complete & Start Processing
+      description: >-
+        Notifies the backend that the client has finished uploading an audio file
+        using the previously provided pre-signed URL. This updates the session status
+        to PROCESSING and triggers the async processing (transcription, parsing)
+        in the background. Returns the current status immediately.
+      tags:
+        - Onboarding
+      operationId: notifyUploadComplete
+      parameters:
+        - $ref: '#/components/parameters/OnboardingIdPath'
+      requestBody:
+        description: Information about the completed upload.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotifyUploadRequest'
+      responses:
+        '200': # Changed from 202
+          description: Notification accepted, status updated to PROCESSING. Async processing initiated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingStatusResponse' # Return status
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /onboarding/{onboarding_id}/status:
+    get:
+      summary: Get Onboarding Status
+      description: >-
+        Polls the status of the asynchronous processing for the onboarding session.
+        Returns the current state (e.g., PROCESSING, NEEDS_MORE_INFO, READY_FOR_REVIEW).
+      tags:
+        - Onboarding
+      operationId: getOnboardingStatus
+      parameters:
+        - $ref: '#/components/parameters/OnboardingIdPath'
+      responses:
+        '200':
+          description: Current status of the onboarding session.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingStatusResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /onboarding/{onboarding_id}/profile:
+    get:
+      summary: Get Generated Onboarding Profile Data
+      description: >-
+        Retrieves the profile data generated so far during the onboarding session,
+        typically used once the status is READY_FOR_REVIEW, allowing the user
+        to see the parsed information before finalizing signup.
+      tags:
+        - Onboarding
+      operationId: getOnboardingProfileData
+      parameters:
+        - $ref: '#/components/parameters/OnboardingIdPath'
+      responses:
+        '200':
+          description: Generated profile data from the onboarding session.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingProfileData'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409': # Conflict - if status is not yet ready for review
+           description: Onboarding session data not yet ready for review. Check status endpoint.
+           content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # --- Authentication ---
+  # Note: Actual login/signup often involves redirects to an external provider (Cognito)
+  # These endpoints might be for token refresh or getting user info based on a valid token.
+
+  /auth/me:
+    get:
+      summary: Get Current User Info
+      description: Returns information about the currently authenticated user based on the provided JWT.
+      tags:
+        - Authentication
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: [] # Requires authentication
+      responses:
+        '200':
+          description: Current user details.
+          content:
+            application/json:
+              schema:
+                # Could be a specific AuthUser schema or reuse UserProfile
+                 $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/callback:
+    post:
+      summary: Handle Authentication Provider Callback
+      description: >-
+        The endpoint the client calls after being redirected back from the
+        external authentication provider (e.g., Cognito). The client passes
+        the authorization code and state parameter received from the provider.
+        The backend exchanges the code for tokens, finalizes onboarding if applicable,
+        and returns authentication tokens to the client.
+      tags:
+        - Authentication
+      operationId: handleAuthCallback
+      requestBody:
+        description: Authorization code and state received from the authentication provider.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthCallbackRequest'
+      responses:
+        '200':
+          description: Authentication successful, onboarding finalized (if applicable), tokens returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthCallbackResponse' # Contains tokens
+        '400':
+          $ref: '#/components/responses/BadRequest' # Invalid code or state
+        '401':
+          $ref: '#/components/responses/Unauthorized' # Token exchange failed
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # --- Profiles ---
+
+  /profiles/me:
+    get:
+      summary: Get Own Profile
+      description: Retrieves the complete profile for the currently authenticated user.
+      tags:
+        - Profiles
+      operationId: getMyProfile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound' # If user exists but profile somehow doesn't
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      summary: Update Own Profile
+      description: Allows the authenticated user to manually update parts of their profile.
+      tags:
+        - Profiles
+      operationId: updateMyProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Profile fields to update.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Profile updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile' # Return updated profile
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /profiles/{user_id}:
+    get:
+      summary: Get User Profile
+      description: Retrieves the publicly viewable profile information for a specific user.
+      tags:
+        - Profiles
+      operationId: getUserProfile
+      security:
+        - bearerAuth: [] # Requires authentication to view other profiles
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user whose profile is to be retrieved.
+          schema:
+            type: string
+            format: uuid # Assuming user_id is also a UUID
+      responses:
+        '200':
+          description: Public user profile data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicUserProfile' # Use a specific public schema
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden' # If viewing this profile is not allowed
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Consider /profiles/me/audio-upload-url and /profiles/me/notify-audio-upload for profile updates via audio later.
+
+  # --- Events ---
+
+  /events:
+    get:
+      summary: List Joined Events
+      description: Retrieves a list of events the current user has joined.
+      tags:
+        - Events
+      operationId: listMyEvents
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: A list of events.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventSummary' # Use a summary schema
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /events/{event_id}:
+    get:
+      summary: Get Event Details
+      description: Retrieves detailed information about a specific event.
+      tags:
+        - Events
+      operationId: getEventDetails
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/EventIdPath'
+      responses:
+        '200':
+          description: Event details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event' # Full event schema
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+           $ref: '#/components/responses/Forbidden' # If user hasn't joined / isn't allowed
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /events/{event_id}/join:
+    post:
+      summary: Join an Event
+      description: Allows the current user to join a specific event.
+      tags:
+        - Events
+      operationId: joinEvent
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/EventIdPath'
+      responses:
+        '204': # No Content success response
+          description: Successfully joined the event.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden' # If event requires invite, etc.
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409': # Conflict - already joined
+           description: User has already joined this event.
+           content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /events/{event_id}/participants/me/context:
+    put:
+      summary: Update Event Context
+      description: Updates the current user's goals, expectations, or other context for a specific event they have joined.
+      tags:
+        - Events
+      operationId: updateMyEventContext
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/EventIdPath'
+      requestBody:
+        description: Context data to set for the user within the event.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventContext'
+      responses:
+        '200':
+          description: Context updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventContext' # Return updated context
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403': # If user hasn't joined the event
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound' # If event doesn't exist
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # --- Matching ---
+
+  /events/{event_id}/matches:
+    get:
+      summary: Get Matches for Event
+      description: Retrieves the top N matches for the current user within a specific event.
+      tags:
+        - Matching
+      operationId: getEventMatches
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/EventIdPath'
+        - name: limit
+          in: query
+          description: Maximum number of matches to return.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 10
+      responses:
+        '200':
+          description: List of top matches.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Match'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403': # If user hasn't joined the event
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound' # If event doesn't exist
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # --- Components (Schemas, Parameters, Responses, SecuritySchemes) ---
+
+components:
+  schemas:
+    # --- Basic Types ---
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+      required:
+        - code
+        - message
+
+    # --- Onboarding Schemas ---
+    InitiateOnboardingRequest:
+      type: object
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description: The unique identifier of the event being joined.
+        initial_context:
+          type: string
+          description: The context required for the *first* audio upload (e.g., 'general').
+          example: 'general'
+      required:
+        - event_id
+        - initial_context
+
+    InitiateOnboardingResponse:
+      type: object
+      properties:
+        onboarding_id:
+          type: string
+          format: uuid
+          description: The unique identifier for the newly created onboarding session.
+          example: 'a4b1c2d3-e4f5-6789-abcd-ef0123456789'
+        upload_url:
+          $ref: '#/components/schemas/PresignedUrlResponse/properties/upload_url'
+        s3_key:
+          $ref: '#/components/schemas/PresignedUrlResponse/properties/s3_key'
+        context:
+          $ref: '#/components/schemas/AudioUploadContextRequest/properties/context'
+      required:
+        - onboarding_id
+        - upload_url
+        - s3_key
+        - context
+
+    AudioUploadContextRequest:
+      type: object
+      properties:
+        context:
+          type: string
+          description: Describes the purpose or context of this audio upload (e.g., 'answering_question_1', 'goals_for_event_xyz').
+          example: 'introduction_speech'
+      required:
+        - context
+
+    PresignedUrlResponse:
+      type: object
+      properties:
+        upload_url:
+          type: string
+          format: url
+          description: The pre-signed URL where the client should PUT the audio file.
+        s3_key:
+          type: string
+          description: The object key in S3 that the URL corresponds to. Needed for the notify step.
+      required:
+        - upload_url
+        - s3_key
+
+    NotifyUploadRequest:
+      type: object
+      properties:
+        s3_key:
+          type: string
+          description: The object key in S3 that was successfully uploaded.
+          example: 'uploads/123e4567-e89b-12d3-a456-426614174000/audio_abc.wav'
+        context:
+          type: string
+          description: >-
+             The context string that was returned by the
+             /audio-upload-url endpoint. This tells the backend
+             what the uploaded audio was intended to cover (e.g., 'general', 'event').
+          example: 'general_introduction'
+      required:
+        - s3_key
+        - context
+
+    OnboardingStatus:
+      type: string
+      enum: [STARTED, NEEDS_GENERAL_INFO, NEEDS_EVENT_CONTEXT, PROCESSING, NEEDS_MORE_INFO, READY_FOR_REVIEW, FAILED, COMPLETED, EXPIRED]
+      description: The current status of the onboarding session processing.
+
+    MissingInfoPoint:
+      type: object
+      description: Represents a specific piece of information still needed for onboarding.
+      properties:
+        code:
+          type: string
+          description: A stable machine-readable code identifying the missing information type.
+          example: 'user_name'
+        prompt:
+          type: string
+          description: A user-friendly prompt or display text for the missing information.
+          example: 'Your name and age'
+      required:
+        - code
+        - prompt
+
+    OnboardingStatusResponse:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/OnboardingStatus'
+        missing_info_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/MissingInfoPoint'
+          description: >-
+            A list detailing the specific points of information still required from the user.
+            Primarily relevant when status is NEEDS_GENERAL_INFO, NEEDS_EVENT_CONTEXT, or NEEDS_MORE_INFO.
+      required:
+        - status
+
+    OnboardingProfileData: # Used for Review
+      type: object
+      description: Represents the profile data gathered and generated during an onboarding session for review.
+      properties:
+        general_profile_data:
+          $ref: '#/components/schemas/UserProfile' # Or a subset if needed
+        event_context_data:
+           $ref: '#/components/schemas/EventContext'
+
+    # --- Authentication Schemas ---
+    AuthCallbackRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          description: The authorization code received from the identity provider.
+        state:
+          type: string
+          description: The state parameter originally sent to the provider (may contain onboarding_id).
+      required:
+        - code
+        - state
+
+    AuthCallbackResponse:
+      type: object
+      description: Response containing authentication tokens upon successful login/signup.
+      properties:
+        access_token:
+          type: string
+          # format: jwt # Format is optional hint
+        id_token:
+          type: string
+          # format: jwt
+        refresh_token:
+          type: string
+        expires_in:
+          type: integer
+          description: Lifetime in seconds of the access token.
+        token_type:
+          type: string
+          example: Bearer
+      required:
+        - access_token
+        - id_token
+        - token_type
+        - expires_in
+
+    # --- Profile Schemas ---
+    UserProfile:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          readOnly: true # Typically set by the system
+          description: Unique identifier for the registered user.
+        profile_id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Unique identifier for the user's profile data.
+        email:
+          type: string
+          format: email
+          readOnly: true # Usually from identity provider
+        name:
+          type: string
+          example: 'Alex Chen'
+        headline:
+          type: string
+          example: 'Software Engineer | AI Enthusiast'
+        skills:
+          type: array
+          items:
+            type: string
+          example: ['Python', 'Machine Learning', 'AWS', 'React']
+        linked_profiles:
+          type: object
+          properties:
+            linkedin_url:
+              type: string
+              format: url
+            github_url:
+              type: string
+              format: url
+        summary:
+          type: string
+          description: AI-generated summary.
+        goals:
+          type: array
+          items:
+            type: string
+          description: General goals or interests.
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+        - user_id
+        - profile_id
+        - email # Usually required
+
+    PublicUserProfile: # Subset of UserProfile for public viewing
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          example: 'Alex Chen'
+        headline:
+          type: string
+          example: 'Software Engineer | AI Enthusiast'
+        skills:
+          type: array
+          items:
+            type: string
+          example: ['Python', 'Machine Learning', 'AWS', 'React']
+      required:
+        - user_id
+        - name
+
+    UpdateProfileRequest:
+      type: object
+      description: Fields allowed for manual user update. Excludes read-only fields.
+      properties:
+        name:
+          type: string
+        headline:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        linked_profiles:
+          type: object
+          properties:
+            linkedin_url:
+              type: string
+              format: url
+            github_url:
+              type: string
+              format: url
+
+    # --- Event Schemas ---
+    Event:
+      type: object
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          example: 'AI Hackathon 2025'
+        description:
+          type: string
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        attendee_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+        - event_id
+        - name
+
+    EventSummary: # Simpler version for lists
+      type: object
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          example: 'AI Hackathon 2025'
+        start_time:
+          type: string
+          format: date-time
+      required:
+        - event_id
+        - name
+
+    EventContext:
+      type: object
+      description: User-specific context within an event.
+      properties:
+        goals:
+          type: array
+          items:
+            type: string
+          example: ['Find a frontend developer', 'Learn about vector databases']
+        expectations:
+          type: string
+          example: 'Looking for serious collaborators for a long-term project.'
+      required:
+        - goals # Example requirement
+
+    # --- Match Schemas ---
+    Match:
+      type: object
+      properties:
+        match_id:
+          type: string
+          format: uuid
+          readOnly: true
+        matched_user:
+          $ref: '#/components/schemas/PublicUserProfile'
+        score:
+          type: number
+          format: float
+          description: Relevance score of the match (0.0 to 1.0).
+          example: 0.85
+        explanation:
+          type: string
+          description: AI-generated explanation for why this match was made.
+          example: 'Shared interest in NLP and looking for backend skills.'
+        event_context:
+          $ref: '#/components/schemas/EventContext'
+      required:
+        - match_id
+        - matched_user
+        - score
+        - explanation
+
+  parameters:
+    OnboardingIdPath:
+      name: onboarding_id
+      in: path
+      required: true
+      description: The ID of the onboarding session.
+      schema:
+        type: string
+        format: uuid
+    EventIdPath:
+      name: event_id
+      in: path
+      required: true
+      description: The ID of the event.
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    Unauthorized:
+      description: Authentication information is missing or invalid.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Authenticated user does not have permission to perform this action.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: The requested resource could not be found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: The request payload is malformed or invalid.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: An unexpected error occurred on the server.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  securitySchemes:
+    bearerAuth: # Can be named anything, used in security key below
+      type: http
+      scheme: bearer
+      bearerFormat: JWT # Optional, informs clients expect JWT format
+      description: >-
+        JWT token obtained after successful authentication (e.g., via Cognito).
+        Include the token in the Authorization header as 'Bearer {token}'.

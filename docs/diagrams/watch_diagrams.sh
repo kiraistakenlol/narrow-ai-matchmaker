@@ -23,7 +23,7 @@ echo "Watching for changes in ${SCRIPT_DIR}/*.dot and ${SCRIPT_DIR}/*.mmd..."
 echo "Press Ctrl+C to stop."
 
 # Watch the directory, filter by extension, and execute compile script for each change
-fswatch -r --event Created --event Updated --event Removed --event Renamed --latency 0.5 -e ".*" -i "\\.dot$" -i "\\.mmd$" "${SCRIPT_DIR}" | while read -r changed_file
+fswatch -r --event Created --event Updated --event Removed --event Renamed --latency 0.5 -e ".*" -i "\\.dot$" -i "\\.mmd$" -i "\\.d2$" "${SCRIPT_DIR}" | while read -r changed_file
 do
     echo "----------------------------------------"
     echo "Change detected: ${changed_file}"
