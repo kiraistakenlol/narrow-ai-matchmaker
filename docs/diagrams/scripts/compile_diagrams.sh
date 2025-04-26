@@ -1,10 +1,11 @@
 #!/bin/bash
 
-# Script to compile specified .dot/.mmd/.d2 file or all files in this directory to SVG
+# Script to compile specified .dot/.mmd/.d2 file or all files in the raw/ directory to SVG
 # Output files will be placed in a 'compiled' subdirectory.
 
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-OUTPUT_DIR="${SCRIPT_DIR}/compiled"
+DIAGRAMS_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+SOURCE_DIR="${DIAGRAMS_DIR}/raw"
+OUTPUT_DIR="${DIAGRAMS_DIR}/compiled"
 
 # Create the output directory if it doesn't exist
 mkdir -p "${OUTPUT_DIR}"
@@ -17,7 +18,7 @@ compile_single_file() {
     local base_filename="${filename%.*}"
     local output_svg="${OUTPUT_DIR}/${base_filename}.svg"
 
-    echo "Compiling single file: $input_file"
+    echo "Compiling file: $input_file"
 
     case "$extension" in
         dot)
@@ -45,12 +46,12 @@ compile_single_file() {
                 echo "Install via: curl -fsSL https://d2lang.com/install.sh | sh -s --" >&2
                 return 1
             fi
-            echo " - Compiling ${filename} to ${base_filename}.svg..."
-            d2 "$input_file" "$output_svg"
+            echo " - Compiling ${filename} to ${base_filename}.svg using ELK layout..."
+            d2 --layout=elk "$input_file" "$output_svg"
             if [ $? -ne 0 ]; then echo "   Error compiling ${filename}" >&2; return 1; fi
             ;;
         *)
-            echo "Error: Unsupported file type: .$extension (expected .dot, .mmd, or .d2)" >&2
+            echo "Error: Unsupported file type: .$extension (expected .dot, .mmd, or .d2 in raw/)" >&2
             return 1
             ;;
     esac
@@ -60,7 +61,7 @@ compile_single_file() {
 
 # --- Main Logic ---
 if [ -n "$1" ]; then
-    # Single file mode
+    # Single file mode - expects full path to file in raw/
     input_file="$1"
     if [ ! -f "$input_file" ]; then
         echo "Error: Input file not found: $input_file" >&2
@@ -70,12 +71,14 @@ if [ -n "$1" ]; then
     exit $?
 else
     # Compile all mode
+    echo "Compiling all diagrams from ${SOURCE_DIR} to ${OUTPUT_DIR}..."
+
     # --- Compile Graphviz (.dot) files ---
     echo "Compiling Graphviz (.dot) diagrams..."
     if ! command -v dot &> /dev/null; then
         echo "Graphviz 'dot' command not found. Skipping .dot compilation." >&2
     else
-        find "${SCRIPT_DIR}" -maxdepth 1 -name '*.dot' | while read -r dotfile; do
+        find "${SOURCE_DIR}" -maxdepth 1 -name '*.dot' | while read -r dotfile; do
             if [ -f "$dotfile" ]; then compile_single_file "$dotfile"; fi
         done
     fi
@@ -86,7 +89,7 @@ else
         echo "Mermaid CLI 'mmdc' command not found. Skipping .mmd compilation." >&2
         echo "Install via: npm install -g @mermaid-js/mermaid-cli" >&2
     else
-        find "${SCRIPT_DIR}" -maxdepth 1 -name '*.mmd' | while read -r mmdfile; do
+        find "${SOURCE_DIR}" -maxdepth 1 -name '*.mmd' | while read -r mmdfile; do
             if [ -f "$mmdfile" ]; then compile_single_file "$mmdfile"; fi
         done
     fi
@@ -97,7 +100,7 @@ else
         echo "D2 CLI 'd2' command not found. Skipping .d2 compilation." >&2
         echo "Install via: curl -fsSL https://d2lang.com/install.sh | sh -s --" >&2
     else
-        find "${SCRIPT_DIR}" -maxdepth 1 -name '*.d2' | while read -r d2file; do
+        find "${SOURCE_DIR}" -maxdepth 1 -name '*.d2' | while read -r d2file; do
             if [ -f "$d2file" ]; then compile_single_file "$d2file"; fi
         done
     fi

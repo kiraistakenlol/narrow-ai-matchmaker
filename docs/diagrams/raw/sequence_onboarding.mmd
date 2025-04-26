@@ -11,9 +11,10 @@ sequenceDiagram
     participant EventSvc as Event Service (Backend)
     participant MatchService as Match Service (Backend)
     participant ContentExtractionSvc as Content Extraction Service (Backend)
+    participant LlmService as LlmService (Backend)
     participant S3 as AWS S3 Bucket
     participant STT as AWS Transcribe (STT)
-    participant LLM as LLM Service
+    # participant LLM as External LLM Provider # Removed for simplicity
     participant RDS as AWS RDS Database
     # participant Qdrant as Qdrant Cloud # Assuming Qdrant is used internally by Match/Profile/Event svcs, not directly here
     participant AuthSvc as AWS Cognito
@@ -88,8 +89,11 @@ sequenceDiagram
         ContentExtractionSvc->>S3: Get Audio File (using s3_key)
         ContentExtractionSvc->>STT: Transcribe
         STT-->>ContentExtractionSvc: Transcript
-        ContentExtractionSvc->>LLM: Parse Transcript (using profile_schema)
-        LLM-->>ContentExtractionSvc: Parsed Profile Data
+        ContentExtractionSvc->>LlmService: Parse Transcript (using profile_schema)
+        activate LlmService
+        # Note over LlmService: Internally calls External LLM Provider
+        LlmService-->>ContentExtractionSvc: Parsed Profile Data
+        deactivate LlmService
         deactivate ContentExtractionSvc
         ProfileSvc->>RDS: Update Profile SET data=Parsed Profile Data, # Calculate score internally
         RDS-->>ProfileSvc: Updated Profile Data (including completeness_score)
@@ -107,8 +111,11 @@ sequenceDiagram
         ContentExtractionSvc->>S3: Get Audio File (using s3_key)
         ContentExtractionSvc->>STT: Transcribe
         STT-->>ContentExtractionSvc: Transcript
-        ContentExtractionSvc->>LLM: Parse Transcript (using event_context_schema)
-        LLM-->>ContentExtractionSvc: Parsed Event Context Data
+        ContentExtractionSvc->>LlmService: Parse Transcript (using event_context_schema)
+        activate LlmService
+        # Note over LlmService: Internally calls External LLM Provider
+        LlmService-->>ContentExtractionSvc: Parsed Event Context Data
+        deactivate LlmService
         deactivate ContentExtractionSvc
         EventSvc->>RDS: Update EventParticipation SET context_data=Parsed Event Context Data, # Calculate score internally
         RDS-->>EventSvc: Updated Participation Data (including completeness_score)

@@ -19,6 +19,7 @@ Application_Services: {
   EventService: Event Service { shape: rectangle; style.fill: "#e0f7fa" }
   MatchService: Match Service { shape: rectangle; style.fill: "#e0f7fa" }
   ContentExtractionService: Content Extraction Service { shape: rectangle; style.fill: "#e0f7fa" }
+  LlmService: LlmService { shape: rectangle; style.fill: "#e0f7fa" }
 }
 
 # AWS Managed / External Dependencies
@@ -46,7 +47,7 @@ Dependencies: {
          fill: "#ffcaa0"
       }
   }
-  LLMService: LLM Service {
+  ExternalLLMProvider: External LLM Provider {
       shape: rectangle
       style: {
          fill: "#caffbf"
@@ -60,33 +61,37 @@ Dependencies: {
 
 
 # Connections
-APIGateway -> Application_Services.OnboardingService: "/onboarding/*"
-APIGateway -> Application_Services.AuthenticationService: "/auth/callback"
+APIGateway -> Application_Services.OnboardingService: "Handle Onboarding Flow"
+APIGateway -> Application_Services.AuthenticationService: "Handle Authentication"
+APIGateway -> Application_Services.ProfileService: "Fetch/Update Profile"
+APIGateway -> Application_Services.EventService: "Manage Events & Participation"
+APIGateway -> Application_Services.MatchService: "Fetch Matches"
+APIGateway -> Application_Services.UserService: "Manage User Account"
 
 Application_Services.OnboardingService -> Application_Services.UserService: "Create/Update User"
 Application_Services.OnboardingService -> Application_Services.ProfileService: "Create Profile,\nProcess Audio"
 Application_Services.OnboardingService -> Application_Services.EventService: "Create Participation,\nProcess Audio"
-Application_Services.OnboardingService -> Dependencies.RDS: "CRUD Session"
+Application_Services.OnboardingService -> Dependencies.RDS
 Application_Services.OnboardingService -> Dependencies.S3: "Gen Presigned URL"
 Application_Services.OnboardingService -> Application_Services.MatchService: "Trigger Matching"
 
 Application_Services.AuthenticationService -> Dependencies.Cognito: "Exchange Code"
 Application_Services.AuthenticationService -> Application_Services.OnboardingService: "Finalize"
 
-Application_Services.UserService -> Dependencies.RDS: "CRUD User"
+Application_Services.UserService -> Dependencies.RDS
 
-Application_Services.ProfileService -> Dependencies.RDS: "CRUD Profile"
+Application_Services.ProfileService -> Dependencies.RDS
 Application_Services.ProfileService -> Application_Services.ContentExtractionService: "Extract Profile Data"
-Application_Services.ProfileService -> Dependencies.QdrantCloud: "Store Profile Emb."
 
-Application_Services.EventService -> Dependencies.RDS: "CRUD Participation"
+Application_Services.EventService -> Dependencies.RDS
 Application_Services.EventService -> Application_Services.ContentExtractionService: "Extract Event Data"
-Application_Services.EventService -> Dependencies.QdrantCloud: "Store Context Emb."
 
 Application_Services.ContentExtractionService -> Dependencies.S3: "Get Audio"
 Application_Services.ContentExtractionService -> Dependencies.Transcribe: "Transcribe"
-Application_Services.ContentExtractionService -> Dependencies.LLMService: "Parse Transcript"
+Application_Services.ContentExtractionService -> Application_Services.LlmService: "Parse Transcript"
 
-Application_Services.MatchService -> Dependencies.RDS: "Fetch Data"
+Application_Services.MatchService -> Dependencies.RDS
 Application_Services.MatchService -> Dependencies.QdrantCloud: "Search Embeddings"
-Application_Services.MatchService -> Dependencies.LLMService: "Explain Match" 
+Application_Services.MatchService -> Application_Services.LlmService: "Explain Match"
+
+Application_Services.LlmService -> Dependencies.ExternalLLMProvider: "Invoke LLM" 

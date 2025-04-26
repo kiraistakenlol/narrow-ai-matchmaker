@@ -6,7 +6,8 @@ This document outlines the key features of the Narrow AI Matchmaker platform fro
 
 *   Open the web interface and create a profile.
 *   Create/update profile using guided audio recordings.
-*   Log in using social media accounts or email.
+*   Log in using email.
+*   Log in using social media accounts (e.g., Google, GitHub).
 *   Link LinkedIn/GitHub profiles to automatically populate profile details.
 *   View and manually edit the profile page.
 
