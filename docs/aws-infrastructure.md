@@ -18,3 +18,4 @@ This document outlines the core AWS services planned for the Narrow AI Matchmake
 
 *   **Qdrant Cloud**
 *   **LLM Service Provider**
+ 
