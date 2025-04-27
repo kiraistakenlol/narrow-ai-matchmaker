@@ -22,3 +22,6 @@ matching/playground/test_data/my_*.json
 
 
 **/dist/
+
+# Locally stored audio files (Backend)
+/application/packages/backend/data/
