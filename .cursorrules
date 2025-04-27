@@ -13,3 +13,5 @@ Always try to use types
 
 ## Formatting
 Use 4 spaces for indentation.  
+
+NEVER leave things like: // import { ConfigService } from '@nestjs/config'; // Unused
