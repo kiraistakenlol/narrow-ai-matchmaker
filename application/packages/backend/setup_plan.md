@@ -44,7 +44,7 @@ This document consolidates the setup steps, guidelines, and technology stack spe
 - [x] Initialize `package.json` with core NestJS dependencies.
 - [x] Add NestJS dev dependencies.
 - [x] Add TypeORM and config dependencies (`@nestjs/typeorm`, `typeorm`, `pg`, `@nestjs/config`).
-- [ ] Create a basic README.md (`README.md`).
+- [x] Create a basic README.md (`README.md`).
 - [x] Create `tsconfig.json` (extending `../../tsconfig.base.json`, ensure path aliases are configured).
 - [x] Set up basic NestJS application structure (`src/main.ts`, `src/app.module.ts`).
 - [x] Configure a global API prefix ('/api/v1') in `main.ts`.

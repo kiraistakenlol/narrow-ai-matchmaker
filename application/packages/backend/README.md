@@ -2,6 +2,19 @@
 
 This package contains the NestJS API server for the Narrow AI Matchmaker application.
 
+## Running Locally
+
+1.  **Database:** The application requires a PostgreSQL database. Use the provided `docker-compose.yml` file to run a local PostgreSQL container configured according to the `.env` file:
+    ```bash
+    # From the application/packages/backend directory
+    docker-compose up -d
+    ```
+2.  **Application:** Start the NestJS server using the root script:
+    ```bash
+    # From the workspace root directory
+    ./start-backend.sh
+    ```
+
 ## Directory Structure
 
 ```
