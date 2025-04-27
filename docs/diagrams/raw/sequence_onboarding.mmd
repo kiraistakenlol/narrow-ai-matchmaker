@@ -1,5 +1,5 @@
 sequenceDiagram
-    title Onboarding Flow
+    title Onboarding Flow (Revised Session Creation)
 
     participant Human
     participant Client as Client Interface
@@ -22,12 +22,12 @@ sequenceDiagram
     Human->>Client: Click 'Record Introduction' for Event X
     activate Client
     Note right of Client: Starts audio recording locally
-    Client->>API: POST /onboarding/initiate (Body: event_id, initial_context='general') # Conceptual combined endpoint
+    Client->>API: POST /onboarding/initiate (Body: event_id) # Context removed
     activate API
-    API->>OnboardingSvc: Initiate Onboarding & Get URL (event_id, initial_context)
+    API->>OnboardingSvc: Initiate Onboarding (event_id)
     activate OnboardingSvc
 
-    # --- User Creation --- #
+    # --- Create Linked Entities FIRST --- #
     OnboardingSvc->>UserService: Create Unauthenticated User
     activate UserService
     Note over UserService: Generate internal user_id (UUID)
@@ -36,30 +36,29 @@ sequenceDiagram
     UserService-->>OnboardingSvc: internal_user_id
     deactivate UserService
 
-    # --- Session & Linked Entities Creation --- #
-    OnboardingSvc->>RDS: Create OnboardingSession (event_id, user_id=internal_user_id, status=STARTED)
-    RDS-->>OnboardingSvc: onboarding_id
-
-    OnboardingSvc->>ProfileSvc: Create Initial Profile (user_id)
+    OnboardingSvc->>ProfileSvc: Create Initial Profile (user_id=internal_user_id)
     activate ProfileSvc
-    ProfileSvc->>RDS: INSERT INTO Profile (user_id=..., onboarding_id=...)
+    ProfileSvc->>RDS: INSERT INTO Profile (user_id=...)
     RDS-->>ProfileSvc: profile_id
     ProfileSvc-->>OnboardingSvc: profile_id
     deactivate ProfileSvc
 
-    OnboardingSvc->>EventSvc: Create Initial Participation (user_id, event_id)
+    OnboardingSvc->>EventSvc: Create Initial Participation (user_id=internal_user_id, event_id)
     activate EventSvc
-    EventSvc->>RDS: INSERT INTO EventParticipation (user_id=..., event_id=..., onboarding_id=...)
+    EventSvc->>RDS: INSERT INTO EventParticipation (user_id=..., event_id=...)
     RDS-->>EventSvc: participation_id
     EventSvc-->>OnboardingSvc: participation_id
     deactivate EventSvc
 
-    OnboardingSvc->>RDS: Update OnboardingSession SET profile_id=..., participation_id=...
+    # --- Create Onboarding Session AFTER getting IDs --- #
+    OnboardingSvc->>RDS: Create OnboardingSession (event_id, user_id=internal_user_id, profile_id=..., participation_id=..., status=AWAITING_AUDIO)
+    RDS-->>OnboardingSvc: onboarding_id
+    # Removed subsequent update step
 
     # --- Pre-signed URL Generation --- #
-    Note over OnboardingSvc: Generates S3 key based on context (e.g., 'general')
+    Note over OnboardingSvc: Generates S3 key based on onboarding_id (e.g., 'onboarding/{id}/audio.wav')
     OnboardingSvc->>API: Return Onboarding ID & Pre-signed URL details
-    API-->>Client: 201 Created {onboarding_id, upload_url, s3_key, context='general'}
+    API-->>Client: 201 Created {onboarding_id, upload_url, s3_key}
     deactivate API
     deactivate OnboardingSvc # Deactivate OnboardingSvc *after* API interaction complete
 

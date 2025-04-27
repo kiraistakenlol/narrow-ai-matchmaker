@@ -1,9 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 export enum OnboardingStatus {
     STARTED = 'STARTED',
-    AWAITING_INITIAL_AUDIO = 'AWAITING_INITIAL_AUDIO',
-    INITIAL_AUDIO_UPLOADED = 'INITIAL_AUDIO_UPLOADED',
+    AWAITING_AUDIO = 'AWAITING_AUDIO',
+    AUDIO_UPLOADED = 'AUDIO_UPLOADED',
     PROCESSING = 'PROCESSING',
     NEEDS_CLARIFICATION = 'NEEDS_CLARIFICATION',
     READY_FOR_REVIEW = 'READY_FOR_REVIEW',
@@ -17,34 +17,23 @@ export class OnboardingSession {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column('uuid')
-    @Index()
+    @Column()
     eventId: string;
 
-    @Column('uuid', { nullable: true })
-    @Index()
-    userId?: string;
+    @Column()
+    userId: string;
 
-    @Column('uuid', { nullable: true })
-    @Index()
-    profileId?: string;
+    @Column()
+    profileId: string;
 
-    @Column('uuid', { nullable: true })
-    @Index()
-    participationId?: string;
+    @Column()
+    participationId: string;
 
-    @Column({
-        type: 'enum',
-        enum: OnboardingStatus,
-        default: OnboardingStatus.STARTED,
-    })
+    @Column()
     status: OnboardingStatus;
 
-    @Column('jsonb', { nullable: true })
-    audioContexts?: Record<string, { uploaded: boolean; storagePath?: string }>;
-
-    @Column('jsonb', { nullable: true })
-    extractedData?: any;
+    @Column()
+    audioStoragePath?: string;
 
     @CreateDateColumn()
     createdAt: Date;
@@ -52,6 +41,6 @@ export class OnboardingSession {
     @UpdateDateColumn()
     updatedAt: Date;
 
-    @Column({ type: 'timestamp', nullable: true })
+    @Column()
     expiresAt?: Date;
 } 

@@ -27,12 +27,13 @@ This document consolidates the setup steps, guidelines, and technology stack spe
 *   **Error Handling:** Implement a basic global exception filter (`src/common/filters/http-exception.filter.ts`) for consistent API error responses, aligned with `../../docs/api/openapi.yaml`.
 *   **Dependencies:** Use stable versions.
 *   **Design Alignment:** Backend modules/controllers/services should align with the API defined in `../../docs/api/openapi.yaml`.
-*   **Initial Storage Strategy:** During initial development, audio files will be stored locally on disk.
+*   **Initial Storage Strategy:** During initial development, audio files will be stored locally on disk. This involves a single audio upload per session initially.
     *   Set the environment variable `AUDIO_STORAGE_PROVIDER=local`.
     *   Set `AUDIO_LOCAL_STORAGE_PATH=./data/audio` (relative to the backend package root).
-    *   Files will be saved within this directory (e.g., `./data/audio/some-uuid/context.wav`). The path structure within `data/` should mimic the object key structure intended for S3 later (i.e., `data/` acts like the bucket root).
-    *   The `generatePresignedUploadUrl` method will return a local backend URL (e.g., `http://localhost:PORT/api/v1/_local-upload/ENCODED_KEY`) instead of an actual S3 presigned URL.
-    *   A dedicated controller (`LocalUploadController`) handles `PUT` requests to this endpoint, parsing the raw request body (requires `body-parser` middleware configured in `main.ts`) and saving the file using `LocalAudioStorageService`.
+    *   Files will be saved within this directory (e.g., `./data/audio/onboarding/SESSION_ID/audio.wav`).
+    *   The `/onboarding/initiate` endpoint generates a storage path and returns a local backend URL (e.g., `http://localhost:PORT/api/v1/_local-upload/ENCODED_KEY`) for the client to `PUT` the audio file.
+    *   A dedicated controller (`LocalUploadController`) handles these `PUT` requests, parsing the raw request body and saving the file using `LocalAudioStorageService`.
+    *   The client then calls `/onboarding/SESSION_ID/notify-upload` with the storage key (`s3_key`) to confirm the upload.
     *   Ensure the `./data` directory is added to the root `.gitignore` file.
 *   **Deferred Items (Initial Setup):**
     *   Detailed request validation (`class-validator`/`class-transformer`).

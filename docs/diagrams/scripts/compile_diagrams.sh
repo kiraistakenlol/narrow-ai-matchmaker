@@ -4,8 +4,8 @@
 # Output files will be placed in a 'compiled' subdirectory.
 
 DIAGRAMS_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-SOURCE_DIR="${DIAGRAMS_DIR}/raw"
-OUTPUT_DIR="${DIAGRAMS_DIR}/compiled"
+SOURCE_DIR="${DIAGRAMS_DIR}/../raw"
+OUTPUT_DIR="${DIAGRAMS_DIR}/../compiled"
 
 # Create the output directory if it doesn't exist
 mkdir -p "${OUTPUT_DIR}"
