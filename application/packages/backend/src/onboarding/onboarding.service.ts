@@ -1,12 +1,14 @@
 import { Injectable, Inject, Logger, InternalServerErrorException, NotFoundException, BadRequestException, GoneException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
 import { OnboardingSession, OnboardingStatus } from './entities/onboarding-session.entity';
 import { IAudioStorageService } from '@backend/audio-storage/audio-storage.interface';
 import { InitiateOnboardingRequestDto, InitiateOnboardingResponseDto } from './dto/initiate-onboarding.dto';
 import { NotifyUploadRequestDto } from './dto/notify-upload.dto';
 import { OnboardingStatusResponseDto } from './dto/notify-upload.dto';
+import { UserService } from '@backend/users/users.service';
+import { ProfileService } from '@backend/profiles/profiles.service';
+import { EventService } from '@backend/events/events.service';
 
 @Injectable()
 export class OnboardingService {
@@ -17,32 +19,42 @@ export class OnboardingService {
         private onboardingSessionRepository: Repository<OnboardingSession>,
         @Inject(IAudioStorageService)
         private audioStorageService: IAudioStorageService,
+        private readonly userService: UserService,
+        private readonly profileService: ProfileService,
+        private readonly eventService: EventService,
     ) {}
 
     async initiateOnboarding(dto: InitiateOnboardingRequestDto): Promise<InitiateOnboardingResponseDto> {
         this.logger.log(`Initiating onboarding for event: ${dto.event_id}`);
 
+        const event = await this.eventService.findEventById(dto.event_id);
+        if (!event) {
+            throw new NotFoundException(`Event with ID ${dto.event_id} not found.`);
+        }
+
         try {
-            // --- Simulate creation of linked entities ---
-            const placeholderUserId = uuidv4();
-            const placeholderProfileId = uuidv4();
-            const placeholderParticipationId = uuidv4();
-            this.logger.log(`Placeholder IDs: User=${placeholderUserId}, Profile=${placeholderProfileId}, Participation=${placeholderParticipationId}`);
-            // --- End Simulation ---
-
-            const newSession = this.onboardingSessionRepository.create({
-                eventId: dto.event_id,
-                userId: placeholderUserId,
-                profileId: placeholderProfileId,
-                participationId: placeholderParticipationId,
-                status: OnboardingStatus.AWAITING_AUDIO,
+            const newUser = await this.userService.createUnauthenticatedUser();
+            const tempSession = this.onboardingSessionRepository.create({
+                 eventId: event.id,
+                 userId: newUser.id,
+                 profileId: 'temp',
+                 participationId: 'temp',
+                 status: OnboardingStatus.STARTED,
             });
+            const initialSession = await this.onboardingSessionRepository.save(tempSession);
 
-            const savedSession = await this.onboardingSessionRepository.save(newSession);
-            this.logger.log(`Created onboarding session: ${savedSession.id}`);
+            const newProfile = await this.profileService.createInitialProfile(newUser.id, initialSession.id);
+            const newParticipation = await this.eventService.createInitialParticipation(newUser.id, event.id, initialSession.id);
+
+            initialSession.profileId = newProfile.id;
+            initialSession.participationId = newParticipation.id;
+            initialSession.status = OnboardingStatus.AWAITING_AUDIO;
+
+            const finalSession = await this.onboardingSessionRepository.save(initialSession);
+            this.logger.log(`Created onboarding session: ${finalSession.id}`);
 
             const fileExtension = '.wav';
-            const storageKey = `onboarding/${savedSession.id}/audio${fileExtension}`;
+            const storageKey = `onboarding/${finalSession.id}/audio${fileExtension}`;
             const contentType = 'audio/wav';
 
             const { uploadUrl, storagePath } = await this.audioStorageService.generatePresignedUploadUrl(
@@ -50,12 +62,12 @@ export class OnboardingService {
                 contentType,
             );
 
-            savedSession.audioStoragePath = storagePath;
-            await this.onboardingSessionRepository.save(savedSession);
+            finalSession.audioStoragePath = storagePath;
+            await this.onboardingSessionRepository.save(finalSession);
 
 
             return {
-                onboarding_id: savedSession.id,
+                onboarding_id: finalSession.id,
                 upload_url: uploadUrl,
                 s3_key: storagePath,
             };

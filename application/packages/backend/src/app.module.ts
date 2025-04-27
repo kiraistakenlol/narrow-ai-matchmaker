@@ -4,6 +4,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { OnboardingModule } from './onboarding/onboarding.module';
 import { HealthController } from './health/health.controller';
 import { AudioStorageModule } from './audio-storage/audio-storage.module';
+import { UsersModule } from './users/users.module';
+import { ProfilesModule } from './profiles/profiles.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
     imports: [
@@ -27,6 +30,9 @@ import { AudioStorageModule } from './audio-storage/audio-storage.module';
             }),
         }),
         AudioStorageModule,
+        UsersModule,
+        ProfilesModule,
+        EventsModule,
         OnboardingModule,
     ],
     controllers: [HealthController],
