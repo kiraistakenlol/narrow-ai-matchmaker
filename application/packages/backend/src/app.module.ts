@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OnboardingModule } from './onboarding/onboarding.module';
 import { HealthController } from './health/health.controller';
+import { AudioStorageModule } from './audio-storage/audio-storage.module';
 
 @Module({
     imports: [
@@ -25,6 +26,7 @@ import { HealthController } from './health/health.controller';
                 autoLoadEntities: true,
             }),
         }),
+        AudioStorageModule,
         OnboardingModule,
     ],
     controllers: [HealthController],
