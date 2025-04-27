@@ -18,14 +18,6 @@ export interface IAudioStorageService {
     generatePresignedUploadUrl(key: string, contentType: string, expiresInSeconds?: number): Promise<PresignedUrlResult>;
 
     /**
-     * Saves an audio buffer to the configured storage.
-     * @param buffer - The audio data buffer.
-     * @param key - The desired storage key/path.
-     * @param contentType - The MIME type of the audio.
-     */
-    saveAudio(buffer: Buffer, key: string, contentType: string): Promise<UploadResult>;
-
-    /**
      * Deletes an audio file from storage.
      * @param key - The storage key/path of the file to delete.
      */

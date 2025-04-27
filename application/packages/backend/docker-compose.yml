@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16 # Use a specific version, e.g., PostgreSQL 16
+    container_name: narrow-ai-matchmaker-db-dev
+    environment:
+      POSTGRES_USER: postgres # Matches DB_USERNAME in .env
+      POSTGRES_PASSWORD: postgres # Matches DB_PASSWORD in .env
+      POSTGRES_DB: narrow_ai_matchmaker_db # Matches DB_DATABASE in .env
+    ports:
+      - "5440:5432" # Map host port 5440 to container port 5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Persist data
+    restart: unless-stopped
+
+volumes:
+  postgres_data: {}

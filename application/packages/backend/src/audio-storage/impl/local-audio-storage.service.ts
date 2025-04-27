@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, InternalServerErrorException /*, NotFoundException */ } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -27,15 +27,21 @@ export class LocalAudioStorageService implements IAudioStorageService, OnModuleI
         }
     }
 
-    async generatePresignedUploadUrl(key: string, contentType: string, expiresInSeconds?: number): Promise<PresignedUrlResult> {
-        this.logger.warn('Presigned URL generation is not applicable for local storage.');
-        // In a real scenario for local dev, you might return a placeholder URL
-        // that the frontend could use to POST directly to a specific backend endpoint.
-        // For now, we throw an error or return an unusable structure.
-        throw new Error('Local storage does not support presigned upload URLs.');
+    async generatePresignedUploadUrl(key: string, _contentType: string, _expiresInSeconds?: number): Promise<PresignedUrlResult> {
+        this.logger.log(`Generating local upload URL for key: ${key}`);
+        const port = this.configService.get<number>('APP_PORT');
+        const host = this.configService.get<string>('APP_HOST', 'localhost');
+
+        const encodedKey = encodeURIComponent(key);
+        const uploadUrl = `http://${host}:${port}/api/v1/_local-upload/${encodedKey}`;
+
+        return {
+            uploadUrl: uploadUrl,
+            storagePath: key,
+        };
     }
 
-    async saveAudio(buffer: Buffer, key: string, contentType: string): Promise<UploadResult> {
+    async saveAudio(buffer: Buffer, key: string, _contentType: string): Promise<UploadResult> {
         const filePath = path.join(this.storagePath, key);
         const dirPath = path.dirname(filePath);
 
