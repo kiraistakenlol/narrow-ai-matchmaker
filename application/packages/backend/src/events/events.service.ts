@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, InternalServerErrorException, Logger } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Event } from './entities/event.entity';
@@ -25,25 +25,20 @@ export class EventService {
     }
 
     async createInitialParticipation(userId: string, eventId: string, onboardingId: string): Promise<EventParticipation> {
-        this.logger.log(`Creating initial participation for user: ${userId}, event: ${eventId}, onboarding: ${onboardingId}`);
-
+        this.logger.log(`Creating initial participation for user ${userId}, event ${eventId}, onboarding ${onboardingId}`);
         const newParticipation = this.participationRepository.create({
             userId: userId,
             eventId: eventId,
-            onboardingId: onboardingId,
-            contextData: {},
+            contextData: { onboardingId },
             completenessScore: 0,
-            joinedAt: new Date(),
         });
         try {
             const savedParticipation = await this.participationRepository.save(newParticipation);
             this.logger.log(`Created participation with ID: ${savedParticipation.id}`);
             return savedParticipation;
         } catch (error) {
-            const stack = error instanceof Error ? error.stack : undefined;
-            const message = error instanceof Error ? error.message : 'Unknown error';
-            this.logger.error(`Failed to create participation for user ${userId}, event ${eventId}: ${message}`, stack);
-            throw new InternalServerErrorException('Failed to create event participation record.');
+            this.logger.error(`Failed to save initial participation for user ${userId}, event ${eventId}`, error);
+            throw new InternalServerErrorException('Could not create event participation record.');
         }
     }
 

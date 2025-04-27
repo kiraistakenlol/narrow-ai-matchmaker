@@ -9,9 +9,6 @@ export class Profile {
     @Column()
     userId: string;
 
-    @Column()
-    onboardingId: string;
-
     @Column({ type: 'jsonb', default: {} })
     data: ProfileData;
 

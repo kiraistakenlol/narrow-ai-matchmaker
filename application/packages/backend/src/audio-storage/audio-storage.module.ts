@@ -1,38 +1,14 @@
-import { Module, Global } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { IAudioStorageService } from './audio-storage.interface';
-import { LocalAudioStorageService } from './impl/local-audio-storage.service';
-import { LocalUploadController } from './local-upload.controller';
-// Import S3AudioStorageService later when implemented
-// import { S3AudioStorageService } from './impl/s3-audio-storage.service';
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+// import { IAudioStorageService } from './audio-storage.interface'; // Removed
+import { S3AudioStorageService } from './s3-audio-storage.service';
 
-@Global()
 @Module({
-    imports: [],
-    controllers: [LocalUploadController],
+    imports: [ConfigModule],
     providers: [
-        LocalAudioStorageService,
-        // S3AudioStorageService,
-        {
-            provide: IAudioStorageService,
-            useFactory: (
-                configService: ConfigService,
-                localService: LocalAudioStorageService,
-                // s3Service: S3AudioStorageService,
-            ) => {
-                const provider = configService.get<string>('AUDIO_STORAGE_PROVIDER');
-                switch (provider?.toLowerCase()) {
-                    case 'local':
-                        return localService;
-                    // case 's3':
-                        // return s3Service;
-                    default:
-                        throw new Error(`Unsupported audio storage provider: ${provider}`);
-                }
-            },
-            inject: [ConfigService, LocalAudioStorageService /*, S3AudioStorageService */],
-        },
+        // Directly provide and export S3AudioStorageService
+        S3AudioStorageService,
     ],
-    exports: [IAudioStorageService, LocalAudioStorageService],
+    exports: [S3AudioStorageService], // Export the concrete service
 })
 export class AudioStorageModule {} 

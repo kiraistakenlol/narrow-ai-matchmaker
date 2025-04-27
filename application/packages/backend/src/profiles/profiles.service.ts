@@ -2,6 +2,32 @@ import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Profile } from './entities/profile.entity';
+import { ProfileData } from '@narrow-ai-matchmaker/common';
+
+// Helper function to create a default empty ProfileData
+const createDefaultProfileData = (): ProfileData => ({
+    raw_input: null,
+    personal: {
+        name: null,
+        headline: null,
+        visiting_status: null,
+    },
+    skills: {
+        hard: [],
+        soft: [],
+    },
+    industries: [],
+    hobbies: [],
+    roles: [],
+    event_context: {
+        event_id: 'initial_placeholder', // Needs actual event ID later
+        goals: {
+            looking_for: [],
+            offering: [],
+        },
+    },
+    extra_notes: null,
+});
 
 @Injectable()
 export class ProfileService {
@@ -12,23 +38,20 @@ export class ProfileService {
         private profileRepository: Repository<Profile>,
     ) {}
 
-    async createInitialProfile(userId: string, onboardingId: string): Promise<Profile> {
-        this.logger.log(`Creating initial profile for user: ${userId}, onboarding: ${onboardingId}`);
+    async createInitialProfile(userId: string): Promise<Profile> {
+        this.logger.log(`Creating initial profile for user ${userId}`);
         const newProfile = this.profileRepository.create({
             userId: userId,
-            onboardingId: onboardingId,
-            data: {},
+            data: createDefaultProfileData(),
             completenessScore: 0,
         });
         try {
-            const savedProfile = await this.profileRepository.save(newProfile);
+            const savedProfile: Profile = await this.profileRepository.save(newProfile);
             this.logger.log(`Created profile with ID: ${savedProfile.id}`);
             return savedProfile;
         } catch (error) {
-            const stack = error instanceof Error ? error.stack : undefined;
-            const message = error instanceof Error ? error.message : 'Unknown error';
-            this.logger.error(`Failed to create profile for user ${userId}: ${message}`, stack);
-            throw new InternalServerErrorException('Failed to create profile record.');
+            this.logger.error(`Failed to save initial profile for user ${userId}`, error);
+            throw new InternalServerErrorException('Could not create profile record.');
         }
     }
 

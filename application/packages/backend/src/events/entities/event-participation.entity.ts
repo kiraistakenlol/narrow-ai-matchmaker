@@ -1,4 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+// import { OnboardingSession } from '@backend/onboarding/entities/onboarding-session.entity'; // No longer needed
 
 @Entity('event_participations')
 export class EventParticipation {
@@ -11,11 +12,17 @@ export class EventParticipation {
     @Column()
     eventId: string;
 
-    @Column()
-    onboardingId: string;
+    // // Foreign key column // Removed
+    // @Column() // Removed
+    // onboardingId: string; // Removed
 
-    @Column({ default: {} })
-    contextData: any;
+    // // Relationship (inverse side) // Removed
+    // @OneToOne(() => OnboardingSession, session => session.eventParticipation) // Removed
+    // @JoinColumn({ name: 'onboardingId' }) // Removed
+    // onboardingSession: OnboardingSession; // Removed
+
+    @Column({ type: 'jsonb', default: {} }) // Explicitly set jsonb if needed
+    contextData: any; // Consider using a specific type like ProfileData if applicable
 
     @Column({ type: 'float', default: 0.0 })
     completenessScore: number;
