@@ -1,14 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ContentExtractionService } from './content-extraction.service';
 import { AudioStorageModule } from '@backend/audio-storage/audio-storage.module';
+import { LlmModule } from '@backend/llm/llm.module';
+import { TranscriptionModule } from '@backend/transcription/transcription.module';
 
 @Module({
   imports: [
-    AudioStorageModule, // Fixed import
-    // LlmModule, // Uncomment when LlmModule is ready
-    // TranscriptionModule, // Uncomment when TranscriptionModule is ready
+    AudioStorageModule,
+    LlmModule,
+    TranscriptionModule,
   ],
   providers: [ContentExtractionService],
-  exports: [ContentExtractionService], // Export if other modules need to trigger it directly
+  exports: [ContentExtractionService],
 })
 export class ContentExtractionModule {} 

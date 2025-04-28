@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Backend (ts-node)",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--nolazy",
+        "-r", "ts-node/register",
+        "-r", "tsconfig-paths/register",
+        "--inspect-brk=9229"
+      ],
+      "args": [
+        "${workspaceFolder}/application/packages/backend/src/main.ts"
+      ],
+      "cwd": "${workspaceFolder}/application/packages/backend",
+      "console": "integratedTerminal",
+      "restart": true,
+      "sourceMaps": true,
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ]
+    }
+  ]
+} 

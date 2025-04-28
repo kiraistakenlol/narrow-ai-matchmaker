@@ -21,14 +21,17 @@ export class S3AudioStorageService {
     private readonly presignedUrlExpiresIn = 3600; // Default: 1 hour
 
     constructor(private configService: ConfigService) {
-        // Assuming AWS config comes from the general AWS settings for now
-        // If S3 needs separate creds/region, adjust config access
-        this.region = this.configService.get<string>('transcription.aws.region'); // Reuse region
+        this.logger.log('Initializing S3AudioStorageService...');
+        this.region = this.configService.get<string>('transcription.aws.region');
         this.bucketName = this.configService.get<string>('audioStorage.s3Bucket');
+        this.logger.log(`Read AWS_REGION from config: ${this.region}`);
+        this.logger.log(`Read AWS_S3_BUCKET_AUDIO from config: ${this.bucketName}`);
+
         const accessKeyId = this.configService.get<string>('transcription.aws.accessKeyId');
         const secretAccessKey = this.configService.get<string>('transcription.aws.secretAccessKey');
 
         if (!this.region || !this.bucketName) {
+             this.logger.error(`Configuration missing! Region: ${this.region}, Bucket: ${this.bucketName}`);
             throw new Error('AWS region and S3 audio bucket name must be configured.');
         }
 

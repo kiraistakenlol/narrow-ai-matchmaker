@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, Logger } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OnboardingModule } from './onboarding/onboarding.module';
@@ -16,7 +16,10 @@ import { ContentExtractionModule } from './content-extraction/content-extraction
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
-            envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
+            envFilePath: [
+                `.env.${process.env.NODE_ENV || 'development'}`,
+                '.env' 
+            ],
             load: [configuration],
             validationSchema: configValidationSchema,
             validationOptions: {
@@ -27,17 +30,22 @@ import { ContentExtractionModule } from './content-extraction/content-extraction
         TypeOrmModule.forRootAsync({
             imports: [ConfigModule],
             inject: [ConfigService],
-            useFactory: (configService: ConfigService) => ({
-                type: 'postgres',
-                host: configService.get<string>('database.host'),
-                port: configService.get<number>('database.port'),
-                username: configService.get<string>('database.username'),
-                password: configService.get<string>('database.password'),
-                database: configService.get<string>('database.database'),
-                entities: [],
-                synchronize: false,
-                autoLoadEntities: true,
-            }),
+            useFactory: (configService: ConfigService) => {
+                const logger = new Logger('AppModule');
+                logger.debug('Loaded configuration:', JSON.stringify(configService.get('')));
+
+                return {
+                    type: 'postgres',
+                    host: configService.get<string>('database.host'),
+                    port: configService.get<number>('database.port'),
+                    username: configService.get<string>('database.username'),
+                    password: configService.get<string>('database.password'),
+                    database: configService.get<string>('database.database'),
+                    entities: [],
+                    synchronize: false,
+                    autoLoadEntities: true,
+                };
+            },
         }),
         AudioStorageModule,
         TranscriptionModule,
