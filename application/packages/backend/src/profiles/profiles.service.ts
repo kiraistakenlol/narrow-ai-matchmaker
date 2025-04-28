@@ -4,6 +4,8 @@ import { Repository } from 'typeorm';
 import { Profile } from './entities/profile.entity';
 import { ProfileData } from '@narrow-ai-matchmaker/common';
 import { ContentExtractionService } from '@backend/content-extraction/content-extraction.service';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Helper function to create a default empty ProfileData
 const createDefaultEmptyProfileData = (): ProfileData => ({
@@ -34,12 +36,27 @@ const createDefaultEmptyProfileData = (): ProfileData => ({
 @Injectable()
 export class ProfileService {
     private readonly logger = new Logger(ProfileService.name);
+    private readonly profileSchema: object;
 
     constructor(
         @InjectRepository(Profile)
         private profileRepository: Repository<Profile>,
         private readonly contentExtractionService: ContentExtractionService,
-    ) {}
+    ) {
+        // Load the profile schema from the JSON file
+        try {
+            // Use process.cwd() to get the workspace root directory
+            const workspaceRoot = process.cwd();
+            const schemaPath = path.join(workspaceRoot,'..', '..','..', 'profile', 'profile_schema.json')
+            const schemaContent = fs.readFileSync(schemaPath, 'utf8');
+            this.profileSchema = JSON.parse(schemaContent);
+            this.logger.log('Profile schema loaded successfully');
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            this.logger.error(`Failed to load profile schema: ${errorMessage}`);
+            throw new InternalServerErrorException('Failed to load profile schema');
+        }
+    }
 
     async createInitialProfile(userId: string): Promise<Profile> {
         this.logger.log(`Creating initial profile for user: ${userId}`);
@@ -80,26 +97,20 @@ export class ProfileService {
             throw new NotFoundException(`Profile for user ${userId} not found`);
         }
         
-        const profileSchema = { 
-            type: 'object', 
-            properties: { 
-                name: { type: 'string' }, 
-                interests: { type: 'array', items: { type: 'string' } } 
-            }, 
-            required: ['name'] 
-        };
-        
-        const profileInstructions = "Extract the user's name and key interests mentioned in the provided text transcript.";
-        
-        // Extract profile data from text transcript
-        const extractedProfileData = await this.contentExtractionService.extractStructuredDataFromText(
+        // Extract profile data from text transcript using the profile schema
+        const { extractedData, suggestedNewEnumValues } = await this.contentExtractionService.extractStructuredDataFromText<ProfileData>(
             transcriptText,
-            profileSchema,
-            profileInstructions
+            this.profileSchema
         );
         
         // Update profile with extracted data
-        profile.data = extractedProfileData;
+        profile.data = extractedData;
+        
+        // Log any suggested new enum values for potential schema updates
+        if (Object.keys(suggestedNewEnumValues).length > 0) {
+            this.logger.log(`Suggested new enum values: ${JSON.stringify(suggestedNewEnumValues)}`);
+        }
+        
         return this.save(profile);
     }
 }

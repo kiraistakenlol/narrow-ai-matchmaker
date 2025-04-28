@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ILlmService, LlmStructuredDataResult } from './llm.interface';
+import { ILlmService } from './llm.interface';
 import { ProfileData } from '@narrow-ai-matchmaker/common'; // Import the type
 
 // Helper function to create a default empty ProfileData (can be shared)
@@ -35,27 +35,29 @@ export class MockLlmService implements ILlmService {
         this.logger.log('MockLlmService initialized');
     }
 
-    async extractStructuredData(
-        text: string,
-        _targetSchema: object, // Prefixed as unused
-        instructions: string
-    ): Promise<LlmStructuredDataResult> {
+    async generateResponse(
+        userPrompt: string,
+        systemPrompt?: string
+    ): Promise<string> {
         this.logger.warn(
-            `Mock extractStructuredData called. Returning fixed placeholder ProfileData. Instructions: "${instructions}", Text length: ${text.length}`
+            `Mock generateResponse called. Returning fixed placeholder response. System prompt: "${systemPrompt}", User prompt length: ${userPrompt.length}`
         );
 
-        // Return a fixed, valid ProfileData structure
-        const placeholderData = createDefaultProfileData();
-
-        // Optionally, slightly customize based on input for basic testing
-        if (text.toLowerCase().includes('python')) {
-             placeholderData.skills.hard.push({ skill: 'Python', level: 'Beginner' });
+        // Check if the system prompt contains instructions for structured data extraction
+        if (systemPrompt && systemPrompt.includes('RESPONSE FORMAT')) {
+            // Return a mock structured response
+            const mockResponse = {
+                extractedData: createDefaultProfileData(),
+                suggestedNewEnumValues: {
+                    preferredCommunicationStyle: 'casual',
+                    availability: 'mornings'
+                }
+            };
+            
+            return JSON.stringify(mockResponse);
         }
-        placeholderData.raw_input = text.substring(0, 100); // Store snippet of input
-
-        return {
-            extractedData: placeholderData,
-            modelUsed: 'mock-llm-v0.2',
-        };
+        
+        // Default response for general prompts
+        return `This is a mock response to: "${userPrompt.substring(0, 50)}..."`;
     }
 } 

@@ -88,14 +88,12 @@ export class EventService {
         const eventInstructions = "Extract the user's goals for this specific event and their general availability mentioned in the provided text transcript.";
         
         // Extract event data from text transcript
-        const extractedEventData = await this.contentExtractionService.extractStructuredDataFromText(
+        const extractedEventData = await this.contentExtractionService.extractStructuredDataFromText<any>(
             transcriptText,
-            eventContextSchema,
-            eventInstructions
-        );
-        
+            eventContextSchema)
+            
         // Update participation with extracted data
-        participation.contextData = extractedEventData;
+        // participation.contextData = extractedEventData.extractedData;
         return this.save(participation);
     }
 } 

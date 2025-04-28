@@ -2,8 +2,7 @@ import { Module, Logger } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ILlmService } from './llm.interface';
 import { MockLlmService } from './mock-llm.service';
-// Import future implementations like:
-// import { OpenAiLlmService } from './openai-llm.service';
+import { GroqLlmService } from './groq-llm.service';
 
 @Module({
     imports: [ConfigModule],
@@ -18,8 +17,8 @@ import { MockLlmService } from './mock-llm.service';
                 switch (provider) {
                     case 'mock':
                         return mockService;
-                    // case 'openai':
-                    //     return new OpenAiLlmService(configService);
+                    case 'groq':
+                        return new GroqLlmService(configService);
                     // Add cases for 'anthropic', 'groq', etc.
                     default:
                         logger.error(`Invalid LLM_PROVIDER: ${provider}. Defaulting to mock.`);

@@ -1,27 +1,16 @@
-export interface LlmStructuredDataResult {
-    extractedData: object; // The JSON object matching the requested schema
-    modelUsed?: string; // Optional: Identify the specific model that processed the request
-}
-
 export interface ILlmService {
     /**
-     * Extracts structured data (JSON) from a given text based on a target schema and instructions.
+     * Generates a response from the LLM based on user and system prompts.
      *
-     * @param text The input text to process.
-     * @param targetSchema A JSON schema object defining the desired output structure.
-     * @param instructions Natural language instructions guiding the LLM on what/how to extract.
-     * @returns A promise resolving to the extracted structured data.
-     * @throws Error if the LLM fails to extract data or follow the schema.
+     * @param userPrompt The user's input prompt.
+     * @param systemPrompt Optional system prompt to guide the LLM's behavior.
+     * @returns A promise resolving to the LLM's response.
+     * @throws Error if the LLM fails to generate a response.
      */
-    extractStructuredData(
-        text: string,
-        targetSchema: object,
-        instructions: string
-    ): Promise<LlmStructuredDataResult>;
-
-    // Add other potential methods later, e.g.:
-    // generateEmbedding(text: string): Promise<number[]>;
-    // classifyText(text: string, categories: string[]): Promise<string>;
+    generateResponse(
+        userPrompt: string,
+        systemPrompt?: string
+    ): Promise<string>;
 }
 
 export const ILlmService = Symbol('ILlmService'); 
