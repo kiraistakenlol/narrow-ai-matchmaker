@@ -1,25 +1,13 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    /* Module-specific options */
     "outDir": "./dist",
     "rootDir": "./src",
-    // Ensure declaration files are generated for consumers
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-
-    // If using path aliases within this package, define them here
-    // "baseUrl": ".",
-    // "paths": {
-    //   "@utils/*": ["src/utils/*"],
-    //   "@interfaces/*": ["src/interfaces/*"]
-    // }
-
-    /* Override base options if needed */
-    // Example: Target might be different for a library vs an app
-    // "target": "ES2020",
-
+    "moduleResolution": "node",
+    "module": "commonjs",
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

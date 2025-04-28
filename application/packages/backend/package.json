@@ -2,13 +2,12 @@
   "name": "@narrow-ai-matchmaker/backend",
   "version": "0.1.0",
   "description": "Backend API service (NestJS)",
-  "main": "dist/backend/src/main.js",
+  "main": "./dist/backend/src/main.js",
   "scripts": {
     "build": "nest build",
-    "start": "npm run build && node dist/backend/src/main.js",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/backend/src/main.js",
+    "start": "node ./dist/backend/src/main.js",
+    "dev": "nest start --watch",
+    "debug": "nest start --debug --watch",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
   },
   "keywords": [],
