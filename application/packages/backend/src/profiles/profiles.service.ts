@@ -2,10 +2,10 @@ import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Profile } from './entities/profile.entity';
-import { ProfileData } from '@narrow-ai-matchmaker/common';
+import { ProfileData, EventContext } from '@narrow-ai-matchmaker/common';
 
 // Helper function to create a default empty ProfileData
-const createDefaultProfileData = (): ProfileData => ({
+const createDefaultEmptyProfileData = (): ProfileData => ({
     raw_input: null,
     personal: {
         name: null,
@@ -19,8 +19,9 @@ const createDefaultProfileData = (): ProfileData => ({
     industries: [],
     hobbies: [],
     roles: [],
+    // Need a default EventContext, assuming a placeholder ID initially
     event_context: {
-        event_id: 'initial_placeholder', // Needs actual event ID later
+        event_id: 'initial_placeholder', // Or consider making EventContext nullable if appropriate
         goals: {
             looking_for: [],
             offering: [],
@@ -39,20 +40,35 @@ export class ProfileService {
     ) {}
 
     async createInitialProfile(userId: string): Promise<Profile> {
-        this.logger.log(`Creating initial profile for user ${userId}`);
-        const newProfile = this.profileRepository.create({
-            userId: userId,
-            data: createDefaultProfileData(),
-            completenessScore: 0,
-        });
+        this.logger.log(`Creating initial profile for user: ${userId}`);
         try {
-            const savedProfile: Profile = await this.profileRepository.save(newProfile);
-            this.logger.log(`Created profile with ID: ${savedProfile.id}`);
+            const newProfile = this.profileRepository.create({
+                userId: userId,
+                data: createDefaultEmptyProfileData(),
+                completenessScore: 0,
+            });
+            const savedProfile = await this.profileRepository.save(newProfile);
+            this.logger.log(`Successfully created initial profile ${savedProfile.id} for user ${userId}`);
             return savedProfile;
         } catch (error) {
-            this.logger.error(`Failed to save initial profile for user ${userId}`, error);
-            throw new InternalServerErrorException('Could not create profile record.');
+            const message = error instanceof Error ? error.message : 'Unknown database error';
+            this.logger.error(`Failed to create initial profile for user ${userId}: ${message}`, error instanceof Error ? error.stack : undefined);
+            throw new InternalServerErrorException('Could not create initial profile.');
         }
     }
 
+    async save(profile: Profile): Promise<Profile> {
+        this.logger.log(`Saving profile ${profile.id} for user ${profile.userId}`);
+        try {
+            const savedProfile = await this.profileRepository.save(profile);
+            this.logger.log(`Successfully saved profile ${savedProfile.id}`);
+            return savedProfile;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown database error';
+            this.logger.error(`Failed to save profile ${profile.id}: ${message}`, error instanceof Error ? error.stack : undefined);
+            throw new InternalServerErrorException(`Could not save profile ${profile.id}.`);
+        }
+    }
+
+    // Add other profile-related methods here (e.g., findById, updateProfileData, etc.)
 } 

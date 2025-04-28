@@ -9,8 +9,6 @@ import { UserService } from '@backend/users/users.service';
 import { ProfileService } from '@backend/profiles/profiles.service';
 import { EventService } from '@backend/events/events.service';
 import { ContentExtractionService } from '@backend/content-extraction/content-extraction.service';
-import { Profile } from '@backend/profiles/entities/profile.entity';
-import { EventParticipation } from '@backend/events/entities/event-participation.entity';
 
 @Injectable()
 export class OnboardingService {
@@ -20,10 +18,6 @@ export class OnboardingService {
         private audioStorageService: S3AudioStorageService,
         @InjectRepository(OnboardingSession)
         private onboardingSessionRepository: Repository<OnboardingSession>,
-        @InjectRepository(Profile)
-        private profileRepository: Repository<Profile>,
-        @InjectRepository(EventParticipation)
-        private eventParticipationRepository: Repository<EventParticipation>,
         private readonly userService: UserService,
         private readonly profileService: ProfileService,
         private readonly eventService: EventService,
@@ -39,41 +33,45 @@ export class OnboardingService {
         }
 
         try {
+            // 1. Create User
             const newUser = await this.userService.createUnauthenticatedUser();
+            this.logger.log(`Created new user: ${newUser.id}`);
 
-            const tempSession = this.onboardingSessionRepository.create({
-                 eventId: event.id,
-                 userId: newUser.id,
-                 profileId: 'placeholder-profile-id',
-                 participationId: 'placeholder-participation-id',
-                 status: OnboardingStatus.STARTED,
-            });
-            const initialSession = await this.onboardingSessionRepository.save(tempSession);
-            this.logger.log(`Created initial onboarding session: ${initialSession.id}`);
-
+            // 2. Create initial Profile
             const newProfile = await this.profileService.createInitialProfile(newUser.id);
-            const newParticipation = await this.eventService.createInitialParticipation(newUser.id, event.id, initialSession.id);
+            this.logger.log(`Created initial profile: ${newProfile.id}`);
 
-            initialSession.profileId = newProfile.id;
-            initialSession.participationId = newParticipation.id;
-            initialSession.status = OnboardingStatus.AWAITING_AUDIO;
+            // 3. Create initial Event Participation
+            const newParticipation = await this.eventService.createInitialParticipation(newUser.id, event.id, '');
+            this.logger.log(`Created initial event participation: ${newParticipation.id}`);
 
-            const fileExtension = '.wav';
-            const storageKey = `onboarding/${initialSession.id}/audio${fileExtension}`;
-            const contentType = 'audio/wav';
+            // 4. Create the Onboarding Session 
+            const newOnboarding = await this.onboardingSessionRepository.save(
+                this.onboardingSessionRepository.create({
+                    eventId: event.id,
+                    userId: newUser.id,
+                    profileId: newProfile.id,
+                    participationId: newParticipation.id,
+                    status: OnboardingStatus.AWAITING_AUDIO
+                })
+            );
+            this.logger.log(`Created onboarding session with ID: ${newOnboarding.id}`);
 
+            // 5. Construct storage key using the session ID and new format
+            const fileExtension = '.webm'; // New format
+            const storageKey = `onboarding/${newOnboarding.id}/audio-initial${fileExtension}`;
+            const contentType = 'audio/webm'; // New format
+
+            // 6. Generate the presigned URL using the final storage key
             const { uploadUrl, storagePath } = await this.audioStorageService.generatePresignedUploadUrl(
                 storageKey,
                 contentType,
             );
+            this.logger.log(`Generated pre-signed URL for session ${newOnboarding.id} at path: ${storagePath}`);
 
-            initialSession.audioStoragePath = storagePath;
-
-            const finalSession = await this.onboardingSessionRepository.save(initialSession);
-            this.logger.log(`Updated onboarding session ${finalSession.id} with profile/participation IDs and audio path.`);
-
+            // 7. Return response
             return {
-                onboarding_id: finalSession.id,
+                onboarding_id: newOnboarding.id,
                 upload_url: uploadUrl,
                 s3_key: storagePath,
             };
@@ -107,13 +105,22 @@ export class OnboardingService {
              throw new GoneException(`Onboarding session ${onboardingId} has expired.`);
         }
 
+        // Construct the expected storage key based on session ID and new format
+        const fileExtension = '.webm'; // New format
+        const expectedStorageKey = `onboarding/${session.id}/audio-initial${fileExtension}`;
+
         if (session.status !== OnboardingStatus.AWAITING_AUDIO) {
              this.logger.warn(`Upload notification received for session ${onboardingId} not awaiting audio (status: ${session.status}). Processing will not be re-triggered.`);
+             // Even if not awaiting audio, check if the key matches what we *would* expect
+             if (expectedStorageKey !== dto.s3_key) {
+                this.logger.error(`CRITICAL: Storage key mismatch for completed/failed session ${onboardingId}. Expected: ${expectedStorageKey}, Received: ${dto.s3_key}`);
+             }
              return { status: session.status };
         }
 
-        if (session.audioStoragePath !== dto.s3_key) {
-             this.logger.error(`Storage key mismatch for session ${onboardingId}. Expected: ${session.audioStoragePath}, Received: ${dto.s3_key}`);
+        // Check the received key against the dynamically constructed expected key
+        if (expectedStorageKey !== dto.s3_key) {
+             this.logger.error(`Storage key mismatch for session ${onboardingId}. Expected: ${expectedStorageKey}, Received: ${dto.s3_key}`);
              throw new BadRequestException(`Invalid storage key provided.`);
         }
 
@@ -145,8 +152,13 @@ export class OnboardingService {
                 relations: ['profile', 'eventParticipation'],
             });
 
-            if (!session || !session.profile || !session.eventParticipation || !session.audioStoragePath) {
-                 throw new Error(`Session ${sessionId} or required data not found for background processing.`);
+            // Construct the expected storage key here as well using new format
+            const fileExtension = '.webm'; // New format
+            const storageKey = `onboarding/${sessionId}/audio-initial${fileExtension}`;
+
+            // Check session and relations exist
+            if (!session || !session.profile || !session.eventParticipation) {
+                 throw new Error(`Session ${sessionId} or required relations not found for background processing.`);
             }
 
             session.status = OnboardingStatus.PROCESSING;
@@ -158,14 +170,15 @@ export class OnboardingService {
             const profileInstructions = "Extract the user's name and key interests mentioned in the audio.";
             const eventInstructions = "Extract the user's goals for this specific event and their general availability mentioned.";
 
+            // Use the dynamically constructed storageKey for content extraction
             const extractedProfileData = await this.contentExtractionService.extractStructuredData(
-                session.audioStoragePath,
+                storageKey,
                 profileSchema,
                 profileInstructions
             );
 
             const extractedEventData = await this.contentExtractionService.extractStructuredData(
-                session.audioStoragePath,
+                storageKey,
                 eventContextSchema,
                 eventInstructions
             );
@@ -173,9 +186,9 @@ export class OnboardingService {
             session.profile.data = extractedProfileData;
             session.eventParticipation.contextData = extractedEventData;
 
-            await this.profileRepository.save(session.profile);
-            await this.eventParticipationRepository.save(session.eventParticipation);
-            this.logger.log(`Updated profile and event participation data for session ${sessionId}`);
+            await this.profileService.save(session.profile);
+            await this.eventService.save(session.eventParticipation);
+            this.logger.log(`Updated profile and event participation data for session ${sessionId} via services.`);
 
             session.status = OnboardingStatus.COMPLETED;
             await this.onboardingSessionRepository.save(session);

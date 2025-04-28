@@ -11,6 +11,8 @@ This document consolidates the setup steps, guidelines, and technology stack spe
 *   **Language:** TypeScript
 *   **Database ORM:** TypeORM
 *   **Relational Database:** PostgreSQL
+*   **Audio Storage:** AWS S3
+*   **Transcription:** AWS Transcribe
 
 ## Database Schema Management (Development)
 
@@ -23,49 +25,65 @@ This document consolidates the setup steps, guidelines, and technology stack spe
 *   **TypeScript:** Prioritize strong typing; avoid `any` and `unknown` where possible. Use settings from `../../tsconfig.base.json` and specific overrides in `./tsconfig.json`.
 *   **Path Aliases:** Use configured TypeScript path aliases (`@common/*`, `@backend/*`) for cleaner imports.
 *   **Minimalism & Just-In-Time (JIT):** Strive for simplicity. Create code, files, classes, interfaces only when needed. Defer optional features/config.
-*   **Configuration:** Implement strongly-typed configuration management using `@nestjs/config`, prioritizing `process.env` over `.env`.
-*   **Error Handling:** Implement a basic global exception filter (`src/common/filters/http-exception.filter.ts`) for consistent API error responses, aligned with `../../docs/api/openapi.yaml`.
+*   **Configuration:** Implement strongly-typed configuration management using `@nestjs/config`, `Joi` validation, and `.env` files.
+*   **Error Handling:** Implement a basic global exception filter (`src/common/filters/http-exception.filter.ts`) for consistent API error responses.
 *   **Dependencies:** Use stable versions.
 *   **Design Alignment:** Backend modules/controllers/services should align with the API defined in `../../docs/api/openapi.yaml`.
-*   **Initial Storage Strategy:** During initial development, audio files will be stored locally on disk. This involves a single audio upload per session initially.
-    *   Set the environment variable `AUDIO_STORAGE_PROVIDER=local`.
-    *   Set `AUDIO_LOCAL_STORAGE_PATH=./data/audio` (relative to the backend package root).
-    *   Files will be saved within this directory (e.g., `./data/audio/onboarding/SESSION_ID/audio.wav`).
-    *   The `/onboarding/initiate` endpoint generates a storage path and returns a local backend URL (e.g., `http://localhost:PORT/api/v1/_local-upload/ENCODED_KEY`) for the client to `PUT` the audio file.
-    *   A dedicated controller (`LocalUploadController`) handles these `PUT` requests, parsing the raw request body and saving the file using `LocalAudioStorageService`.
-    *   The client then calls `/onboarding/SESSION_ID/notify-upload` with the storage key (`s3_key`) to confirm the upload.
-    *   Ensure the `./data` directory is added to the root `.gitignore` file.
-*   **Deferred Items (Initial Setup):**
-    *   Detailed request validation (`class-validator`/`class-transformer`).
+*   **Audio Storage Strategy:** Audio files are stored exclusively in AWS S3.
+    *   Environment variables `AWS_REGION` and `AWS_S3_BUCKET_AUDIO` are required.
+    *   The `S3AudioStorageService` handles generating presigned PUT URLs for client uploads and retrieving audio streams.
+    *   The previous local storage strategy and related components (`LocalAudioStorageService`, `LocalUploadController`) have been removed.
+*   **Transcription Strategy:** Transcription is handled exclusively by AWS Transcribe.
+    *   Environment variables `AWS_REGION` and `AWS_TRANSCRIBE_OUTPUT_BUCKET` are required.
+    *   The `AwsTranscribeService` handles starting transcription jobs (using S3 URIs) and polling/retrieving results.
+*   **LLM Strategy:** LLM interactions are abstracted via `ILlmService`.
+    *   `LlmModule` uses a factory to select provider based on `LLM_PROVIDER` env var.
+    *   Initial providers: `mock`, (`openai`, `groq` to be added).
+*   **Content Extraction:** The `ContentExtractionService` orchestrates transcription and LLM processing.
+*   **Simplified Abstractions:** Initial abstractions for choosing providers (audio, transcription) were removed in favor of direct AWS service usage to simplify the current setup.
+*   **Deferred Items:**
+    *   Detailed request validation (`class-validator`/`class-transformer` integration in DTOs).
     *   Comprehensive testing (unit, integration, E2E).
     *   Authentication/Authorization flows (JWT, Guards).
+    *   Refined `.env` loading (currently uses `.env.<NODE_ENV>` fallback to `.env`).
+    *   `Dockerfile` creation.
 
-## Phase 1: Initial Backend Setup
+## Phase 1: Initial Backend Setup & Core Services
 
 - [x] Initialize `package.json` with core NestJS dependencies.
 - [x] Add NestJS dev dependencies.
-- [x] Add TypeORM and config dependencies (`@nestjs/typeorm`, `typeorm`, `pg`, `@nestjs/config`).
+- [x] Add TypeORM and config dependencies (`@nestjs/typeorm`, `typeorm`, `pg`, `@nestjs/config`, `joi`).
+- [x] Add AWS SDK dependencies (`@aws-sdk/client-s3`, `@aws-sdk/client-transcribe`, `@aws-sdk/s3-request-presigner`).
+- [x] Add LLM SDK dependencies (`groq-sdk`).
 - [x] Create a basic README.md (`README.md`).
 - [x] Create `tsconfig.json` (extending `../../tsconfig.base.json`, ensure path aliases are configured).
 - [x] Set up basic NestJS application structure (`src/main.ts`, `src/app.module.ts`).
 - [x] Configure a global API prefix ('/api/v1') in `main.ts`.
-- [x] Integrate `@nestjs/config` in `AppModule`.
+- [x] Integrate `@nestjs/config` in `AppModule` with Joi validation and `.env` loading.
 - [x] Create `.env.example`.
-- [x] Create `.env` file (and ensure it's in root `.gitignore`).
 - [x] Configure `TypeOrmModule.forRootAsync` in `AppModule` (ensure `synchronize: false`).
 - [x] Configure `main.ts` to use `APP_PORT` and `APP_HOST` env vars.
 - [x] Add `@narrow-ai-matchmaker/common` package as a dependency in `package.json`.
-- [x] Define initial module/service/controller interfaces/classes (Placeholder `OnboardingModule`, `HealthController`).
 - [x] Implement basic global exception filter (`src/common/filters/http-exception.filter.ts`).
+- [x] Implement `S3AudioStorageService` and `AudioStorageModule` (S3 only).
+- [x] Implement `AwsTranscribeService` and `TranscriptionModule` (AWS only).
+- [x] Implement `ILlmService`, `MockLlmService`, `GroqLlmService`, and `LlmModule`.
+- [x] Implement `ContentExtractionService` and `ContentExtractionModule`.
+- [x] Define initial core feature modules/services/controllers/entities (Users, Profiles, Events, Onboarding, Health). 
+- [x] Fix build errors and ensure application starts.
 
 ## Phase 2: Feature Implementation (Details TBD)
 
-- [ ] Implement core service logic, database interactions, and API endpoints according to `../../docs/api/openapi.yaml`.
+- [ ] Implement core service logic for Onboarding, Profiles, Events, Matching, etc.
+- [ ] Implement database interactions according to schema.
+- [ ] Implement API endpoints according to `../../docs/api/openapi.yaml`.
 - [ ] Implement request validation (`class-validator`/`class-transformer`).
 - [ ] Add Authentication and Authorization (JWT, Guards).
 - [ ] Add comprehensive tests (unit, integration, E2E).
 
 ## Other Considerations
 
-- [ ] Refine `.env` loading in `AppModule` for local vs. Docker/AWS (Current setup prioritizes `process.env`).
-- [ ] Create a basic `Dockerfile`. 
+- [ ] Create a basic `Dockerfile`.
+- [ ] Refine LLM service implementations (OpenAI, Anthropic?).
+- [ ] Add Vector DB integration (`qdrant.service.ts`).
+- [ ] Implement robust polling/webhook for async jobs (Transcription). 

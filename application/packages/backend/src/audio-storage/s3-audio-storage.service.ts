@@ -4,11 +4,14 @@ import { S3Client, GetObjectCommand, DeleteObjectCommand, PutObjectCommand } fro
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 // import { IAudioStorageService, PresignedUrlResult } from '../audio-storage.interface'; // Removed
 import { Readable } from 'stream';
+// import { randomUUID } from 'crypto'; // Remove this import
 
 // Define PresignedUrlResult locally or move to a shared types file
+// Revert interface back
 export interface PresignedUrlResult {
     uploadUrl: string;
     storagePath: string;
+    // generatedId: string; // Remove this
 }
 
 @Injectable()
@@ -41,7 +44,10 @@ export class S3AudioStorageService {
         this.logger.log(`S3AudioStorageService initialized for region ${this.region} and bucket ${this.bucketName}`);
     }
 
-    async generatePresignedUploadUrl(key: string, contentType: string): Promise<PresignedUrlResult> {
+    async generatePresignedUploadUrl(
+        key: string, // Add key parameter back
+        contentType: string
+    ): Promise<PresignedUrlResult> { // Update return type
         this.logger.log(`Generating presigned URL for key: ${key}, contentType: ${contentType}`);
         try {
             const command = new PutObjectCommand({
@@ -57,6 +63,7 @@ export class S3AudioStorageService {
             return {
                 uploadUrl,
                 storagePath: key, // The final path in S3 is the key itself
+                // generatedId: generatedId, // Remove generatedId from return
             };
         } catch (error) {
             this.logger.error(`Failed to generate presigned URL for key ${key}`, error);

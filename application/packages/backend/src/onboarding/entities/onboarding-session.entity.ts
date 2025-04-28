@@ -52,9 +52,6 @@ export class OnboardingSession {
     @Column()
     status: OnboardingStatus;
 
-    @Column({ nullable: true })
-    audioStoragePath?: string;
-
     @CreateDateColumn()
     createdAt: Date;
 
