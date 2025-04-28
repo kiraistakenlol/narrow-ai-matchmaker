@@ -13,7 +13,7 @@ export class OnboardingController {
         @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
         dto: InitiateOnboardingRequestDto,
     ): Promise<InitiateOnboardingResponseDto> {
-        return this.onboardingService.initiateOnboarding(dto);
+        return this.onboardingService.initiate(dto);
     }
 
     @Post(':onboarding_id/notify-upload')
@@ -23,6 +23,6 @@ export class OnboardingController {
         @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
         dto: NotifyUploadRequestDto,
     ): Promise<OnboardingStatusResponseDto> {
-        return this.onboardingService.notifyUploadComplete(onboardingId, dto);
+        return this.onboardingService.processAudio(onboardingId, dto.s3_key);
     }
 } 

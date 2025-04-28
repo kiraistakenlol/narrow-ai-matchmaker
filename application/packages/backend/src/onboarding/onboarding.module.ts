@@ -10,6 +10,7 @@ import { ContentExtractionModule } from '@backend/content-extraction/content-ext
 import { Profile } from '@backend/profiles/entities/profile.entity';
 import { EventParticipation } from '@backend/events/entities/event-participation.entity';
 import { AudioStorageModule } from '@backend/audio-storage/audio-storage.module';
+import { TranscriptionModule } from '@backend/transcription/transcription.module';
 
 @Module({
     imports: [
@@ -23,6 +24,7 @@ import { AudioStorageModule } from '@backend/audio-storage/audio-storage.module'
         EventsModule,
         ContentExtractionModule,
         AudioStorageModule,
+        TranscriptionModule,
     ],
     controllers: [OnboardingController],
     providers: [OnboardingService],

@@ -1,8 +1,9 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Event } from './entities/event.entity';
 import { EventParticipation } from './entities/event-participation.entity';
+import { ContentExtractionService } from '@backend/content-extraction/content-extraction.service';
 
 @Injectable()
 export class EventService {
@@ -13,6 +14,7 @@ export class EventService {
         private eventRepository: Repository<Event>,
         @InjectRepository(EventParticipation)
         private participationRepository: Repository<EventParticipation>,
+        private readonly contentExtractionService: ContentExtractionService,
     ) {}
 
     async findEventById(eventId: string): Promise<Event | null> {
@@ -63,4 +65,37 @@ export class EventService {
         }
     }
 
+    async processParticipationUpdate(userId: string, eventId: string, transcriptText: string): Promise<EventParticipation> {
+        this.logger.log(`Processing event participation update for user: ${userId}, event: ${eventId} using transcript`);
+        
+        const participation = await this.participationRepository.findOne({ 
+            where: { userId, eventId } 
+        });
+        
+        if (!participation) {
+            throw new NotFoundException(`Event participation for user ${userId} and event ${eventId} not found`);
+        }
+        
+        const eventContextSchema = { 
+            type: 'object', 
+            properties: { 
+                goals: { type: 'array', items: { type: 'string' } }, 
+                availability: { type: 'string' } 
+            }, 
+            required: ['goals'] 
+        };
+        
+        const eventInstructions = "Extract the user's goals for this specific event and their general availability mentioned in the provided text transcript.";
+        
+        // Extract event data from text transcript
+        const extractedEventData = await this.contentExtractionService.extractStructuredDataFromText(
+            transcriptText,
+            eventContextSchema,
+            eventInstructions
+        );
+        
+        // Update participation with extracted data
+        participation.contextData = extractedEventData;
+        return this.save(participation);
+    }
 } 

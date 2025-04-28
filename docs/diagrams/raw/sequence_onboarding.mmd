@@ -70,82 +70,76 @@ sequenceDiagram
 
     # --- Notify Upload & Synchronous Backend Processing --- #
     Note right of Client: Automatically notifies backend after successful S3 upload
-    Client->>API: POST /onboarding/{onboarding_id}/notify-upload (Body: s3_key, context)
+    Client->>API: POST /onboarding/{onboarding_id}/notify-upload (Body: s3_key)
     deactivate Client
     activate API
-    API->>OnboardingSvc: Notify Upload & Process (onboarding_id, s3_key, context)
+    API->>OnboardingSvc: Notify Upload & Process (onboarding_id, s3_key)
     activate OnboardingSvc
 
-    OnboardingSvc->>RDS: Get OnboardingSession (for profile_id, participation_id)
-    RDS-->>OnboardingSvc: session(profile_id, participation_id)
+    OnboardingSvc->>RDS: Get OnboardingSession (for user_id, event_id, profile_id, participation_id)
+    RDS-->>OnboardingSvc: session(...)
 
-    alt context is 'general'
-        # --- Synchronous call to Profile Service --- #
-        OnboardingSvc->>ProfileSvc: Process Profile Audio (profile_id, s3_key)
-        activate ProfileSvc
-        ProfileSvc->>ContentExtractionSvc: ProcessAudio(s3_key, profile_schema)
-        activate ContentExtractionSvc
-        ContentExtractionSvc->>S3: Get Audio File (using s3_key)
-        ContentExtractionSvc->>STT: Transcribe
-        STT-->>ContentExtractionSvc: Transcript
-        ContentExtractionSvc->>LlmService: Parse Transcript (using profile_schema)
-        activate LlmService
-        # Note over LlmService: Internally calls External LLM Provider
-        LlmService-->>ContentExtractionSvc: Parsed Profile Data
-        deactivate LlmService
-        deactivate ContentExtractionSvc
-        ProfileSvc->>RDS: Update Profile SET data=Parsed Profile Data, # Calculate score internally
-        RDS-->>ProfileSvc: Updated Profile Data (including completeness_score)
-        ProfileSvc-->>OnboardingSvc: Updated Profile DTO {completeness_score, ...}
-        deactivate ProfileSvc
-        # Store profile score in OnboardingSvc context
-        Note right of OnboardingSvc: Stores profile_completeness_score
+    Note right of OnboardingSvc: Processing starts asynchronously
+    OnboardingSvc->>RDS: Update OnboardingSession (status: PROCESSING)
+    RDS-->>OnboardingSvc: OK
 
-    else context is 'event'
-        # --- Synchronous call to Event Service --- #
-        OnboardingSvc->>EventSvc: Process Event Audio (participation_id, s3_key)
-        activate EventSvc
-        EventSvc->>ContentExtractionSvc: ProcessAudio(s3_key, event_context_schema)
-        activate ContentExtractionSvc
-        ContentExtractionSvc->>S3: Get Audio File (using s3_key)
-        ContentExtractionSvc->>STT: Transcribe
-        STT-->>ContentExtractionSvc: Transcript
-        ContentExtractionSvc->>LlmService: Parse Transcript (using event_context_schema)
-        activate LlmService
-        # Note over LlmService: Internally calls External LLM Provider
-        LlmService-->>ContentExtractionSvc: Parsed Event Context Data
-        deactivate LlmService
-        deactivate ContentExtractionSvc
-        EventSvc->>RDS: Update EventParticipation SET context_data=Parsed Event Context Data, # Calculate score internally
-        RDS-->>EventSvc: Updated Participation Data (including completeness_score)
-        EventSvc-->>OnboardingSvc: Updated Participation DTO {completeness_score, ...}
-        deactivate EventSvc
-        # Store event score in OnboardingSvc context
-         Note right of OnboardingSvc: Stores event_completeness_score
-    end
+    # --- Transcription --- #
+    OnboardingSvc->>STT: startTranscriptionJob(s3_key)
+    activate STT
+    Note right of OnboardingSvc: Polls/waits for transcription job
+    STT-->>OnboardingSvc: { jobId }
+    OnboardingSvc->>STT: getTranscriptionResult(jobId)
+    STT-->>OnboardingSvc: { transcriptText }
+    deactivate STT
+
+    # --- Profile Update via Text --- #
+    OnboardingSvc->>ProfileSvc: processProfileUpdate(user_id, transcriptText)
+    activate ProfileSvc
+    ProfileSvc->>ContentExtractionSvc: extractStructuredData(transcriptText, profileSchema, profileInstructions)
+    activate ContentExtractionSvc
+    # ContentExtractionSvc internally calls LlmService
+    ContentExtractionSvc->>LlmService: extractStructuredData(...)
+    activate LlmService
+    LlmService-->>ContentExtractionSvc: { extractedProfileData }
+    deactivate LlmService
+    ContentExtractionSvc-->>ProfileSvc: { extractedProfileData }
+    deactivate ContentExtractionSvc
+    ProfileSvc->>RDS: Update Profile (data = extractedProfileData)
+    RDS-->>ProfileSvc: Updated Profile
+    ProfileSvc-->>OnboardingSvc: Updated Profile
+    deactivate ProfileSvc
+
+    # --- Event Participation Update via Text --- #
+    OnboardingSvc->>EventSvc: processParticipationUpdate(user_id, event_id, transcriptText)
+    activate EventSvc
+    EventSvc->>ContentExtractionSvc: extractStructuredData(transcriptText, eventSchema, eventInstructions)
+    activate ContentExtractionSvc
+    # ContentExtractionSvc internally calls LlmService
+    ContentExtractionSvc->>LlmService: extractStructuredData(...)
+    activate LlmService
+    LlmService-->>ContentExtractionSvc: { extractedEventData }
+    deactivate LlmService
+    ContentExtractionSvc-->>EventSvc: { extractedEventData }
+    deactivate ContentExtractionSvc
+    EventSvc->>RDS: Update EventParticipation (contextData = extractedEventData)
+    RDS-->>EventSvc: Updated Participation
+    EventSvc-->>OnboardingSvc: Updated Participation
+    deactivate EventSvc
 
     # --- Update Overall Onboarding Status --- #
-    OnboardingSvc->>RDS: Update OnboardingSession Scores (profile_score?, event_score?)
-    OnboardingSvc->>RDS: Get OnboardingSession (scores, thresholds)
-    RDS-->>OnboardingSvc: session(scores, thresholds)
-    Note right of OnboardingSvc: Check if scores >= thresholds
-    alt Sufficient data collected
-         OnboardingSvc->>RDS: Update OnboardingSession SET status=READY_FOR_REVIEW
-         Note right of OnboardingSvc: Final Status: READY_FOR_REVIEW
-    else Needs more info
-         OnboardingSvc->>RDS: Update OnboardingSession SET status=NEEDS_MORE_INFO # or specific status
-         Note right of OnboardingSvc: Final Status: NEEDS_MORE_INFO
-    end
+    Note right of OnboardingSvc: Calculate completeness based on updated Profile and Participation
+    OnboardingSvc->>RDS: Update OnboardingSession (status: COMPLETED or other)
+    RDS-->>OnboardingSvc: OK
 
     # --- Return Final Status to Client --- #
-    OnboardingSvc-->>API: Final Onboarding Status Response {status, missing_info_points?}
+    OnboardingSvc-->>API: Final Onboarding Status Response {status}
     deactivate OnboardingSvc
     API-->>Client: 200 OK {OnboardingStatusResponse}
-    Client-->>Human: Show Final Status (e.g., Ready for Review / Needs More Info)
-    activate Client # Reactivate client for subsequent actions
+    Client-->>Human: Show Final Status
+    activate Client
     deactivate API
 
-    loop Until Onboarding Complete or Ready for Review # Check status received from notify or polling
+    loop Until Onboarding Complete or Ready for Review
 
         # --- Status Polling (If needed, e.g., initial processing failed or took too long) --- #
         # ... Polling loop can remain similar, but primarily for recovery or long waits ...

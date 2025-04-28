@@ -1,8 +1,9 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Profile } from './entities/profile.entity';
 import { ProfileData } from '@narrow-ai-matchmaker/common';
+import { ContentExtractionService } from '@backend/content-extraction/content-extraction.service';
 
 // Helper function to create a default empty ProfileData
 const createDefaultEmptyProfileData = (): ProfileData => ({
@@ -37,6 +38,7 @@ export class ProfileService {
     constructor(
         @InjectRepository(Profile)
         private profileRepository: Repository<Profile>,
+        private readonly contentExtractionService: ContentExtractionService,
     ) {}
 
     async createInitialProfile(userId: string): Promise<Profile> {
@@ -70,5 +72,34 @@ export class ProfileService {
         }
     }
 
-    // Add other profile-related methods here (e.g., findById, updateProfileData, etc.)
-} 
+    async processProfileUpdate(userId: string, transcriptText: string): Promise<Profile> {
+        this.logger.log(`Processing profile update for user: ${userId} using transcript`);
+        
+        const profile = await this.profileRepository.findOne({ where: { userId } });
+        if (!profile) {
+            throw new NotFoundException(`Profile for user ${userId} not found`);
+        }
+        
+        const profileSchema = { 
+            type: 'object', 
+            properties: { 
+                name: { type: 'string' }, 
+                interests: { type: 'array', items: { type: 'string' } } 
+            }, 
+            required: ['name'] 
+        };
+        
+        const profileInstructions = "Extract the user's name and key interests mentioned in the provided text transcript.";
+        
+        // Extract profile data from text transcript
+        const extractedProfileData = await this.contentExtractionService.extractStructuredDataFromText(
+            transcriptText,
+            profileSchema,
+            profileInstructions
+        );
+        
+        // Update profile with extracted data
+        profile.data = extractedProfileData;
+        return this.save(profile);
+    }
+}

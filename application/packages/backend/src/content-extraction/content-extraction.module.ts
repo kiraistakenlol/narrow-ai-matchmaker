@@ -1,14 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ContentExtractionService } from './content-extraction.service';
-import { AudioStorageModule } from '@backend/audio-storage/audio-storage.module';
 import { LlmModule } from '@backend/llm/llm.module';
-import { TranscriptionModule } from '@backend/transcription/transcription.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
-    AudioStorageModule,
     LlmModule,
-    TranscriptionModule,
+    ConfigModule,
   ],
   providers: [ContentExtractionService],
   exports: [ContentExtractionService],

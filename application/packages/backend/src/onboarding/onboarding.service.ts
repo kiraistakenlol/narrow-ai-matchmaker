@@ -1,14 +1,15 @@
-import { Injectable, Logger, InternalServerErrorException, NotFoundException, BadRequestException, GoneException } from '@nestjs/common';
+import { Injectable, Logger, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OnboardingSession, OnboardingStatus } from './entities/onboarding-session.entity';
 import { S3AudioStorageService } from '@backend/audio-storage/s3-audio-storage.service';
 import { InitiateOnboardingRequestDto, InitiateOnboardingResponseDto } from './dto/initiate-onboarding.dto';
-import { NotifyUploadRequestDto, OnboardingStatusResponseDto } from './dto/notify-upload.dto';
 import { UserService } from '@backend/users/users.service';
 import { ProfileService } from '@backend/profiles/profiles.service';
 import { EventService } from '@backend/events/events.service';
-import { ContentExtractionService } from '@backend/content-extraction/content-extraction.service';
+import { Profile } from '@backend/profiles/entities/profile.entity';
+import { EventParticipation } from '@backend/events/entities/event-participation.entity';
+import { AwsTranscribeService } from '@backend/transcription/aws-transcribe.service';
 
 @Injectable()
 export class OnboardingService {
@@ -21,10 +22,10 @@ export class OnboardingService {
         private readonly userService: UserService,
         private readonly profileService: ProfileService,
         private readonly eventService: EventService,
-        private readonly contentExtractionService: ContentExtractionService,
+        private readonly transcriptionService: AwsTranscribeService,
     ) {}
 
-    async initiateOnboarding(dto: InitiateOnboardingRequestDto): Promise<InitiateOnboardingResponseDto> {
+    async initiate(dto: InitiateOnboardingRequestDto): Promise<InitiateOnboardingResponseDto> {
         this.logger.log(`Initiating onboarding for event: ${dto.event_id}`);
 
         const event = await this.eventService.findEventById(dto.event_id);
@@ -84,132 +85,99 @@ export class OnboardingService {
         }
     }
 
-    async notifyUploadComplete(onboardingId: string, dto: NotifyUploadRequestDto): Promise<OnboardingStatusResponseDto> {
-        this.logger.log(`Received upload notification for session: ${onboardingId}, key: ${dto.s3_key}`);
-
-        const session = await this.onboardingSessionRepository.findOne({
-             where: { id: onboardingId },
-             relations: ['profile', 'eventParticipation'],
+    async processAudio(onboardingId: string, s3_key: string): Promise<OnboardingSession> {
+        this.logger.log(`Processing audio for onboarding: ${onboardingId}`);
+        
+        const onboarding = await this.onboardingSessionRepository.findOne({
+            where: { id: onboardingId },
+            relations: ['profile', 'eventParticipation'],
         });
 
-        if (!session) {
-            throw new NotFoundException(`Onboarding session with ID ${onboardingId} not found.`);
+        if (!onboarding || !onboarding.profile || !onboarding.eventParticipation) {
+            throw new Error(`Session ${onboardingId} or required relations not found.`);
         }
-        if (!session.profile || !session.eventParticipation) {
-            this.logger.error(`Session ${onboardingId} is missing required profile or eventParticipation relation.`);
-            throw new InternalServerErrorException('Incomplete session data.');
-        }
-
-        if (session.expiresAt && session.expiresAt < new Date()) {
-             this.logger.warn(`Upload notification received for expired session: ${onboardingId}`);
-             throw new GoneException(`Onboarding session ${onboardingId} has expired.`);
-        }
-
-        // Construct the expected storage key based on session ID and new format
-        const fileExtension = '.webm'; // New format
-        const expectedStorageKey = `onboarding/${session.id}/audio-initial${fileExtension}`;
-
-        if (session.status !== OnboardingStatus.AWAITING_AUDIO) {
-             this.logger.warn(`Upload notification received for session ${onboardingId} not awaiting audio (status: ${session.status}). Processing will not be re-triggered.`);
-             // Even if not awaiting audio, check if the key matches what we *would* expect
-             if (expectedStorageKey !== dto.s3_key) {
-                this.logger.error(`CRITICAL: Storage key mismatch for completed/failed session ${onboardingId}. Expected: ${expectedStorageKey}, Received: ${dto.s3_key}`);
-             }
-             return { status: session.status };
-        }
-
-        // Check the received key against the dynamically constructed expected key
-        if (expectedStorageKey !== dto.s3_key) {
-             this.logger.error(`Storage key mismatch for session ${onboardingId}. Expected: ${expectedStorageKey}, Received: ${dto.s3_key}`);
-             throw new BadRequestException(`Invalid storage key provided.`);
-        }
-
-        session.status = OnboardingStatus.AUDIO_UPLOADED;
 
         try {
-            await this.onboardingSessionRepository.save(session);
-            this.logger.log(`Updated session ${onboardingId} status to ${OnboardingStatus.AUDIO_UPLOADED}`);
+            this.logger.log(`Starting transcription for onboarding ${onboardingId}, key: ${s3_key}`);
+            const transcriptText = await this.transcriptionService.transcribeAudio(s3_key);
+            this.logger.log(`Transcription completed for onboarding ${onboardingId}, transcript: ${transcriptText}`);
 
-            this._processAudioInBackground(session.id, dto.s3_key);
+            // Delegate profile processing to ProfileService with TEXT
+            const updatedProfile = await this.profileService.processProfileUpdate(onboarding.userId, transcriptText);
+            
+            // Delegate event participation processing to EventService with TEXT
+            const updatedParticipation = await this.eventService.processParticipationUpdate(onboarding.userId, onboarding.eventId, transcriptText);
+            
+            this.logger.log(`Updated profile and event participation data for onboarding ${onboardingId}`);
 
-            return { status: session.status };
-
+            // // Calculate completeness and update status
+            // const profileCompleteness = this.calculateProfileCompleteness(updatedProfile);
+            // const eventCompleteness = this.calculateEventCompleteness(updatedParticipation);
+            
+            // Update session status based on completeness
+            // onboarding.status = this.determineOnboardingStatus(profileCompleteness, eventCompleteness);
+            
+            onboarding.status = OnboardingStatus.COMPLETED;
+            await this.onboardingSessionRepository.save(onboarding);
+            
+            this.logger.log(`Updated session ${onboardingId} status to ${onboarding.status}`);
+            
+            return onboarding;
         } catch (error) {
-            const stack = error instanceof Error ? error.stack : undefined;
-            const message = error instanceof Error ? error.message : 'Unknown error';
-            this.logger.error(`Failed to update session ${onboardingId} status after upload notification: ${message}`, stack);
-            throw new InternalServerErrorException('Failed to process upload notification.');
+            const message = error instanceof Error ? error.message : 'Unknown processing error';
+            this.logger.error(`Audio processing failed for session ${onboardingId}: ${message}`, error instanceof Error ? error.stack : undefined);
+            
+            // Attempt to update session status to failed
+            try {
+                 const currentSession = await this.onboardingSessionRepository.findOneBy({ id: onboardingId });
+                 if (currentSession) {
+                     currentSession.status = OnboardingStatus.FAILED;
+                     await this.onboardingSessionRepository.save(currentSession);
+                     this.logger.log(`Updated session ${onboardingId} status to ${OnboardingStatus.FAILED}`);
+                 } 
+            } catch (saveError) {
+                 this.logger.error(`Failed to update session ${onboardingId} status to FAILED after processing error: ${saveError}`);
+            }
+            
+            throw error; // Re-throw the original processing error
         }
     }
 
-    private async _processAudioInBackground(sessionId: string, s3_key: string): Promise<void> {
-        this.logger.log(`Starting background audio processing for session: ${sessionId}`);
-        let session: OnboardingSession | null = null;
+    private calculateProfileCompleteness(profile: Profile): number {
+        // Simple implementation - can be enhanced based on requirements
+        if (!profile.data) return 0;
+        
+        const data = profile.data as any;
+        let completeness = 0;
+        
+        if (data.name) completeness += 50;
+        if (data.interests && Array.isArray(data.interests) && data.interests.length > 0) completeness += 50;
+        
+        return completeness;
+    }
 
-        try {
-            session = await this.onboardingSessionRepository.findOne({
-                where: { id: sessionId },
-                relations: ['profile', 'eventParticipation'],
-            });
+    private calculateEventCompleteness(eventParticipation: EventParticipation): number {
+        // Simple implementation - can be enhanced based on requirements
+        if (!eventParticipation.contextData) return 0;
+        
+        const data = eventParticipation.contextData as any;
+        let completeness = 0;
+        
+        if (data.goals && Array.isArray(data.goals) && data.goals.length > 0) completeness += 70;
+        if (data.availability) completeness += 30;
+        
+        return completeness;
+    }
 
-            const storageKey = s3_key;
-
-            // Check session and relations exist
-            if (!session || !session.profile || !session.eventParticipation) {
-                 throw new Error(`Session ${sessionId} or required relations not found for background processing.`);
-            }
-
-            session.status = OnboardingStatus.PROCESSING;
-            await this.onboardingSessionRepository.save(session);
-            this.logger.log(`Updated session ${sessionId} status to ${OnboardingStatus.PROCESSING}`);
-
-            const profileSchema = { type: 'object', properties: { name: { type: 'string' }, interests: { type: 'array', items: { type: 'string' } } }, required: ['name'] };
-            const eventContextSchema = { type: 'object', properties: { goals: { type: 'array', items: { type: 'string' } }, availability: { type: 'string' } }, required: ['goals'] };
-            const profileInstructions = "Extract the user's name and key interests mentioned in the audio.";
-            const eventInstructions = "Extract the user's goals for this specific event and their general availability mentioned.";
-
-            // Use the dynamically constructed storageKey for content extraction
-            const extractedProfileData = await this.contentExtractionService.extractStructuredData(
-                storageKey,
-                profileSchema,
-                profileInstructions
-            );
-
-            const extractedEventData = await this.contentExtractionService.extractStructuredData(
-                storageKey,
-                eventContextSchema,
-                eventInstructions
-            );
-
-            session.profile.data = extractedProfileData;
-            session.eventParticipation.contextData = extractedEventData;
-
-            await this.profileService.save(session.profile);
-            await this.eventService.save(session.eventParticipation);
-            this.logger.log(`Updated profile and event participation data for session ${sessionId} via services.`);
-
-            session.status = OnboardingStatus.COMPLETED;
-            await this.onboardingSessionRepository.save(session);
-            this.logger.log(`Updated session ${sessionId} status to ${OnboardingStatus.COMPLETED}`);
-
-            this.logger.log(`Successfully finished background audio processing for session: ${sessionId}`);
-
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'Unknown processing error';
-            this.logger.error(`Background audio processing failed for session ${sessionId}: ${message}`, error instanceof Error ? error.stack : undefined);
-
-            if (session) {
-                try {
-                    const currentSession = await this.onboardingSessionRepository.findOneBy({ id: sessionId });
-                    if (currentSession) {
-                         currentSession.status = OnboardingStatus.FAILED;
-                         await this.onboardingSessionRepository.save(currentSession);
-                         this.logger.log(`Updated session ${sessionId} status to ${OnboardingStatus.FAILED}`);
-                    }
-                } catch (saveError) {
-                    this.logger.error(`Failed to update session ${sessionId} status to FAILED after processing error: ${saveError}`);
-                }
-            }
+    private determineOnboardingStatus(profileCompleteness: number, eventCompleteness: number): OnboardingStatus {
+        if (profileCompleteness >= 0.9 && eventCompleteness >= 0.9) {
+            return OnboardingStatus.COMPLETED;
+        } else if (profileCompleteness >= 0.7 && eventCompleteness >= 0.7) {
+            return OnboardingStatus.READY_FOR_REVIEW;
+        } else if (profileCompleteness >= 0.5 || eventCompleteness >= 0.5) {
+            return OnboardingStatus.NEEDS_CLARIFICATION;
+        } else {
+            return OnboardingStatus.AWAITING_AUDIO;
         }
     }
 }
