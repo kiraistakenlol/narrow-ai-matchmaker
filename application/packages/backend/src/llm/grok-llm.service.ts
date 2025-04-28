@@ -12,27 +12,27 @@ interface ApiError extends Error {
 }
 
 @Injectable()
-export class GroqLlmService implements ILlmService {
-    private readonly logger = new Logger(GroqLlmService.name);
+export class GrokLlmService implements ILlmService {
+    private readonly logger = new Logger(GrokLlmService.name);
     private readonly openai: OpenAI;
     private readonly model: string;
 
     constructor(private configService: ConfigService) {
-        this.logger.log('Initializing GroqLlmService...');
+        this.logger.log('Initializing GrokLlmService...');
         
-        const apiKey = this.configService.get<string>('GROQ_API_KEY');
-        const model = this.configService.get<string>('GROQ_MODEL_NAME');
-        const baseURL = this.configService.get<string>('GROQ_API_BASE_URL', 'https://api.x.ai/v1');
+        const apiKey = this.configService.get<string>('GROK_API_KEY');
+        const model = this.configService.get<string>('GROK_MODEL_NAME');
+        const baseURL = this.configService.get<string>('GROK_API_BASE_URL', 'https://api.x.ai/v1');
         
         this.logger.debug(`Configuration values - API Key: ${apiKey ? 'Present' : 'Missing'}, Model: ${model || 'Not set'}, BaseURL: ${baseURL}`);
         
         if (!apiKey) {
-            this.logger.error('GROQ_API_KEY is not configured');
-            throw new Error('GROQ_API_KEY is not configured.');
+            this.logger.error('GROK_API_KEY is not configured');
+            throw new Error('GROK_API_KEY is not configured.');
         }
         if (!model) {
-            this.logger.error('GROQ_MODEL_NAME is not configured');
-            throw new Error('GROQ_MODEL_NAME is not configured.');
+            this.logger.error('GROK_MODEL_NAME is not configured');
+            throw new Error('GROK_MODEL_NAME is not configured.');
         }
         
         this.model = model;
@@ -121,10 +121,11 @@ export class GroqLlmService implements ILlmService {
 
             this.logger.debug(`Full raw Grok API response: ${JSON.stringify(response, null, 2)}`);
 
-            const responseContent = response.choices[0]?.message?.content;
+            const message = response.choices[0]?.message;
+            const responseContent = message?.content || (message as any)?.reasoning_content;
             if (!responseContent) {
-                this.logger.error('Grok API returned an empty response content');
-                throw new Error('Grok API returned an empty response content.');
+                this.logger.error('Grok API returned an empty response content and reasoning_content');
+                throw new Error('Grok API returned an empty response content and reasoning_content.');
             }
 
             const usage = response.usage;

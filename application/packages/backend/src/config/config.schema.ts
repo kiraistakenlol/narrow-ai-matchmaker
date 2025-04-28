@@ -24,8 +24,8 @@ export const configValidationSchema = Joi.object({
     AWS_TRANSCRIBE_ROLE_ARN: Joi.string().optional(),
 
     // LLM Provider
-    LLM_PROVIDER: Joi.string().valid('openai', 'groq').default('groq'),
+    LLM_PROVIDER: Joi.string().valid('openai', 'grok').default('grok'),
     OPENAI_API_KEY: Joi.string().when('LLM_PROVIDER', { is: 'openai', then: Joi.required() }),
-    GROQ_API_KEY: Joi.string().when('LLM_PROVIDER', { is: 'groq', then: Joi.required() }),
-    GROQ_MODEL_NAME: Joi.string().when('LLM_PROVIDER', { is: 'groq', then: Joi.required() }),
+    GROK_API_KEY: Joi.string().when('LLM_PROVIDER', { is: 'grok', then: Joi.required() }),
+    GROK_MODEL_NAME: Joi.string().when('LLM_PROVIDER', { is: 'grok', then: Joi.required() }),
 }); 

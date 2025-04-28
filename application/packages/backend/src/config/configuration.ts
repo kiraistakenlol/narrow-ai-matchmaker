@@ -28,9 +28,9 @@ export default () => ({
         openai: {
             apiKey: process.env.OPENAI_API_KEY,
         },
-        groq: {
-            apiKey: process.env.GROQ_API_KEY,
-            modelName: process.env.GROQ_MODEL_NAME,
+        grok: {
+            apiKey: process.env.GROK_API_KEY,
+            modelName: process.env.GROK_MODEL_NAME,
         }
     },
 }); 

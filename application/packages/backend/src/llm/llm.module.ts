@@ -1,7 +1,7 @@
 import { Module, Logger } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ILlmService } from './llm.interface';
-import { GroqLlmService } from './groq-llm.service';
+import { GrokLlmService } from './grok-llm.service';
 
 @Module({
     imports: [ConfigModule],
@@ -14,12 +14,11 @@ import { GroqLlmService } from './groq-llm.service';
                 logger.log(`LLM provider selected: ${provider}`);
 
                 switch (provider) {
-                    case 'groq':
-                        return new GroqLlmService(configService);
+                    case 'grok':
+                        return new GrokLlmService(configService);
                     // Add cases for 'anthropic', etc.
                     default:
-                        logger.warn(`LLM provider '${provider}' not recognized. Defaulting to Groq.`);
-                        return new GroqLlmService(configService);
+                        throw new Error(`LLM provider '${provider}' not recognized. Please configure a valid provider.`);
                 }
             },
             inject: [ConfigService],
