@@ -11,9 +11,9 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
-  
+
   # Explicitly use the 'personal' AWS profile
-  profile = "personal" 
-  
+  profile = "personal"
+
   # Alternatively, could use environment variables or other auth methods
 } 
