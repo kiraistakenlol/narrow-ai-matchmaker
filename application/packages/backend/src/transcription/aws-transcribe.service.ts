@@ -17,6 +17,7 @@ export class AwsTranscribeService {
     private readonly transcribeClient: TranscribeClient;
     private readonly s3Client: S3Client;
     private readonly outputBucket: string;
+    private readonly audioBucket: string;
     private readonly region: string;
     private readonly maxPollingAttempts = 30; // 5 minutes with 10-second intervals
     private readonly pollingInterval = 10000; // 10 seconds
@@ -26,9 +27,10 @@ export class AwsTranscribeService {
         const accessKeyId = this.configService.get<string>('transcription.aws.accessKeyId');
         const secretAccessKey = this.configService.get<string>('transcription.aws.secretAccessKey');
         this.outputBucket = this.configService.get<string>('transcription.aws.outputBucket');
+        this.audioBucket = this.configService.get<string>('audioStorage.s3Bucket');
 
-        if (!this.region || !this.outputBucket) {
-            throw new Error('AWS region and Transcribe output bucket must be configured.');
+        if (!this.region || !this.outputBucket || !this.audioBucket) {
+            throw new Error('AWS region, Transcribe output bucket, and audio storage bucket must be configured.');
         }
 
         const credentials = accessKeyId && secretAccessKey ? { accessKeyId, secretAccessKey } : undefined;
@@ -36,7 +38,7 @@ export class AwsTranscribeService {
         this.transcribeClient = new TranscribeClient({ region: this.region, credentials });
         this.s3Client = new S3Client({ region: this.region, credentials });
 
-        this.logger.log(`AwsTranscribeService initialized for region ${this.region} and output bucket ${this.outputBucket}`);
+        this.logger.log(`AwsTranscribeService initialized for region ${this.region}, output bucket ${this.outputBucket}, and audio bucket ${this.audioBucket}`);
     }
 
     /**
@@ -51,8 +53,9 @@ export class AwsTranscribeService {
         this.logger.log(`Starting transcription for audio: ${s3Key}`);
         
         try {
-            // Convert S3 key to S3 URI
-            const s3Uri = `s3://${this.outputBucket}/${s3Key}`;
+            // Convert S3 key to S3 URI using the audio storage bucket, not the output bucket
+            const s3Uri = `s3://${this.audioBucket}/${s3Key}`;
+            this.logger.log(`Using S3 URI for transcription: ${s3Uri}`);
             
             // Generate a unique job name based on the S3 key
             const jobName = `transcript-${Date.now()}-${s3Key.replace(/[^a-zA-Z0-9]/g, '-')}`;

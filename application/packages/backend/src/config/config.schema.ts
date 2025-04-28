@@ -27,5 +27,5 @@ export const configValidationSchema = Joi.object({
     LLM_PROVIDER: Joi.string().valid('openai', 'groq').default('groq'),
     OPENAI_API_KEY: Joi.string().when('LLM_PROVIDER', { is: 'openai', then: Joi.required() }),
     GROQ_API_KEY: Joi.string().when('LLM_PROVIDER', { is: 'groq', then: Joi.required() }),
-    GROQ_MODEL_NAME: Joi.string().when('LLM_PROVIDER', { is: 'groq', then: Joi.string().default('llama3-8b-8192') }).optional(),
+    GROQ_MODEL_NAME: Joi.string().when('LLM_PROVIDER', { is: 'groq', then: Joi.required() }),
 }); 

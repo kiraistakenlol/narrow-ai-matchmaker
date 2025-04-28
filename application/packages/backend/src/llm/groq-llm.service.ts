@@ -1,30 +1,86 @@
 import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import Groq from 'groq-sdk';
+import OpenAI from 'openai';
 import { ILlmService } from './llm.interface';
+
+// Define error interface for API errors
+interface ApiError extends Error {
+    response?: {
+        status: number;
+        data: any;
+    };
+}
 
 @Injectable()
 export class GroqLlmService implements ILlmService {
     private readonly logger = new Logger(GroqLlmService.name);
-    private readonly groq: Groq;
+    private readonly openai: OpenAI;
     private readonly model: string;
 
     constructor(private configService: ConfigService) {
-        const apiKey = this.configService.get<string>('llm.groq.apiKey');
-        this.model = this.configService.get<string>('llm.groq.modelName', 'llama3-8b-8192'); // Read from config, provide default
-
+        this.logger.log('Initializing GroqLlmService...');
+        
+        const apiKey = this.configService.get<string>('GROQ_API_KEY');
+        const model = this.configService.get<string>('GROQ_MODEL_NAME');
+        const baseURL = this.configService.get<string>('GROQ_API_BASE_URL', 'https://api.x.ai/v1');
+        
+        this.logger.debug(`Configuration values - API Key: ${apiKey ? 'Present' : 'Missing'}, Model: ${model || 'Not set'}, BaseURL: ${baseURL}`);
+        
         if (!apiKey) {
-            throw new Error('GROQ_API_KEY must be configured for GroqLlmService');
+            this.logger.error('GROQ_API_KEY is not configured');
+            throw new Error('GROQ_API_KEY is not configured.');
         }
-        this.groq = new Groq({ apiKey });
-        this.logger.log(`GroqLlmService initialized with model: ${this.model}`);
+        if (!model) {
+            this.logger.error('GROQ_MODEL_NAME is not configured');
+            throw new Error('GROQ_MODEL_NAME is not configured.');
+        }
+        
+        this.model = model;
+        
+        const maskedKey = this.maskApiKey(apiKey);
+        this.logger.log(`Grok service initialized with API key: ${maskedKey}`);
+        
+        try {
+            this.openai = new OpenAI({
+                apiKey: apiKey,
+                baseURL: baseURL,
+            });
+            this.logger.log(`OpenAI client initialized with baseURL: ${baseURL}`);
+        } catch (error: unknown) {
+            const err = error as Error;
+            this.logger.error(`Failed to initialize OpenAI client: ${err.message}`, err.stack);
+            throw new Error(`Failed to initialize OpenAI client: ${err.message}`);
+        }
+        
+        this.logger.log(`Grok service initialized with model: ${this.model}, BaseURL: ${baseURL}`);
+    }
+    
+    /**
+     * Masks an API key for logging purposes
+     * Shows first 4 and last 4 characters, masks the rest
+     */
+    private maskApiKey(apiKey: string): string {
+        if (!apiKey || apiKey.length < 8) {
+            return '***';
+        }
+        
+        const firstFour = apiKey.substring(0, 4);
+        const lastFour = apiKey.substring(apiKey.length - 4);
+        const maskedLength = apiKey.length - 8;
+        const maskedPart = '*'.repeat(Math.min(maskedLength, 8));
+        
+        return `${firstFour}${maskedPart}${lastFour}`;
     }
 
     async generateResponse(
         userPrompt: string,
         systemPrompt?: string
     ): Promise<string> {
-        this.logger.log(`Generating response using Groq model: ${this.model}`);
+        this.logger.log(`Generating response using Grok model: ${this.model}`);
+        this.logger.debug(`User prompt: ${userPrompt.substring(0, 100)}${userPrompt.length > 100 ? '...' : ''}`);
+        if (systemPrompt) {
+            this.logger.debug(`System prompt: ${systemPrompt.substring(0, 100)}${systemPrompt.length > 100 ? '...' : ''}`);
+        }
 
         try {
             const messages = [];
@@ -43,24 +99,52 @@ export class GroqLlmService implements ILlmService {
                 content: userPrompt,
             });
 
-            const chatCompletion = await this.groq.chat.completions.create({
+            this.logger.debug(`Sending request to Grok API with ${messages.length} messages`);
+            
+            const startTime = Date.now();
+            this.logger.log(`Using model: ${this.model}`);
+            const response = await this.openai.chat.completions.create({
                 messages,
                 model: this.model,
-                temperature: 0.1, // Lower temperature for more deterministic output
+                max_tokens: 1000,
+                temperature: 0.7,
             });
+            const endTime = Date.now();
+            
+            this.logger.debug(`Grok API response received in ${endTime - startTime}ms`);
+            this.logger.debug(`Response structure: ${JSON.stringify({
+                id: response.id,
+                model: response.model,
+                choices: response.choices?.length,
+                usage: response.usage
+            })}`);
 
-            const responseContent = chatCompletion.choices[0]?.message?.content;
+            this.logger.debug(`Full raw Grok API response: ${JSON.stringify(response, null, 2)}`);
+
+            const responseContent = response.choices[0]?.message?.content;
             if (!responseContent) {
-                throw new Error('Groq API returned an empty response content.');
+                this.logger.error('Grok API returned an empty response content');
+                throw new Error('Grok API returned an empty response content.');
             }
 
-            this.logger.debug(`Raw Groq response: ${responseContent}`);
-            this.logger.log(`Successfully generated response using Groq model: ${this.model}`);
+            const usage = response.usage;
+            this.logger.debug(`Raw Grok response: ${responseContent.substring(0, 100)}${responseContent.length > 100 ? '...' : ''}`);
+            this.logger.log(`Successfully generated response using Grok model: ${this.model}. Tokens: In=${usage?.prompt_tokens}, Out=${usage?.completion_tokens}`);
             
             return responseContent;
-        } catch (error) {
-            this.logger.error(`Groq API call failed for model ${this.model}`, error);
-            const message = error instanceof Error ? error.message : 'Unknown Groq API error';
+        } catch (error: unknown) {
+            this.logger.error(`Grok API call failed for model ${this.model}`, error);
+            
+            const apiError = error as ApiError;
+            this.logger.error(`Error details: ${apiError.message}`, apiError.stack);
+            
+            // Log additional details if available
+            if (apiError.response) {
+                this.logger.error(`API response status: ${apiError.response.status}`);
+                this.logger.error(`API response data: ${JSON.stringify(apiError.response.data)}`);
+            }
+            
+            const message = apiError.message || 'Unknown Grok API error';
             throw new InternalServerErrorException(`Failed to generate response using LLM: ${message}`);
         }
     }

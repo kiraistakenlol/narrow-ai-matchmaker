@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend API Playground</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h2 {
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="file"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-right: 5px; /* Add some space between buttons */
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+        pre {
+            background-color: #e9e9e9;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 0.9em;
+            margin-top: 15px;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .success {
+             color: #28a745;
+             font-weight: bold;
+        }
+        .info {
+            font-size: 0.9em;
+            color: #555;
+        }
+        .recording {
+            background-color: #dc3545 !important; 
+            color: white !important;
+        }
+        audio {
+            width: 100%;
+            margin-top: 10px;
+        }
+        /* New styles for the layout */
+        .main-content {
+            display: flex;
+            gap: 20px;
+        }
+        .left-panel {
+            flex: 2;
+        }
+        .right-panel {
+            flex: 1;
+            min-width: 300px;
+        }
+        .scenario {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .scenario h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .scenario-description {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-bottom: 15px;
+        }
+        .scenario-steps {
+            margin-bottom: 15px;
+        }
+        .scenario-steps ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .scenario-steps li {
+            margin-bottom: 5px;
+        }
+        .scenario-status {
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        .scenario-status.running {
+            color: #007bff;
+        }
+        .scenario-status.success {
+            color: #28a745;
+        }
+        .scenario-status.error {
+            color: #dc3545;
+        }
+        .scenario-log {
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.8em;
+            max-height: 150px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+        .scenario-log .step {
+            margin-bottom: 5px;
+        }
+        .scenario-log .step-success {
+            color: #28a745;
+        }
+        .scenario-log .step-error {
+            color: #dc3545;
+        }
+        .scenario-log .step-info {
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Backend API Playground</h1>
+
+    <div class="main-content">
+        <!-- Left Panel - Original Content -->
+        <div class="left-panel">
+            <!-- Initiate Onboarding Section -->
+            <div class="container">
+                <h2>1. Initiate Onboarding</h2>
+                <p><code>POST /api/v1/onboarding/initiate</code></p>
+                <div>
+                    <label for="initiate-event-id">Event ID (UUID):</label>
+                    <input type="text" id="initiate-event-id" placeholder="Enter event UUID" value="9998e0af-33d7-4f16-873a-70a5b97ffa5e">
+                </div>
+                <button id="initiate-btn">Initiate</button>
+                <pre id="initiate-output">Response will appear here...</pre>
+            </div>
+
+            <!-- Display Current State -->
+            <div class="container" style="background-color: #e0f7fa;">
+                <strong>Current Onboarding ID:</strong> <span id="current-onboarding-id" class="info">None</span> <br>
+                <strong>Upload URL:</strong> <span id="current-upload-url" class="info">None</span> <br>
+                <strong>S3 Key:</strong> <span id="current-s3-key" class="info">None</span>
+            </div>
+
+            <!-- Record Audio & Notify Section -->
+            <div class="container">
+                <h2>2. Record Audio & Notify Upload</h2>
+                <p>Simulates recording audio and notifying the backend.</p>
+                <div>
+                    <button id="start-record-btn">Start Recording</button>
+                    <button id="stop-record-btn" disabled>Stop Recording</button>
+                    <span id="recording-status" class="info">Status: Idle</span>
+                </div>
+                <audio id="audio-playback" controls></audio>
+                <hr style="margin: 15px 0;">
+                <p>Click below to simulate the S3 upload finishing and notify the backend:</p>
+                <p><code>POST /api/v1/onboarding/{onboarding_id}/notify-upload</code></p>
+                <button id="notify-btn" disabled>Notify Upload Complete</button>
+                <pre id="notify-output">Notify response will appear here...</pre>
+            </div>
+        </div>
+
+        <!-- Right Panel - Test Scenarios -->
+        <div class="right-panel">
+            <div class="container">
+                <h2>Test Scenarios</h2>
+                <p>Run predefined test scenarios to automate common workflows.</p>
+                
+                <!-- Simple Onboarding Flow Scenario -->
+                <div class="scenario">
+                    <h3>Simple Onboarding Flow</h3>
+                    <div class="scenario-description">
+                        Automates the complete onboarding process from initiation to notification.
+                    </div>
+                    <div class="scenario-steps">
+                        <ol>
+                            <li>Initiates onboarding with the provided Event ID</li>
+                            <li>Loads pre-recorded audio file</li>
+                            <li>Uploads the audio to S3</li>
+                            <li>Notifies the backend of the upload completion</li>
+                        </ol>
+                    </div>
+                    <div class="scenario-status" id="simple-onboarding-status">Ready to run</div>
+                    <div class="scenario-log" id="simple-onboarding-log"></div>
+                    <button id="run-simple-onboarding-btn">Run Scenario</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3440/api/v1'; // Adjust if your backend runs elsewhere
+        
+        // --- State Variables ---
+        let currentOnboardingId = null;
+        let currentUploadUrl = null;
+        let currentS3Key = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let audioBlob = null;
+        let audioUrl = null;
+        let audioStream = null;
+        let recordingTimer = null;
+        let recordingStartTime = null;
+        let recordingDuration = 0;
+        let isScenarioRunning = false;
+
+        // --- DOM Elements ---
+        const currentOnboardingIdSpan = document.getElementById('current-onboarding-id');
+        const currentUploadUrlSpan = document.getElementById('current-upload-url');
+        const currentS3KeySpan = document.getElementById('current-s3-key');
+        const initiateBtn = document.getElementById('initiate-btn');
+        const initiateEventIdInput = document.getElementById('initiate-event-id');
+        const startRecordBtn = document.getElementById('start-record-btn');
+        const stopRecordBtn = document.getElementById('stop-record-btn');
+        const recordingStatusSpan = document.getElementById('recording-status');
+        const audioPlayback = document.getElementById('audio-playback');
+        const notifyBtn = document.getElementById('notify-btn');
+        const runSimpleOnboardingBtn = document.getElementById('run-simple-onboarding-btn');
+        const simpleOnboardingStatus = document.getElementById('simple-onboarding-status');
+        const simpleOnboardingLog = document.getElementById('simple-onboarding-log');
+        
+        // Function to format time in MM:SS format
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        // Function to update the timer display
+        function updateTimer() {
+            if (recordingStartTime) {
+                const elapsed = (Date.now() - recordingStartTime) / 1000;
+                recordingDuration = elapsed;
+                recordingStatusSpan.textContent = `Status: Recording... (${formatTime(elapsed)})`;
+            }
+        }
+
+        // --- Helper Function --- 
+        async function makeApiCall(endpoint, method, body, outputElementId, successCallback) {
+            const outputElement = document.getElementById(outputElementId);
+            outputElement.textContent = 'Loading...';
+            outputElement.className = ''; // Reset classes
+
+            try {
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                        // Add Authorization header here if needed later
+                    },
+                    body: body ? JSON.stringify(body) : null,
+                });
+
+                const responseData = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(responseData.message || `HTTP error! status: ${response.status}`);
+                }
+
+                outputElement.textContent = JSON.stringify(responseData, null, 2);
+                outputElement.classList.add('success');
+
+                if (successCallback) {
+                    successCallback(responseData);
+                }
+                return responseData; // Return data on success
+
+            } catch (error) {
+                console.error('API Call Error:', error);
+                outputElement.textContent = `Error: ${error.message}`;
+                outputElement.classList.add('error');
+                return null; // Indicate failure
+            }
+        }
+
+        // --- Scenario Logging Functions ---
+        function logScenarioStep(message, type = 'info') {
+            const logEntry = document.createElement('div');
+            logEntry.className = `step step-${type}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            simpleOnboardingLog.appendChild(logEntry);
+            simpleOnboardingLog.scrollTop = simpleOnboardingLog.scrollHeight;
+        }
+
+        function updateScenarioStatus(status, type = 'info') {
+            simpleOnboardingStatus.textContent = status;
+            simpleOnboardingStatus.className = 'scenario-status';
+            if (type) {
+                simpleOnboardingStatus.classList.add(type);
+            }
+        }
+
+        // --- Initiate Onboarding (Step 1) --- 
+        initiateBtn.addEventListener('click', () => {
+            const eventId = initiateEventIdInput.value.trim();
+            if (!eventId) {
+                alert('Please enter an Event ID.');
+                return;
+            }
+            
+            const requestBody = { event_id: eventId };
+
+            // Reset state from previous runs
+            currentOnboardingId = null;
+            currentUploadUrl = null;
+            currentS3Key = null;
+            audioBlob = null;
+            if (audioUrl) URL.revokeObjectURL(audioUrl);
+            audioUrl = null;
+            audioPlayback.src = '';
+            notifyBtn.disabled = true;
+            currentOnboardingIdSpan.textContent = 'None';
+            currentUploadUrlSpan.textContent = 'None';
+            currentS3KeySpan.textContent = 'None';
+            document.getElementById('notify-output').textContent = 'Notify response will appear here...';
+            document.getElementById('notify-output').className = '';
+
+
+            const initiateSuccess = (data) => {
+                if (data && data.onboarding_id && data.s3_key && data.upload_url) {
+                    currentOnboardingId = data.onboarding_id;
+                    currentUploadUrl = data.upload_url;
+                    currentS3Key = data.s3_key;
+                    currentOnboardingIdSpan.textContent = currentOnboardingId;
+                    currentUploadUrlSpan.textContent = currentUploadUrl.substring(0, 50) + '...'; // Truncate for display
+                    currentS3KeySpan.textContent = currentS3Key;
+                    console.log('Stored State:', { currentOnboardingId, currentUploadUrl, currentS3Key });
+                    // Enable notify button only if we have the ID and key
+                    notifyBtn.disabled = !(currentOnboardingId && currentS3Key && audioBlob);
+                } else {
+                     currentOnboardingId = null;
+                     currentUploadUrl = null;
+                     currentS3Key = null;
+                     currentOnboardingIdSpan.textContent = 'Error getting data from response';
+                     currentUploadUrlSpan.textContent = '';
+                     currentS3KeySpan.textContent = '';
+                     notifyBtn.disabled = true;
+                }
+            };
+
+            makeApiCall('/onboarding/initiate', 'POST', requestBody, 'initiate-output', initiateSuccess);
+        });
+
+        // --- Audio Recording (Step 2a) ---
+        startRecordBtn.addEventListener('click', async () => {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('getUserMedia not supported on your browser!');
+                return;
+            }
+
+            try {
+                // Clean up any existing stream
+                if (audioStream) {
+                    audioStream.getTracks().forEach(track => track.stop());
+                }
+                
+                // Request audio stream
+                audioStream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        sampleRate: 44100
+                    } 
+                });
+                
+                startRecordBtn.disabled = true;
+                stopRecordBtn.disabled = false;
+                notifyBtn.disabled = true; // Disable notify until recording stops
+                startRecordBtn.classList.add('recording');
+                
+                // Start the timer
+                recordingStartTime = Date.now();
+                recordingTimer = setInterval(updateTimer, 1000);
+                recordingStatusSpan.textContent = 'Status: Recording... (00:00)';
+                
+                audioChunks = []; // Reset chunks
+                
+                if (audioUrl) {
+                    URL.revokeObjectURL(audioUrl); // Clean up previous blob URL
+                    audioUrl = null;
+                }
+                audioPlayback.src = '';
+                audioBlob = null;
+
+                // Check supported MIME types
+                const mimeTypes = [
+                    'audio/webm',
+                    'audio/webm;codecs=opus',
+                    'audio/ogg;codecs=opus',
+                    'audio/mp4',
+                    'audio/mpeg'
+                ];
+                
+                let selectedMimeType = '';
+                for (const mimeType of mimeTypes) {
+                    if (MediaRecorder.isTypeSupported(mimeType)) {
+                        selectedMimeType = mimeType;
+                        console.log(`Using MIME type: ${mimeType}`);
+                        break;
+                    }
+                }
+                
+                if (!selectedMimeType) {
+                    throw new Error('No supported audio MIME types found');
+                }
+                
+                // Create MediaRecorder with the selected MIME type
+                mediaRecorder = new MediaRecorder(audioStream, { mimeType: selectedMimeType });
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                        console.log(`Received audio chunk: ${event.data.size} bytes`);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    console.log(`Recording stopped, processing ${audioChunks.length} chunks`);
+                    
+                    // Stop the timer
+                    clearInterval(recordingTimer);
+                    recordingTimer = null;
+                    
+                    // Create blob from chunks
+                    audioBlob = new Blob(audioChunks, { type: selectedMimeType });
+                    console.log(`Created audio blob: ${audioBlob.size} bytes, type: ${audioBlob.type}`);
+                    
+                    // Create URL for playback
+                    audioUrl = URL.createObjectURL(audioBlob);
+                    
+                    // Force the audio element to reload the source
+                    audioPlayback.pause();
+                    audioPlayback.removeAttribute('src');
+                    audioPlayback.load();
+                    audioPlayback.src = audioUrl;
+                    
+                    // Add event listeners to debug playback issues
+                    audioPlayback.onloadedmetadata = () => {
+                        console.log('Audio metadata loaded, duration:', audioPlayback.duration);
+                        // Update status with actual audio duration from the audio element
+                        const actualDuration = audioPlayback.duration;
+                        recordingStatusSpan.textContent = `Status: Recording stopped (${(audioBlob.size / 1024).toFixed(1)} KB, ${formatTime(actualDuration)})`;
+                    };
+                    
+                    audioPlayback.onerror = (e) => {
+                        console.error('Audio playback error:', e);
+                        recordingStatusSpan.textContent = `Error playing audio: ${audioPlayback.error.message}`;
+                    };
+                    
+                    // Update UI
+                    startRecordBtn.disabled = false;
+                    stopRecordBtn.disabled = true;
+                    startRecordBtn.classList.remove('recording');
+                    
+                    // If metadata doesn't load quickly, use the timer duration as fallback
+                    setTimeout(() => {
+                        if (!audioPlayback.duration || isNaN(audioPlayback.duration)) {
+                            recordingStatusSpan.textContent = `Status: Recording stopped (${(audioBlob.size / 1024).toFixed(1)} KB, ${formatTime(recordingDuration)})`;
+                        }
+                    }, 1000);
+                    
+                    // Enable notify button if we have all required data
+                    console.log('Checking conditions for notify button:', {
+                        hasOnboardingId: !!currentOnboardingId,
+                        hasS3Key: !!currentS3Key,
+                        hasAudioBlob: !!audioBlob,
+                        audioBlobSize: audioBlob ? audioBlob.size : 0
+                    });
+                    
+                    // Always enable the notify button if we have an audio blob, regardless of other conditions
+                    // This allows testing the notification endpoint even without initiating onboarding
+                    if (audioBlob && audioBlob.size > 0) {
+                        // Enable the upload button if we have an upload URL
+                        if (currentUploadUrl) {
+                            uploadButton.disabled = false;
+                            console.log('Upload button enabled because we have an upload URL');
+                        }
+                        
+                        // Only enable notify button if we've uploaded or don't have an upload URL
+                        if (!currentUploadUrl) {
+                            notifyBtn.disabled = false;
+                            console.log('Notify button enabled because audio was recorded (no upload URL available)');
+                        } else {
+                            // If we have an upload URL, keep notify button disabled until upload is complete
+                            notifyBtn.disabled = true;
+                            console.log('Notify button disabled until upload is complete');
+                        }
+                    } else {
+                        notifyBtn.disabled = !(currentOnboardingId && currentS3Key && audioBlob);
+                        console.log('Notify button state based on all conditions');
+                    }
+                };
+
+                // Start recording with 1-second timeslices for more reliable data collection
+                mediaRecorder.start(1000);
+                console.log('MediaRecorder started');
+
+            } catch (err) {
+                console.error('Error accessing microphone:', err);
+                recordingStatusSpan.textContent = `Error: ${err.message}`;
+                startRecordBtn.disabled = false;
+                stopRecordBtn.disabled = true;
+                startRecordBtn.classList.remove('recording');
+                
+                // Clean up any partial stream
+                if (audioStream) {
+                    audioStream.getTracks().forEach(track => track.stop());
+                    audioStream = null;
+                }
+            }
+        });
+
+        stopRecordBtn.addEventListener('click', () => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                console.log('Stopping MediaRecorder');
+                mediaRecorder.stop();
+                
+                // Stop all tracks in the stream
+                if (audioStream) {
+                    audioStream.getTracks().forEach(track => track.stop());
+                    audioStream = null;
+                }
+            }
+        });
+
+        // --- Notify Upload (Step 2b) ---
+        notifyBtn.addEventListener('click', () => {
+            if (!audioBlob) {
+                alert('No audio recorded yet.');
+                return;
+            }
+            
+            // If we don't have an onboarding ID or S3 key, use placeholder values for testing
+            const onboardingId = currentOnboardingId || 'test-onboarding-id';
+            const s3Key = currentS3Key || 'test-s3-key';
+            
+            console.log(`Simulating upload completion for ${s3Key}`);
+
+            const endpoint = `/onboarding/${onboardingId}/notify-upload`;
+            const requestBody = { s3_key: s3Key };
+
+            makeApiCall(endpoint, 'POST', requestBody, 'notify-output');
+        });
+
+        // Add a manual play button for testing
+        const audioContainer = document.createElement('div');
+        audioContainer.style.marginTop = '10px';
+        
+        const playButton = document.createElement('button');
+        playButton.textContent = 'Play Recording';
+        playButton.id = 'manual-play-btn';
+        playButton.style.marginRight = '10px';
+        playButton.addEventListener('click', () => {
+            if (audioBlob) {
+                console.log('Manually playing audio blob');
+                const newAudioUrl = URL.createObjectURL(audioBlob);
+                audioPlayback.src = newAudioUrl;
+                audioPlayback.play().catch(e => {
+                    console.error('Error playing audio:', e);
+                    recordingStatusSpan.textContent = `Error playing audio: ${e.message}`;
+                });
+            } else {
+                alert('No audio recorded yet');
+            }
+        });
+        
+        // Add upload button
+        const uploadButton = document.createElement('button');
+        uploadButton.textContent = 'Upload to S3';
+        uploadButton.id = 'upload-btn';
+        uploadButton.style.marginRight = '10px';
+        uploadButton.disabled = true;
+        uploadButton.addEventListener('click', async () => {
+            if (!audioBlob) {
+                alert('No audio recorded yet');
+                return;
+            }
+            
+            if (!currentUploadUrl) {
+                alert('No upload URL available. Please initiate onboarding first.');
+                return;
+            }
+            
+            try {
+                uploadButton.disabled = true;
+                uploadButton.textContent = 'Uploading...';
+                recordingStatusSpan.textContent = 'Status: Uploading to S3...';
+                
+                console.log(`Uploading audio to ${currentUploadUrl}`);
+                
+                // Perform the actual upload
+                const response = await fetch(currentUploadUrl, {
+                    method: 'PUT',
+                    body: audioBlob,
+                    headers: {
+                        'Content-Type': audioBlob.type || 'audio/webm'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Upload failed with status: ${response.status}`);
+                }
+                
+                console.log('Upload successful');
+                recordingStatusSpan.textContent = `Status: Upload complete (${(audioBlob.size / 1024).toFixed(1)} KB)`;
+                uploadButton.textContent = 'Upload Complete';
+                
+                // Enable the notify button after successful upload
+                notifyBtn.disabled = false;
+                
+            } catch (error) {
+                console.error('Upload error:', error);
+                recordingStatusSpan.textContent = `Error uploading: ${error.message}`;
+                uploadButton.textContent = 'Upload Failed';
+                uploadButton.disabled = false;
+            }
+        });
+        
+        audioContainer.appendChild(playButton);
+        audioContainer.appendChild(uploadButton);
+        audioPlayback.parentNode.insertBefore(audioContainer, audioPlayback);
+
+        // --- Test Scenario: Simple Onboarding Flow ---
+        runSimpleOnboardingBtn.addEventListener('click', async () => {
+            if (isScenarioRunning) {
+                alert('A scenario is already running. Please wait for it to complete.');
+                return;
+            }
+
+            isScenarioRunning = true;
+            runSimpleOnboardingBtn.disabled = true;
+            simpleOnboardingLog.innerHTML = ''; // Clear previous logs
+            updateScenarioStatus('Running scenario...', 'running');
+
+            try {
+                // Step 1: Initiate onboarding
+                logScenarioStep('Step 1: Initiating onboarding...', 'info');
+                const eventId = initiateEventIdInput.value.trim();
+                if (!eventId) {
+                    throw new Error('Please enter an Event ID before running the scenario.');
+                }
+
+                const initiateResult = await makeApiCall('/onboarding/initiate', 'POST', { event_id: eventId }, 'initiate-output');
+                if (!initiateResult) {
+                    throw new Error('Failed to initiate onboarding.');
+                }
+
+                logScenarioStep(`Onboarding initiated successfully. ID: ${initiateResult.onboarding_id}`, 'success');
+                
+                // Step 2: Record audio for 2 seconds
+                logScenarioStep('Step 2: Loading audio file...', 'info');
+                
+                try {
+                    // Fetch the audio file
+                    const audioResponse = await fetch('audio-samples/onboarding-alex-rivera-full-stack-dev.mp3');
+                    if (!audioResponse.ok) {
+                        throw new Error('Failed to load audio file');
+                    }
+                    
+                    // Get the audio blob
+                    audioBlob = await audioResponse.blob();
+                    console.log(`Loaded audio file: ${audioBlob.size} bytes, type: ${audioBlob.type}`);
+                    
+                    // Create URL for playback
+                    audioUrl = URL.createObjectURL(audioBlob);
+                    audioPlayback.src = audioUrl;
+                    
+                    logScenarioStep(`Audio file loaded. Size: ${(audioBlob.size / 1024).toFixed(1)} KB`, 'success');
+                    
+                    // Step 3: Upload to S3
+                    logScenarioStep('Step 3: Uploading audio to S3...', 'info');
+                    
+                    if (!initiateResult.upload_url) {
+                        throw new Error('No upload URL available from initiation step.');
+                    }
+                    
+                    // Perform the upload
+                    const uploadResponse = await fetch(initiateResult.upload_url, {
+                        method: 'PUT',
+                        body: audioBlob,
+                        headers: {
+                            'Content-Type': audioBlob.type || 'audio/webm'
+                        }
+                    });
+                    
+                    if (!uploadResponse.ok) {
+                        throw new Error(`Upload failed with status: ${uploadResponse.status}`);
+                    }
+                    
+                    logScenarioStep('Upload to S3 completed successfully', 'success');
+                    
+                    // Step 4: Notify upload complete
+                    logScenarioStep('Step 4: Notifying backend of upload completion...', 'info');
+                    
+                    const notifyResult = await makeApiCall(
+                        `/onboarding/${initiateResult.onboarding_id}/notify-upload`, 
+                        'POST', 
+                        { s3_key: initiateResult.s3_key }, 
+                        'notify-output'
+                    );
+                    
+                    if (!notifyResult) {
+                        throw new Error('Failed to notify backend of upload completion.');
+                    }
+                    
+                    logScenarioStep('Notification sent successfully', 'success');
+                    updateScenarioStatus('Scenario completed successfully!', 'success');
+                    
+                } catch (error) {
+                    console.error('Scenario error:', error);
+                    logScenarioStep(`Error: ${error.message}`, 'error');
+                    updateScenarioStatus(`Scenario failed: ${error.message}`, 'error');
+                }
+                
+            } catch (error) {
+                console.error('Scenario error:', error);
+                logScenarioStep(`Error: ${error.message}`, 'error');
+                updateScenarioStatus(`Scenario failed: ${error.message}`, 'error');
+            } finally {
+                isScenarioRunning = false;
+                runSimpleOnboardingBtn.disabled = false;
+            }
+        });
+    </script>
+
+</body>
+</html> 
