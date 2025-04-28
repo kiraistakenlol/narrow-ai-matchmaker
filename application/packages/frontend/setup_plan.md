@@ -1,5 +1,9 @@
 # Frontend Setup Plan: Anonymous Onboarding
 
+## Prerequisites / Backend Setup
+
+- [ ] Configure AWS Cognito resources (User Pool, Google Identity Provider, App Client, Domain) using Terraform in the `infra/terraform` directory. (Requires manual setup of Google OAuth Credentials in Google Cloud Console first).
+
 ## Screens & States
 
 ### 1. Landing / Welcome Screen
@@ -29,6 +33,12 @@
 - Sign in form (email/social)
 - Handles both new and existing accounts
 
+### 5a. Authenticated - Onboarding Required
+- Shown after successful authentication (e.g., Google Sign-In first) if the backend signals onboarding is still needed.
+- UI: Simplified welcome/prompt focusing solely on the next required step.
+- Key Action: Prominent "Record Introduction" button.
+- Note: "Sign In" options are hidden as the user is already authenticated.
+
 ### 6. Merge/Discard Anonymous Data Prompt
 - If user signs in with an existing account after onboarding:
     - Prompt: "You have onboarding data from this session. Merge with your existing profile or discard?"
@@ -55,11 +65,12 @@
 
 ## State Transitions (High-Level)
 
-1. Not Authenticated → Welcome → Onboarding → Review → Complete → Sign Up/Sign In
-2. Not Authenticated → Welcome → Sign In (existing)
-    - If onboarding data exists, show merge/discard prompt
-3. Onboarding Abandoned → Return → Resume or Restart
-4. Onboarding Complete, No Signup → Session expires → Show expired state
+1. Not Authenticated → Welcome → Onboarding → Review → Complete → Sign Up (new user) → Authenticated App Entry
+2. Not Authenticated → Welcome → Onboarding → Review → Complete → Sign In (existing user) → Merge/Discard Prompt → Authenticated App Entry
+3. Not Authenticated → Welcome → Sign In (existing user, onboarding complete) → Authenticated App Entry
+4. Not Authenticated → Welcome → Sign In (new user or existing user needing onboarding) → Authenticated - Onboarding Required Screen → Onboarding → Review → Complete (backend links data) → Authenticated App Entry
+5. Onboarding Abandoned → Return → Resume or Restart
+6. Onboarding Complete, No Signup → Session expires → Show expired state
 
 ---
 
@@ -72,9 +83,25 @@
 | Review & Confirm            | After recording intro                           |
 | Onboarding Complete         | After onboarding, before signup/signin          |
 | Sign Up / Sign In           | User chooses to create or access account        |
-| Merge/Discard Prompt        | Sign in with existing account after onboarding  |
+| Authenticated - Onboarding Required | Authenticated, but backend requires onboarding |
+| Merge/Discard Prompt        | Sign in with existing account after anonymous onboarding |
 | Event Context               | Any step, if eventId present                    |
 | Error/Expired               | Onboarding/session expired, errors              |
-| Authenticated App Entry     | After signup/signin                             |
+| Authenticated App Entry     | After signup/signin and onboarding is complete  |
+
+---
+
+## Sign-In Page Implementation (Phase 1 - Frontend Only)
+
+- [ ] Install `aws-amplify` library.
+- [ ] Add Cognito environment variables (`VITE_COGNITO_*`) to `.env` and `.env.example`.
+- [ ] Configure Amplify library in the frontend (e.g., in `main.tsx` or a dedicated config file) using environment variables.
+- [ ] Create Sign-In Page Component:
+    - [ ] Add "Sign in with Google" button.
+    - [ ] Implement button click handler to call `Auth.federatedSignIn({ provider: 'Google' })`.
+- [ ] Create Callback Component/Route:
+    - [ ] Set up a route matching the Cognito Redirect URI (e.g., `/auth/callback`).
+    - [ ] Use `useEffect` hook and Amplify listeners/functions to detect successful redirect from Cognito.
+    - [ ] (Temporary) Update local UI state to indicate tokens are present (for visual confirmation only).
 
 </rewritten_file> 
