@@ -6,7 +6,7 @@ import { ProfileData } from '@narrow-ai-matchmaker/common';
 @Injectable()
 export class ContentExtractionService {
     private readonly logger = new Logger(ContentExtractionService.name);
-    
+
     private readonly prompt = `
 You are a data extraction assistant. Your task is to extract structured information from text and format it according to a provided JSON schema.
 
@@ -31,7 +31,7 @@ RESPONSE FORMAT:
     constructor(
         @Inject(ILlmService)
         private readonly llmService: ILlmService,
-    ) {}
+    ) { }
 
     /**
      * Extracts structured data from a given text transcript using an LLM.
@@ -53,11 +53,8 @@ RESPONSE FORMAT:
                     ${JSON.stringify(schema, null, 2)}
             `;
 
-            const response = await this.llmService.generateResponse(
-                userPrompt,
-                this.prompt
-            );
-            
+            const response = await this.llmService.generateResponse(userPrompt, this.prompt);
+
             const parsedResponse = JSON.parse(response);
             this.logger.log('Successfully extracted structured data from text.');
             return parsedResponse;

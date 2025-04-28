@@ -33,11 +33,4 @@ export default () => ({
             modelName: process.env.GROQ_MODEL_NAME,
         }
     },
-    vectorDb: {
-        provider: process.env.VECTOR_DB_PROVIDER,
-        qdrant: {
-            url: process.env.QDRANT_URL,
-            apiKey: process.env.QDRANT_API_KEY,
-        },
-    },
 }); 

@@ -24,13 +24,8 @@ export const configValidationSchema = Joi.object({
     AWS_TRANSCRIBE_ROLE_ARN: Joi.string().optional(),
 
     // LLM Provider
-    LLM_PROVIDER: Joi.string().valid('mock', 'openai', 'groq').default('mock'),
+    LLM_PROVIDER: Joi.string().valid('openai', 'groq').default('groq'),
     OPENAI_API_KEY: Joi.string().when('LLM_PROVIDER', { is: 'openai', then: Joi.required() }),
     GROQ_API_KEY: Joi.string().when('LLM_PROVIDER', { is: 'groq', then: Joi.required() }),
     GROQ_MODEL_NAME: Joi.string().when('LLM_PROVIDER', { is: 'groq', then: Joi.string().default('llama3-8b-8192') }).optional(),
-
-    // Vector DB
-    VECTOR_DB_PROVIDER: Joi.string().valid('mock', 'qdrant').default('mock'),
-    QDRANT_URL: Joi.string().when('VECTOR_DB_PROVIDER', { is: 'qdrant', then: Joi.required() }),
-    QDRANT_API_KEY: Joi.string().optional(),
 }); 
