@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Profile } from './entities/profile.entity';
-import { ProfileData, EventContext } from '@narrow-ai-matchmaker/common';
+import { ProfileData } from '@narrow-ai-matchmaker/common';
 
 // Helper function to create a default empty ProfileData
 const createDefaultEmptyProfileData = (): ProfileData => ({

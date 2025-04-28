@@ -130,7 +130,7 @@ export class OnboardingService {
             await this.onboardingSessionRepository.save(session);
             this.logger.log(`Updated session ${onboardingId} status to ${OnboardingStatus.AUDIO_UPLOADED}`);
 
-            this._processAudioInBackground(session.id);
+            this._processAudioInBackground(session.id, dto.s3_key);
 
             return { status: session.status };
 
@@ -142,7 +142,7 @@ export class OnboardingService {
         }
     }
 
-    private async _processAudioInBackground(sessionId: string): Promise<void> {
+    private async _processAudioInBackground(sessionId: string, s3_key: string): Promise<void> {
         this.logger.log(`Starting background audio processing for session: ${sessionId}`);
         let session: OnboardingSession | null = null;
 
@@ -152,9 +152,7 @@ export class OnboardingService {
                 relations: ['profile', 'eventParticipation'],
             });
 
-            // Construct the expected storage key here as well using new format
-            const fileExtension = '.webm'; // New format
-            const storageKey = `onboarding/${sessionId}/audio-initial${fileExtension}`;
+            const storageKey = s3_key;
 
             // Check session and relations exist
             if (!session || !session.profile || !session.eventParticipation) {
