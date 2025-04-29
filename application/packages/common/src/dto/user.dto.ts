@@ -1,12 +1,7 @@
-import { IsUUID, IsEmail } from 'class-validator';
+import { ProfileData } from '../types/profile.types';
 
-/**
- * Basic Data Transfer Object for User information.
- */
 export class UserDto {
-    @IsUUID()
     id!: string;
-
-    @IsEmail()
     email!: string;
+    profile?: ProfileData | null; // Profile might be null initially
 } 

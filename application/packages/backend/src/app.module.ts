@@ -1,4 +1,4 @@
-import { Module, Logger } from '@nestjs/common';
+import { Module, Logger, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OnboardingModule } from './onboarding/onboarding.module';
@@ -12,6 +12,8 @@ import { TranscriptionModule } from './transcription/transcription.module';
 import { LlmModule } from './llm/llm.module';
 import { ContentExtractionModule } from './content-extraction/content-extraction.module';
 import { AuthModule } from './auth/auth.module';
+import { AuthMiddleware } from './common/middleware/auth.middleware';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
     imports: [
@@ -28,6 +30,7 @@ import { AuthModule } from './auth/auth.module';
                 abortEarly: false,
             },
         }),
+        JwtModule.register({}),
         TypeOrmModule.forRootAsync({
             imports: [ConfigModule],
             inject: [ConfigService],
@@ -61,4 +64,10 @@ import { AuthModule } from './auth/auth.module';
     controllers: [HealthController],
     providers: [],
 })
-export class AppModule {} 
+export class AppModule implements NestModule {
+    configure(consumer: MiddlewareConsumer) {
+        consumer
+            .apply(AuthMiddleware)
+            .forRoutes('*');
+    }
+} 

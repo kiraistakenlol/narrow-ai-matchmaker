@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -27,4 +27,11 @@ export class UserService {
         }
     }
 
+    async findUserWithProfileById(externalId: string): Promise<User | null> {
+        const user = await this.userRepository.findOne({
+            where: { externalId: externalId },
+            relations: ['profile'],
+        });
+        return user;
+    }
 } 

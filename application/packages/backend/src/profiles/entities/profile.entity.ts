@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToOne, JoinColumn } from 'typeorm';
 import { ProfileData } from '@narrow-ai-matchmaker/common';
+import { User } from '../../users/entities/user.entity';
 
 @Entity('profiles')
 export class Profile {
@@ -8,6 +9,10 @@ export class Profile {
 
     @Column()
     userId: string;
+
+    @OneToOne(() => User, user => user.profile) 
+    @JoinColumn({ name: 'userId' })
+    user: User;
 
     @Column({ type: 'jsonb', default: {} })
     data: ProfileData;
