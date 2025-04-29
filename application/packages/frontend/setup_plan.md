@@ -99,8 +99,8 @@
 - [x] Create Sign-In Page Component:
     - [x] Add "Sign in with Google" button.
     - [x] Implement button click handler to call `Auth.federatedSignIn({ provider: 'Google' })`.
-- [ ] Create Callback Component/Route:
-    - [ ] Set up a route matching the Cognito Redirect URI (e.g., `/auth/callback`).
+- [x] Create Callback Component/Route:
+    - [x] Set up a route matching the Cognito Redirect URI (e.g., `/auth/callback`).
     - [ ] Use `useEffect` hook and Amplify listeners/functions to detect successful redirect from Cognito.
     - [ ] (Temporary) Update local UI state to indicate tokens are present (for visual confirmation only).
 

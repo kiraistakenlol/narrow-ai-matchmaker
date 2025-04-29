@@ -25,3 +25,16 @@ matching/playground/test_data/my_*.json
 
 # Locally stored audio files (Backend)
 /application/packages/backend/data/
+
+# Terraform files
+tfplan
+**/*.tfplan
+**/*.tfstate
+**/*.tfstate.backup
+.terraform/
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.lock.hcl

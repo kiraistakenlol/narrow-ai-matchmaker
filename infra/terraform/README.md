@@ -7,8 +7,8 @@ This directory contains the Terraform configuration for the Narrow AI Matchmaker
 These values are needed for the frontend and backend application configuration:
 
 *   **AWS Region:** `us-east-1`
-*   **Cognito User Pool ID:** `us-east-1_4f9woTx9X`
-*   **Cognito User Pool Client ID (Web Frontend):** `796l813bi3r4cppn8unrbipaj7`
+*   **Cognito User Pool ID:** `us-east-1_tVogU0bWH`
+*   **Cognito User Pool Client ID (Web Frontend):** `2q87i5og3ot6q69ea28at0hrso`
 *   **Cognito Domain Prefix:** `narrow-ai-matchmaker-dev-summary-gannet`
 *   **Cognito Domain Endpoint:** `https://narrow-ai-matchmaker-dev-summary-gannet.auth.us-east-1.amazoncognito.com`
 
