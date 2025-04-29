@@ -4,6 +4,7 @@ import { Event } from './entities/event.entity';
 import { EventParticipation } from './entities/event-participation.entity';
 import { EventService } from './events.service';
 import { ContentExtractionModule } from '@backend/content-extraction/content-extraction.module';
+import { EventsController } from './events.controller';
 
 @Module({
   imports: [
@@ -12,5 +13,6 @@ import { ContentExtractionModule } from '@backend/content-extraction/content-ext
   ],
   providers: [EventService],
   exports: [EventService],
+  controllers: [EventsController],
 })
 export class EventsModule {} 
