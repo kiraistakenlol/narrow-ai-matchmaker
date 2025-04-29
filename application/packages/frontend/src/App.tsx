@@ -3,26 +3,30 @@ import {
     BrowserRouter as Router,
     Routes,
     Route,
+    Navigate,
 } from 'react-router-dom';
 
-import SignInPage from './pages/SignInPage';
-import AuthCallbackPage from './pages/AuthCallbackPage';
+// Import pages
+import HomePage from './pages/HomePage';
+import EventPage from './pages/EventPage';
+import AuthPage from './pages/AuthPage'; // Renamed from SignInPromptPage
+// import OnboardingPage from './pages/OnboardingPage'; // Removed
 
 function App() {
     return (
         <Router>
             <Routes>
-                {/* Route for the Sign In page */}
-                <Route path="/" element={<SignInPage />} />
-                
-                {/* Route for the Cognito callback */}
-                <Route path="/auth/callback" element={<AuthCallbackPage />} />
+                {/* Root route - Home (handles auth check internally) */}
+                <Route path="/" element={<HomePage />} />
 
-                {/* TODO: Add other routes here (e.g., onboarding, main dashboard) */}
-                {/* Example:
-                <Route path="/onboarding" element={<OnboardingPage />} />
-                <Route path="/dashboard" element={<DashboardPage />} /> 
-                */}
+                {/* Event detail page */}
+                <Route path="/event/:id" element={<EventPage />} />
+
+                {/* Sign in / Onboarding prompt page */}
+                <Route path="/signin" element={<AuthPage />} />
+
+                {/* Catch-all route: Redirects any unmatched path to Home */}
+                <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </Router>
     );
