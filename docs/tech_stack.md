@@ -24,6 +24,11 @@ This document outlines the chosen technology stack for the Narrow AI Matchmaker 
 *   **Relational Database:** PostgreSQL
 *   **Vector Database:** Qdrant (Cloud)
 
+## Data Validation
+
+*   **Approach:** No dedicated data validation library (like `class-validator`) will be used initially.
+*   **Rationale:** Simplify initial development. Validation logic, if needed, will be handled manually within service layers or rely on database constraints.
+
 ## Database Schema Management (Development)
 
 *   **Approach:** Manual DDL Scripts
