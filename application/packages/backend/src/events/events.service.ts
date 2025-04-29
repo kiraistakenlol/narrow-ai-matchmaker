@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Event } from './entities/event.entity';
 import { EventParticipation } from './entities/event-participation.entity';
-import { ContentExtractionService } from '@backend/content-extraction/content-extraction.service';
+import { ContentExtractionService } from '../content-extraction/content-extraction.service';
 
 @Injectable()
 export class EventService {
@@ -30,6 +30,32 @@ export class EventService {
             const message = error instanceof Error ? error.message : 'Unknown database error';
             this.logger.error(`Failed to find event by ID ${eventId}: ${message}`, error instanceof Error ? error.stack : undefined);
             throw new InternalServerErrorException('Could not retrieve event.');
+        }
+    }
+
+    // New method to find events joined by a user
+    async findJoinedEventsByUserId(userId: string): Promise<{ event: Event, participation: EventParticipation }[]> {
+        this.logger.log(`Finding events joined by user ID: ${userId}`);
+        try {
+            const participations = await this.participationRepository.find({
+                where: { userId: userId },
+                relations: {
+                    event: true
+                },
+                order: {
+                    event: { startTime: 'ASC' }
+                }
+            });
+
+            const joinedEvents = participations.map(p => ({ event: p.event, participation: p }));
+
+            this.logger.log(`Found ${joinedEvents.length} joined events for user ${userId}`);
+            return joinedEvents;
+
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown database error';
+            this.logger.error(`Failed to find joined events for user ${userId}: ${message}`, error instanceof Error ? error.stack : undefined);
+            throw new InternalServerErrorException('Could not retrieve joined events.');
         }
     }
 
@@ -85,15 +111,44 @@ export class EventService {
             required: ['goals'] 
         };
         
-        const eventInstructions = "Extract the user's goals for this specific event and their general availability mentioned in the provided text transcript.";
-        
-        // Extract event data from text transcript
         const extractedEventData = await this.contentExtractionService.extractStructuredDataFromText<any>(
             transcriptText,
-            eventContextSchema)
+            eventContextSchema
+        );
             
-        // Update participation with extracted data
-        // participation.contextData = extractedEventData.extractedData;
+        participation.contextData = extractedEventData;
         return this.save(participation);
+    }
+
+    // New method to find event and optionally the user's participation
+    async findEventWithOptionalParticipation(
+        eventId: string, 
+        userId?: string | null
+    ): Promise<{ event: Event, participation: EventParticipation | null } | null> {
+        this.logger.log(`Finding event ${eventId} with optional participation for user ${userId || 'N/A'}`);
+        try {
+            const event = await this.eventRepository.findOneBy({ id: eventId });
+            if (!event) {
+                this.logger.warn(`Event with ID ${eventId} not found.`);
+                return null; // Event itself not found
+            }
+
+            let participation: EventParticipation | null = null;
+            if (userId) {
+                // Attempt to find participation only if userId is provided
+                participation = await this.participationRepository.findOne({
+                    where: { userId: userId, eventId: eventId },
+                    // No need to load event relation again here
+                });
+                 this.logger.log(`Participation for user ${userId} in event ${eventId}: ${participation ? 'Found' : 'Not Found'}`);
+            }
+            
+            return { event, participation };
+
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown database error';
+            this.logger.error(`Failed to find event ${eventId} with participation for user ${userId || 'N/A'}: ${message}`, error instanceof Error ? error.stack : undefined);
+            throw new InternalServerErrorException('Could not retrieve event details.');
+        }
     }
 } 

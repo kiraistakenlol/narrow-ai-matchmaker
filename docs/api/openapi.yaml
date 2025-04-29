@@ -179,23 +179,47 @@ paths:
   # Note: Actual login/signup often involves redirects to an external provider (Cognito)
   # These endpoints might be for token refresh or getting user info based on a valid token.
 
-  /auth/me:
+  /users/me:
     get:
-      summary: Get Current User Info
-      description: Returns information about the currently authenticated user based on the provided JWT.
+      summary: Get Current Authenticated User (Basic Info)
+      description: Returns basic information (ID, email) about the currently authenticated user based on the provided JWT.
       tags:
         - Authentication
-      operationId: getCurrentUser
+      operationId: getMe
       security:
-        - bearerAuth: [] # Requires authentication
+        - bearerAuth: []
       responses:
         '200':
-          description: Current user details.
+          description: Current user basic details.
           content:
             application/json:
               schema:
-                # Could be a specific AuthUser schema or reuse UserProfile
-                 $ref: '#/components/schemas/UserProfile'
+                $ref: '#/components/schemas/UserDto'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /users/me/events:
+    get:
+      summary: List My Joined Events
+      description: Retrieves a list of events the current authenticated user has joined, including their participation context.
+      tags:
+        - Users
+      operationId: listMyJoinedEvents
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: A list of joined events with participation context.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JoinedEventDto'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
@@ -334,51 +358,25 @@ paths:
 
   # --- Events ---
 
-  /events:
-    get:
-      summary: List Joined Events
-      description: Retrieves a list of events the current user has joined.
-      tags:
-        - Events
-      operationId: listMyEvents
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: A list of events.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EventSummary' # Use a summary schema
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
   /events/{event_id}:
     get:
-      summary: Get Event Details
-      description: Retrieves detailed information about a specific event.
+      summary: Get Event Details (including participation if authenticated)
+      description: >-
+        Retrieves detailed public information about a specific event. If the user making
+        the request is authenticated (valid Bearer token provided), it also includes
+        their participation status (participationId, contextData) or null if not joined.
       tags:
         - Events
       operationId: getEventDetails
-      security:
-        - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/EventIdPath'
       responses:
         '200':
-          description: Event details.
+          description: Event details, potentially including current user's participation status.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Event' # Full event schema
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-           $ref: '#/components/responses/Forbidden' # If user hasn't joined / isn't allowed
+                $ref: '#/components/schemas/JoinedEventDto'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -646,9 +644,9 @@ components:
       required:
         - id_token
 
-    UserDto: # Added common UserDto schema
+    UserDto:
       type: object
-      description: Basic user information.
+      description: Basic user information, potentially including profile summary.
       properties:
         id:
           type: string
@@ -660,6 +658,11 @@ components:
           format: email
           readOnly: true
           description: User's email address.
+        profile:
+          type: object
+          nullable: true
+          description: User profile data (exact structure TBD based on ProfileData type).
+          additionalProperties: true
       required:
         - id
         - email
@@ -855,6 +858,45 @@ components:
         - matched_user
         - score
         - explanation
+
+    JoinedEventDto:
+      allOf:
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              readOnly: true
+            name:
+              type: string
+              example: 'AI Hackathon 2025'
+            description:
+              type: string
+              nullable: true
+            startTime:
+              type: string
+              format: date-time
+            endTime:
+              type: string
+              format: date-time
+              nullable: true
+          required:
+            - id
+            - name
+            - startTime
+        - type: object
+          properties:
+            participationId:
+              type: string
+              format: uuid
+              readOnly: true
+              nullable: true
+              description: The ID of the user's participation record (null if not joined).
+            contextData:
+              type: object
+              nullable: true
+              description: User-specific context provided for this event (null if not joined).
+              additionalProperties: true
 
   parameters:
     OnboardingIdPath:

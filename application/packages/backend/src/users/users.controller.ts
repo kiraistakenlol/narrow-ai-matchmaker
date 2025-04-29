@@ -1,15 +1,19 @@
-import { Controller, Get, UseGuards, Req, NotFoundException, Logger, Param, ExecutionContext, createParamDecorator } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, NotFoundException, Logger, Param } from '@nestjs/common';
 import { UserService } from './users.service';
-import { UserDto } from '@narrow-ai-matchmaker/common';
+import { UserDto, JoinedEventDto } from '@narrow-ai-matchmaker/common';
 import { AuthenticatedGuard } from '../auth/guards/authenticated.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { CognitoIdTokenPayload } from '../common/types/auth.types';
+import { EventService } from '../events/events.service';
 
 @Controller('users')
 export class UsersController {
     private readonly logger = new Logger(UsersController.name);
 
-    constructor(private readonly usersService: UserService) {}
+    constructor(
+        private readonly usersService: UserService,
+        private readonly eventService: EventService,
+    ) {}
 
     @Get('me')
     @UseGuards(AuthenticatedGuard)
@@ -33,5 +37,30 @@ export class UsersController {
         };
 
         return userDto;
+    }
+
+    @Get('me/events')
+    @UseGuards(AuthenticatedGuard)
+    async listMyJoinedEvents(@CurrentUser() currentUser: CognitoIdTokenPayload): Promise<JoinedEventDto[]> {
+        const userId = currentUser.sub;
+        this.logger.log(`Handling request for joined events for user ID: ${userId}`);
+
+        const joinedEventsData = await this.eventService.findJoinedEventsByUserId(userId);
+
+        // Map the combined data to JoinedEventDto
+        const joinedEventsDto: JoinedEventDto[] = joinedEventsData.map(({ event, participation }) => ({
+            // Event fields
+            id: event.id,
+            name: event.name,
+            description: event.description,
+            startTime: event.startTime.toISOString(),
+            endTime: event.endTime?.toISOString() ?? null,
+            // Participation fields
+            participationId: participation.id,
+            contextData: participation.contextData,
+        }));
+
+        this.logger.log(`Returning ${joinedEventsDto.length} joined events for user ${userId}`);
+        return joinedEventsDto;
     }
 } 
