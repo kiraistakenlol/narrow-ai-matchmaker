@@ -1,43 +1,37 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { fetchAuthSession, signInWithRedirect } from 'aws-amplify/auth';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAppSelector, useAppDispatch } from '../state/hooks';
+import { 
+    signInWithGoogle, 
+    selectAuthStatus 
+} from '../state/slices/authSlice';
 
 function AuthPage() {
-    const [isLoading, setIsLoading] = useState(true);
+    const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const status = useAppSelector(selectAuthStatus);
 
-    useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                await fetchAuthSession({ forceRefresh: true });
-                navigate('/'); // Redirect to home if already signed in
-            } catch (err) {
-                setIsLoading(false); // No session, stay and show options
-            }
-        };
-        checkAuth();
-    }, [navigate]);
-
-    const handleGoogleSignIn = async () => {
-        setIsLoading(true);
-        try {
-            await signInWithRedirect({ provider: 'Google' });
-        } catch (error) {
-            console.error('Error initiating sign in:', error);
-            setIsLoading(false);
-             // TODO: Display error to user
+     useEffect(() => {
+        // Redirect if checkAuth (from App.tsx) succeeded
+        if (status === 'succeeded') {
+            navigate('/');
         }
+    }, [status, navigate]);
+
+    const handleGoogleSignIn = () => {
+        dispatch(signInWithGoogle());
     };
     
     const handleStartOnboarding = () => {
-        console.log('Start Onboarding Clicked - Navigate to onboarding flow/components here');
-        // Example: navigate('/onboarding-step-1'); // Or trigger state change
-        // For now, just log it.
+        console.log('Start Onboarding Clicked');
+        // TODO: Implement onboarding flow trigger
     };
 
-    if (isLoading) {
+    // Show loading only while initial checkAuth is running
+    if (status === 'loading') {
         return <div style={styles.container}><p>Checking authentication...</p></div>;
     }
+
 
     return (
         <div style={styles.container}>
@@ -63,7 +57,7 @@ function AuthPage() {
     );
 }
 
-// Minimal styles (can reuse/share later)
+// Minimal styles
 const styles: { [key: string]: React.CSSProperties } = {
     container: { padding: '20px', fontFamily: 'sans-serif', textAlign: 'center' },
     title: { marginBottom: '10px' },

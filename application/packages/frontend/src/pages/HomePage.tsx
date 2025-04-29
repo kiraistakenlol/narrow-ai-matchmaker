@@ -1,79 +1,63 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchAuthSession, signOut } from 'aws-amplify/auth';
-import { UserDto } from '@narrow-ai-matchmaker/common';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
+import { useAppSelector, useAppDispatch } from '../state/hooks';
+import { 
+    signOutUser, 
+    selectAuthUser, 
+    selectAuthStatus, 
+    selectAuthError, 
+} from '../state/slices/authSlice';
 
 function HomePage() {
-    const [userData, setUserData] = useState<UserDto | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const user = useAppSelector(selectAuthUser);
+    const status = useAppSelector(selectAuthStatus);
+    const error = useAppSelector(selectAuthError);
+
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const checkAuthAndFetchUser = async () => {
-            try {
-                const session = await fetchAuthSession({ forceRefresh: true });
-                const idToken = session.tokens?.idToken?.toString();
-                if (!idToken) throw new Error('ID token not found after authentication.');
-
-                const response = await fetch(`${API_BASE_URL}/users/me`, {
-                    headers: { 'Authorization': `Bearer ${idToken}` },
-                });
-
-                if (!response.ok) {
-                    // Handle cases where user exists in Cognito but not backend?
-                    if (response.status === 404) {
-                         console.error('User authenticated but not found in backend.');
-                         // Decide recovery path: maybe sign out, maybe force onboarding?
-                         // For now, treat as auth failure for redirect
-                         throw new Error('User not found in backend.');
-                    }
-                    throw new Error(`Failed to fetch user data: ${response.status}`);
-                }
-                const data: UserDto = await response.json();
-                setUserData(data);
-            } catch (err) {
-                console.error('Auth check/fetch failed on Home Page:', err);
-                navigate('/signin'); // Redirect to signin if not authenticated or fetch fails
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        checkAuthAndFetchUser();
-    }, [navigate]);
-
-    const handleSignOut = async () => {
-        try {
-            await signOut();
+        if (status === 'failed') {
             navigate('/signin');
-        } catch (err) {
-            console.error('Error signing out: ', err);
-            setError('Failed to sign out.');
+        } else if (status === 'succeeded') {
+            setIsLoading(false);
         }
+    }, [status, navigate]);
+
+    const handleSignOut = () => {
+        dispatch(signOutUser()); 
+        // Sign out success/failure is handled by slice, 
+        // which should eventually trigger a status change to 'idle' or 'failed' -> redirect
     };
 
-    if (isLoading) {
+    if (status === 'loading' || status === 'idle' || isLoading) {
         return <div style={styles.container}><p>Loading home...</p></div>;
     }
 
-    // Error display primarily for sign-out issues, as fetch errors redirect.
-    if (error) {
-         return <div style={styles.container}><p style={styles.errorText}>{error}</p></div>;
+    // Error display primarily for sign-out errors or other non-redirecting errors
+    if (error && status !== 'failed') { // Don't show error if redirecting
+         return (
+            <div style={styles.container}>
+                <p style={styles.errorText}>Error: {error}</p>
+                 <button onClick={handleSignOut} style={styles.signOutButton}>
+                    Sign Out (force)
+                 </button>
+            </div>
+         );
     }
 
-    // Render user data if loading is done and userData is available
+    // Render user data only if status is succeeded
     return (
         <div style={styles.container}>
             <h1 style={styles.title}>Home / Dashboard</h1>
             <p>Your User Data:</p>
-            {userData ? (
+            {user ? (
                 <pre style={styles.jsonOutput}>
-                    {JSON.stringify(userData, null, 2)}
+                    {JSON.stringify(user, null, 2)}
                 </pre>
             ) : (
-                <p>Could not load user data.</p> // Should ideally be loading or redirected
+                <p>User data not available.</p> // Should ideally not be reachable if status === succeeded
             )}
             <button onClick={handleSignOut} style={styles.signOutButton}>
                 Sign Out
@@ -82,7 +66,7 @@ function HomePage() {
     );
 }
 
-// Minimal styles (can be shared later)
+// Minimal styles (reuse or centralize later)
 const styles: { [key: string]: React.CSSProperties } = {
     container: { padding: '20px', fontFamily: 'sans-serif' },
     title: { marginBottom: '10px' },
