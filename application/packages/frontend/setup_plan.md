@@ -2,7 +2,7 @@
 
 ## Prerequisites / Backend Setup
 
-- [ ] Configure AWS Cognito resources (User Pool, Google Identity Provider, App Client, Domain) using Terraform in the `infra/terraform` directory. (Requires manual setup of Google OAuth Credentials in Google Cloud Console first).
+- [x] Configure AWS Cognito resources (User Pool, Google Identity Provider, App Client, Domain) using Terraform in the `infra/terraform` directory. (Requires manual setup of Google OAuth Credentials in Google Cloud Console first).
 
 ## Screens & States
 
@@ -93,12 +93,12 @@
 
 ## Sign-In Page Implementation (Phase 1 - Frontend Only)
 
-- [ ] Install `aws-amplify` library.
-- [ ] Add Cognito environment variables (`VITE_COGNITO_*`) to `.env` and `.env.example`.
-- [ ] Configure Amplify library in the frontend (e.g., in `main.tsx` or a dedicated config file) using environment variables.
-- [ ] Create Sign-In Page Component:
-    - [ ] Add "Sign in with Google" button.
-    - [ ] Implement button click handler to call `Auth.federatedSignIn({ provider: 'Google' })`.
+- [x] Install `aws-amplify` library.
+- [x] Add Cognito environment variables (`VITE_COGNITO_*`) to `.env` and `.env.example`.
+- [x] Configure Amplify library in the frontend (e.g., in `main.tsx` or a dedicated config file) using environment variables.
+- [x] Create Sign-In Page Component:
+    - [x] Add "Sign in with Google" button.
+    - [x] Implement button click handler to call `Auth.federatedSignIn({ provider: 'Google' })`.
 - [ ] Create Callback Component/Route:
     - [ ] Set up a route matching the Cognito Redirect URI (e.g., `/auth/callback`).
     - [ ] Use `useEffect` hook and Amplify listeners/functions to detect successful redirect from Cognito.

@@ -1,15 +1,9 @@
 import React from 'react';
+import SignInPage from './pages/SignInPage'; // Import the new page
 
 function App() {
-    // Vite exposes env variables starting with VITE_ on import.meta.env
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
-
-    return (
-        <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-            <h1>Hello World - Frontend</h1>
-            <p>API Base URL from .env: <strong>{apiBaseUrl || 'Not Set'}</strong></p>
-        </div>
-    );
+    // For now, just render the SignInPage
+    return <SignInPage />;
 }
 
 export default App;
