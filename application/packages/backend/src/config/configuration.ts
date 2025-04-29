@@ -33,4 +33,9 @@ export default () => ({
             modelName: process.env.GROK_MODEL_NAME,
         }
     },
+    cognito: {
+        userPoolId: process.env.COGNITO_USER_POOL_ID,
+        clientId: process.env.COGNITO_CLIENT_ID,
+        region: process.env.COGNITO_REGION,
+    }
 }); 

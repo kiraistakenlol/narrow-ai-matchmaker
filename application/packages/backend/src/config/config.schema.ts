@@ -28,4 +28,9 @@ export const configValidationSchema = Joi.object({
     OPENAI_API_KEY: Joi.string().when('LLM_PROVIDER', { is: 'openai', then: Joi.required() }),
     GROK_API_KEY: Joi.string().when('LLM_PROVIDER', { is: 'grok', then: Joi.required() }),
     GROK_MODEL_NAME: Joi.string().when('LLM_PROVIDER', { is: 'grok', then: Joi.required() }),
+
+    // Add Cognito Vars
+    COGNITO_USER_POOL_ID: Joi.string().required(),
+    COGNITO_CLIENT_ID: Joi.string().required(),
+    COGNITO_REGION: Joi.string().required()
 }); 

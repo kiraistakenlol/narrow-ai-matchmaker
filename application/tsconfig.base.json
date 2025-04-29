@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
     /* Base Options: */
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "target": "ES2022", // Or a suitable modern target

@@ -201,36 +201,46 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /auth/callback:
+  /auth:
     post:
-      summary: Handle Authentication Provider Callback
+      summary: Finalize Login & Check Onboarding Status
       description: >-
-        The endpoint the client calls after being redirected back from the
-        external authentication provider (e.g., Cognito). The client passes
-        the authorization code and state parameter received from the provider.
-        The backend exchanges the code for tokens, finalizes onboarding if applicable,
-        and returns authentication tokens to the client.
+        Called by the frontend *after* Amplify has successfully handled
+        the OAuth flow client-side and obtained tokens. The backend verifies
+        the provided ID token, links/creates the user record, associates
+        any active onboarding session, and returns whether onboarding is
+        still required.
       tags:
         - Authentication
-      operationId: handleAuthCallback
+      operationId: finalizeLogin
       requestBody:
-        description: Authorization code and state received from the authentication provider.
+        description: >-
+            The ID token obtained by the frontend client-side via Amplify,
+            and the state parameter potentially containing the onboarding ID.
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthCallbackRequest'
+              $ref: '#/components/schemas/FinalizeLoginRequest'
       responses:
         '200':
-          description: Authentication successful, onboarding finalized (if applicable), tokens returned.
+          description: Login finalized, user details returned.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthCallbackResponse' # Contains tokens
+                $ref: '#/components/schemas/UserDto'
         '400':
-          $ref: '#/components/responses/BadRequest' # Invalid code or state
+           description: Invalid request (e.g., missing token, invalid state format).
+           content:
+             application/json:
+               schema:
+                 $ref: '#/components/schemas/Error'
         '401':
-          $ref: '#/components/responses/Unauthorized' # Token exchange failed
+          description: ID Token is invalid or expired.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -621,42 +631,38 @@ components:
            $ref: '#/components/schemas/EventContext'
 
     # --- Authentication Schemas ---
-    AuthCallbackRequest:
+    FinalizeLoginRequest:
       type: object
       properties:
-        code:
-          type: string
-          description: The authorization code received from the identity provider.
-        state:
-          type: string
-          description: The state parameter originally sent to the provider (may contain onboarding_id).
-      required:
-        - code
-        - state
-
-    AuthCallbackResponse:
-      type: object
-      description: Response containing authentication tokens upon successful login/signup.
-      properties:
-        access_token:
-          type: string
-          # format: jwt # Format is optional hint
         id_token:
           type: string
-          # format: jwt
-        refresh_token:
+          description: The ID token obtained by the frontend from Cognito via Amplify.
+        state:
           type: string
-        expires_in:
-          type: integer
-          description: Lifetime in seconds of the access token.
-        token_type:
-          type: string
-          example: Bearer
+          nullable: true
+          description: >-
+            The state parameter originally passed during the sign-in initiation,
+            potentially containing an onboarding_id.
       required:
-        - access_token
         - id_token
-        - token_type
-        - expires_in
+
+    UserDto: # Added common UserDto schema
+      type: object
+      description: Basic user information.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Unique identifier for the registered user.
+        email:
+          type: string
+          format: email
+          readOnly: true
+          description: User's email address.
+      required:
+        - id
+        - email
 
     # --- Profile Schemas ---
     UserProfile:

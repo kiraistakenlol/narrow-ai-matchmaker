@@ -11,6 +11,7 @@ import { configuration, configValidationSchema } from './config';
 import { TranscriptionModule } from './transcription/transcription.module';
 import { LlmModule } from './llm/llm.module';
 import { ContentExtractionModule } from './content-extraction/content-extraction.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
     imports: [
@@ -55,6 +56,7 @@ import { ContentExtractionModule } from './content-extraction/content-extraction
         EventsModule,
         OnboardingModule,
         ContentExtractionModule,
+        AuthModule,
     ],
     controllers: [HealthController],
     providers: [],
