@@ -1,0 +1,73 @@
+# User Onboarding Flow Diagram
+
+direction: right
+
+# Sources
+Sources: {
+  shape: cloud
+  style.fill: "#f0f0f0"
+
+  whatsapp: "WhatsApp Groups"
+  communities: "Expat/Local Communities\n(e.g., Runners)"
+  events: "Local Events/Parties"
+  hackathons: "Hackathons"
+}
+
+# Collection & Initial Data
+Collect: "Collect User Data" {
+  shape: rectangle
+  style.fill: "#e6f7ff"
+
+  unstructured_data: "Unstructured Input\n(Intro, Messages, Social Feeds, etc.)" {
+    style.fill: "#fffbe6"
+  }
+}
+
+# Processing
+llm: "LLM Processing" {
+  shape: rectangle
+  style.fill: "#d9f7be"
+}
+profile_template: "Generic Profile Template" {
+  shape: document
+  style.fill: "#d6e4ff"
+}
+
+# Outcome
+structured_profile: "Structured User Profile" {
+  shape: document
+  style.fill: "#e6fffa"
+}
+db: Database {
+  shape: cylinder
+  style.fill: "#efdbff"
+}
+
+# Connections
+Sources.whatsapp -> Collect : "User joins"
+Sources.communities -> Collect : "User joins"
+Sources.events -> Collect : "User attends"
+Sources.hackathons -> Collect : "User participates"
+
+Collect -> unstructured_data : "Gathers"
+
+unstructured_data -> llm : "Feed data"
+profile_template -> llm : "Uses template"
+
+llm -> structured_profile : "Generates structured data"
+
+structured_profile -> db : "Store User"
+
+# Annotations / Notes
+Sources.hackathons: {
+  tooltip: "Profile focus: Technical skills"
+}
+Sources.communities: {
+  tooltip: "Profile focus: Hobbies, Location"
+}
+Collect: {
+  tooltip: "Specific methods vary by source"
+}
+structured_profile: {
+  tooltip: "Profile completeness varies based on input & source"
+} 
