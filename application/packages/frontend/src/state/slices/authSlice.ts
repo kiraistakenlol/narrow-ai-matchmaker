@@ -15,18 +15,20 @@ interface AuthState {
     user: AuthUser | null;
     status: AuthStatus;
     error: string | null;
+    isOnboarded: boolean;
 }
 
 const initialState: AuthState = {
     user: null,
     status: 'idle',
     error: null,
+    isOnboarded: false,
 };
 
 export const checkAuth = createAsyncThunk<
-    AuthUser, // Return type on success
-    void,     // Argument type (none)
-    { rejectValue: string } // Type for rejectWithValue
+    UserDto, // Return full UserDto on success
+    void,
+    { rejectValue: string }
 >('auth/checkAuth', async (_, { rejectWithValue }) => {
     try {
         const session = await fetchAuthSession({ forceRefresh: true });
@@ -42,18 +44,15 @@ export const checkAuth = createAsyncThunk<
             console.error(`Auth check: /users/me fetch failed (${response.status})`, errorBody);
             return rejectWithValue(`Backend fetch failed: ${response.status}`);
         }
-        const userData: UserDto = await response.json(); // Fetch full DTO
+        const userData: UserDto = await response.json(); 
         
-        // Extract only id and email for the state
-        if (!userData.id || !userData.email) {
-            console.error('Missing id or email in fetched UserDto', userData);
+        // Basic validation before returning
+        if (!userData.id || typeof userData.email === 'undefined') { // Check email existence
+             console.error('Missing id or email in fetched UserDto', userData);
             return rejectWithValue('Incomplete user data received from backend.');
         }
-        const authUser: AuthUser = {
-            id: userData.id,
-            email: userData.email, 
-        };
-        return authUser; // Fulfill with the simplified AuthUser object
+
+        return userData; // Fulfill with the full UserDto object
     } catch (error) {
         console.log('Auth check failed:', error);
         return rejectWithValue(error instanceof Error ? error.message : 'Authentication check failed');
@@ -95,29 +94,39 @@ export const authSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            // checkAuth
+            // Reset onboarding status when starting auth check or on failure/signout
             .addCase(checkAuth.pending, (state) => {
                 state.status = 'loading';
                 state.error = null;
+                state.isOnboarded = false; // Reset on pending
             })
-            // 4. Update reducer payload type to AuthUser
-            .addCase(checkAuth.fulfilled, (state, action: PayloadAction<AuthUser>) => {
+            .addCase(checkAuth.fulfilled, (state, action: PayloadAction<UserDto>) => {
                 state.status = 'succeeded';
-                state.user = action.payload;
+                // Extract id/email for state.user
+                state.user = {
+                    id: action.payload.id,
+                    email: action.payload.email ?? '' // Handle potential null email if schema allows
+                };
+                // Set onboarding status based on profile presence
+                state.isOnboarded = !!action.payload.profile;
+                state.error = null; // Clear error on success
             })
             .addCase(checkAuth.rejected, (state, action) => {
                 state.status = 'failed';
                 state.user = null;
+                state.isOnboarded = false; // Reset on failure
                 state.error = (action.payload as string) ?? 'Authentication check failed (unknown error)';
             })
             // signInWithGoogle (only handles initiation errors)
             .addCase(signInWithGoogle.pending, (state) => {
-                state.status = 'loading'; // Indicate loading while redirect happens
+                state.status = 'loading'; 
                 state.error = null;
+                state.isOnboarded = false;
             })
             .addCase(signInWithGoogle.rejected, (state, action) => {
                 state.status = 'idle'; 
                 state.error = (action.payload as string) ?? 'Google sign-in failed'; 
+                state.isOnboarded = false;
             })
              // signOutUser
             .addCase(signOutUser.pending, (state) => {
@@ -127,11 +136,13 @@ export const authSlice = createSlice({
                 state.status = 'idle';
                 state.user = null;
                 state.error = null;
+                state.isOnboarded = false; // Reset on sign out
             })
             .addCase(signOutUser.rejected, (state, action) => {
                 state.status = 'idle'; 
                 state.user = null;
                 state.error = (action.payload as string) ?? 'Sign out failed'; 
+                state.isOnboarded = false; // Reset on sign out failure too
             });
     },
 });
@@ -143,6 +154,10 @@ export const { clearAuthError } = authSlice.actions;
 export const selectAuthUser = (state: RootState) => state.auth.user;
 export const selectAuthStatus = (state: RootState) => state.auth.status;
 export const selectAuthError = (state: RootState) => state.auth.error;
+// New selector for onboarding status
+export const selectIsOnboarded = (state: RootState) => state.auth.isOnboarded;
+// Updated isAuthenticated to also check onboarding status?
+// No, keep isAuthenticated separate - it just means logged in.
 export const selectIsAuthenticated = (state: RootState) => state.auth.status === 'succeeded' && !!state.auth.user;
 
 export default authSlice.reducer; 
