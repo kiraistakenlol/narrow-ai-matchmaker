@@ -8,6 +8,7 @@ import {
 import { Hub } from 'aws-amplify/utils';
 import { useAppDispatch } from './state/hooks';
 import { checkAuth } from './state/slices/authSlice';
+import StartOnboardingViewTest from './components/StartOnboardingViewTest';
 
 // Import pages
 import HomePage from './pages/HomePage';
@@ -59,6 +60,9 @@ function App() {
 
                 {/* Cognito Callback - Page shows loading, Hub listener triggers state update */}
                 <Route path="/auth/callback" element={<AuthCallbackPage />} />
+
+                {/* Test Onboarding View */}
+                <Route path="/test/onboarding" element={<StartOnboardingViewTest />} />
 
                 {/* Catch-all route: Redirects any unmatched path to Home */}
                 <Route path="*" element={<Navigate to="/" replace />} />

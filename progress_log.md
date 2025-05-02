@@ -1,21 +1,9 @@
-extract logic for signing or onboarding to 
+1. **Event participation needs a status** like “joined,” “initialized,” or something similar. These statuses help us check if the user has filled in all the info that the event needs (different events might ask for different things). It's kinda like how the profile works — we’ve got a profile template, and until the user completes it, it’s not marked as done.
 
-a separate component that accepts
+For the first step, let’s keep it simple and just treat any info in the event participation as “completed.”
 
-1. a list of guidelines to talk about:
+2. Also, the onboarding block should actually kick off the onboarding flow.
+   I want to think through how the flow might be different between general profile onboarding and joining an event.
+   Maybe for now, I’ll just focus on getting the full flow working for the general profile — like when someone visits the main page but their profile’s not done yet.
 
-- your name
-- your background
-- what is your current goal
-
-2. title "Welcome to narrow Ai matcher"
-
-or for example "Welcome to Alepth Hub"
-
-3. optional success redirect url: /event/{id}
-
-this component is going to be shown to the user when the user is not signed in 
-
-## ITEM 1
-this component has to be able to handle the case where the user is signed in but he is not onboarded or/and he's not joined the event (event specific onboarding)
-for this, probably, this componnt can be decomposited 
+**Final note:** Yeah, go ahead and start with building out the onboarding flow for the general user profile.

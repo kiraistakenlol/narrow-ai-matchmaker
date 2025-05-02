@@ -29,6 +29,26 @@
         "uriFormat": "%s",
         "action": "openExternally"
       }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Run Docker Compose",
+      "runtimeExecutable": "docker-compose",
+      "runtimeArgs": [
+        "-f",
+        "${workspaceFolder}/application/packages/backend/docker-compose.yml",
+        "up",
+        "--build"
+      ],
+      "cwd": "${workspaceFolder}/application/packages/backend",
+      "console": "integratedTerminal"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Run Full Stack",
+      "configurations": ["Run Docker Compose", "Run Backend (npm run dev)", "Run Frontend (npm run dev)"]
     }
   ]
 } 

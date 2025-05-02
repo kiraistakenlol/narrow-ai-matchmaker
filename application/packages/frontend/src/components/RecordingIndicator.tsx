@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 
 interface RecordingIndicatorProps {
     isRecording: boolean;
+    isProcessing?: boolean;
+    recordingTime?: number;
 }
 
 // Helper function to format time in MM:SS
@@ -66,15 +68,65 @@ const ensureBlinkKeyframes = () => {
     }
 };
 
+const ensureProcessingKeyframes = () => {
+    const keyframeName = 'processing';
+    if (typeof document === 'undefined') return;
 
-const RecordingIndicator: React.FC<RecordingIndicatorProps> = ({ isRecording }) => {
+    let styleSheet: CSSStyleSheet | null = null;
+    try {
+        for (let i = 0; i < document.styleSheets.length; i++) {
+            if (document.styleSheets[i].cssRules || document.styleSheets[i].rules) {
+                styleSheet = document.styleSheets[i] as CSSStyleSheet;
+                break;
+            }
+        }
+
+        if (!styleSheet) {
+            const styleEl = document.createElement('style');
+            document.head.appendChild(styleEl);
+            styleSheet = styleEl.sheet as CSSStyleSheet;
+        }
+
+        if (!styleSheet) {
+            console.error("Could not find or create a stylesheet to inject keyframes.");
+            return;
+        }
+
+        let keyframesRuleExists = false;
+        const rules = styleSheet.cssRules || styleSheet.rules;
+        for (let i = 0; i < rules.length; i++) {
+            const rule = rules[i];
+            if ((rule instanceof CSSKeyframesRule || rule.constructor.name === 'CSSKeyframesRule') && (rule as CSSKeyframesRule).name === keyframeName) {
+                keyframesRuleExists = true;
+                break;
+            }
+        }
+
+        if (!keyframesRuleExists) {
+            styleSheet.insertRule(`
+                @keyframes ${keyframeName} {
+                    0% { transform: scale(1); opacity: 0.7; }
+                    50% { transform: scale(1.2); opacity: 1; }
+                    100% { transform: scale(1); opacity: 0.7; }
+                }
+            `, rules.length);
+        }
+    } catch (e) {
+        console.error("Failed to inject processing keyframe rule:", e);
+    }
+};
+
+const RecordingIndicator: React.FC<RecordingIndicatorProps> = ({ 
+    isRecording, 
+    isProcessing = false,
+}) => {
     const [elapsedTime, setElapsedTime] = useState<number>(0);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         if (isRecording) {
-            ensureBlinkKeyframes(); // Make sure animation is available
-            setElapsedTime(0); // Reset timer on start
+            ensureBlinkKeyframes();
+            setElapsedTime(0);
             intervalRef.current = setInterval(() => {
                 setElapsedTime(prevTime => prevTime + 1);
             }, 1000);
@@ -83,33 +135,40 @@ const RecordingIndicator: React.FC<RecordingIndicatorProps> = ({ isRecording }) 
                 clearInterval(intervalRef.current);
                 intervalRef.current = null;
             }
-            // Optional: Reset time when stopping, or keep the last value
-            // setElapsedTime(0);
         }
 
-        // Cleanup interval on unmount or when isRecording changes to false
         return () => {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
             }
         };
-    }, [isRecording]); // Dependency array ensures effect runs when isRecording changes
+    }, [isRecording]);
+
+    useEffect(() => {
+        if (isProcessing) {
+            ensureProcessingKeyframes();
+        }
+    }, [isProcessing]);
+
+    const displayTime = elapsedTime;
 
     return (
         <div style={styles.container}>
-            {isRecording ? (
+            {isProcessing ? (
+                <>
+                    <div style={{ ...styles.dot, ...styles.processingDot }}></div>
+                    <span style={{...styles.text, color: '#ffc107'}}>Processing...</span>
+                </>
+            ) : isRecording ? (
                 <>
                     <div style={{ ...styles.dot, animation: 'blink 1s infinite alternate' }}></div>
                     <span style={styles.text}>Recording...</span>
-                    <span style={styles.timer}>{formatTime(elapsedTime)}</span>
+                    <span style={styles.timer}>{formatTime(displayTime)}</span>
                 </>
             ) : (
                 <>
-                    {/* Static representation for "not recording" */}
                     <div style={{ ...styles.dot, backgroundColor: '#6c757d', opacity: 0.5 }}></div>
                     <span style={{...styles.text, color: '#6c757d'}}>Ready to record</span>
-                     {/* Optionally show 00:00 or hide timer */}
-                     {/* <span style={styles.timer}>00:00</span> */}
                 </>
             )}
         </div>
@@ -132,6 +191,10 @@ const styles: { [key: string]: React.CSSProperties } = {
         display: 'inline-block',
         marginRight: '8px',
         backgroundColor: '#dc3545', // Default to recording color
+    },
+    processingDot: {
+        backgroundColor: '#ffc107',
+        animation: 'processing 1.5s ease-in-out infinite',
     },
     text: {
         color: '#dc3545', // Default to recording color
