@@ -12,4 +12,9 @@ This file is a scratchpad for miscellaneous ideas, potential features, and actio
 
 ## TODOs
 
-*   (List actionable tasks here) 
+### Onboarding process
+let's implement this onboardig flow:
+
+1. i press the onboarding button
+2. the FE sends the /api/v1/onboarding/initiate request
+3. 

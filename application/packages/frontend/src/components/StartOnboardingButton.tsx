@@ -1,16 +1,19 @@
 import React from 'react';
 
 interface StartOnboardingButtonProps {
+    text: string;
     disabled?: boolean;
+    onClick?: () => void;
 }
 
-function StartOnboardingButton({disabled = false}: StartOnboardingButtonProps) {
+function StartOnboardingButton({text, disabled = false, onClick}: StartOnboardingButtonProps) {
     return (
         <button
             style={styles.button}
             disabled={disabled}
+            onClick={onClick}
         >
-            Start Onboarding
+            {text}
         </button>
     );
 }

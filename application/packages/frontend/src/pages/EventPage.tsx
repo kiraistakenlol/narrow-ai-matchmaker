@@ -1,22 +1,24 @@
-import React, {useEffect, useState} from 'react';
-import {useLocation, useNavigate, useParams} from 'react-router-dom';
-import {JoinedEventDto} from '@narrow-ai-matchmaker/common';
-import {useAppSelector} from '../state/hooks';
-import {selectIsAuthenticated} from '../state/slices/authSlice';
-import WelcomContainer from '../components/AuthPrompt';
-import StartOnboardingButton from '../components/StartOnboardingButton';
-import SignInWithGoogleButton from '../components/SignInWithGoogleButton';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { JoinedEventDto } from '@narrow-ai-matchmaker/common';
+import { useAppSelector, useAppDispatch } from '../state/hooks';
+import {
+    selectAuthUser,
+    selectIsOnboarded,
+    signInWithGoogle,
+} from '../state/slices/authSlice';
+import SigninOrOnboardView from '../components/SigninOrOnboardView';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
 
 function EventPage() {
-    const {id: eventId} = useParams<{ id: string }>();
+    const { id: eventId } = useParams<{ id: string }>();
     const [eventDto, setEventDto] = useState<JoinedEventDto | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const isAuthenticated = useAppSelector(selectIsAuthenticated);
-    const navigate = useNavigate();
-    const location = useLocation();
+    const dispatch = useAppDispatch();
+    const user = useAppSelector(selectAuthUser);
+    const isOnboarded = useAppSelector(selectIsOnboarded);
 
     useEffect(() => {
         if (!eventId) {
@@ -29,7 +31,8 @@ function EventPage() {
             setIsLoading(true);
             setError(null);
             try {
-                const response = await fetch(`${API_BASE_URL}/events/${eventId}`);
+                const headers: HeadersInit = {};
+                const response = await fetch(`${API_BASE_URL}/events/${eventId}`, { headers });
 
                 if (response.status === 404) {
                     throw new Error('Event not found.');
@@ -48,10 +51,15 @@ function EventPage() {
         };
 
         fetchEvent();
-    }, [eventId, isAuthenticated]);
+    }, [eventId]);
 
-    const handleNavigateToSignIn = () => {
-        navigate(`/signin?redirect=${encodeURIComponent(location.pathname)}`);
+    const handleSignIn = () => {
+        dispatch(signInWithGoogle());
+    };
+
+    const handleStartOnboarding = () => {
+        console.log('EventPage: Start Onboarding Clicked');
+        // TODO: Implement onboarding start logic/navigation
     };
 
     if (isLoading) {
@@ -68,44 +76,36 @@ function EventPage() {
                 <>
                     <h1 style={styles.title}>Event: {eventDto.name}</h1>
 
-                    {isAuthenticated ? (
-                        <div>
-                            {eventDto.participationId ? (
-                                // authenticated and joined
-                                <div>
-                                    <p style={styles.joinedStatus}>✅ JOINED</p>
-                                </div>
-                            ) : (
-                                // authenticated but no joined
-                                <div>
-                                    <p style={styles.joinedStatus}>❌ NOT JOINED</p>
-                                    <WelcomContainer
-                                        title="Join the Event"
-                                        description={`Complete Onboarding to join ${eventDto.name}`}
-                                    >
-                                        <StartOnboardingButton disabled={false}/>
-                                    </WelcomContainer>
-                                </div>
-                            )}
-                        </div>
-
-                    ) : (
-                        <div>
-
-                            <WelcomContainer
-                                title="Join the Event"
-                                description={`Sign in or create an account to join ${eventDto.name}.`}
-                            >
-                                <StartOnboardingButton disabled={false}/>
-                                <SignInWithGoogleButton disabled={false}/>
-                            </WelcomContainer>
-                        </div>
-                    )
-
-                    }
                     <pre style={styles.jsonOutput}>
                         {JSON.stringify(eventDto, null, 2)}
                     </pre>
+
+                    <div style={styles.actionBox}>
+                        {!user ? (
+                            <SigninOrOnboardView
+                                title="Join the Event"
+                                description={`Sign in or create an account to join ${eventDto.name}.`}
+                                showSignIn={true}
+                                showOnboarding={true}
+                                onSignInWithGoogle={handleSignIn}
+                            />
+                        ) : !isOnboarded ? (
+                            <SigninOrOnboardView
+                                title="Complete Profile to Join"
+                                description={`Complete your video introduction to join ${eventDto.name}.`}
+                                showOnboarding={true}
+                                onStartOnboarding={handleStartOnboarding}
+                            />
+                        ) : eventDto.participationId ? (
+                            <div>
+                                <p style={styles.joinedStatus}>✅ You have joined this event.</p>
+                            </div>
+                        ) : (
+                            <div>
+                                <p style={styles.notJoinedStatus}>You have not joined this event yet.</p>
+                            </div>
+                        )}
+                    </div>
                 </>
             ) : (
                 <p>Event data not available.</p>
@@ -116,32 +116,41 @@ function EventPage() {
 
 // Minimal styles
 const styles: { [key: string]: React.CSSProperties } = {
-    container: {padding: '20px', fontFamily: 'sans-serif'},
-    title: {marginBottom: '10px'},
-    errorText: {color: 'red'},
-    jsonOutput: {backgroundColor: '#eee', padding: '10px', margin: '10px 0', whiteSpace: 'pre-wrap'},
-    statusBox: {
-        border: '1px solid #ccc',
-        padding: '10px',
-        margin: '15px 0',
-        borderRadius: '4px',
-        backgroundColor: '#f8f9fa'
+    container: { padding: '20px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto' },
+    title: { marginBottom: '10px' },
+    errorText: { color: 'red' },
+    jsonOutput: { backgroundColor: '#f0f0f0', padding: '15px', margin: '15px 0', whiteSpace: 'pre-wrap', borderRadius: '4px', border: '1px solid #e0e0e0' },
+    actionBox: {
+        marginTop: '20px',
     },
     joinedStatus: {
         color: 'green',
-        fontWeight: 'bold'
+        fontWeight: 'bold',
+        fontSize: '1.1em',
+        textAlign: 'center',
+        padding: '15px',
+        border: '1px solid #c3e6cb',
+        backgroundColor: '#d4edda',
+        borderRadius: '4px'
     },
     notJoinedStatus: {
-        color: 'orange',
-        fontWeight: 'bold'
+        color: '#856404',
+        fontWeight: 'bold',
+        fontSize: '1.1em',
+        textAlign: 'center',
+        marginBottom: '15px'
     },
-    promptBox: {
-        border: '1px solid #ccc',
-        padding: '15px',
-        margin: '15px 0',
+    joinButton: {
+        display: 'block',
+        width: 'fit-content',
+        margin: '0 auto',
+        padding: '10px 20px',
+        fontSize: '1em',
+        backgroundColor: '#007bff',
+        color: 'white',
+        border: 'none',
         borderRadius: '4px',
-        backgroundColor: '#f8f9fa',
-        textAlign: 'center'
+        cursor: 'pointer'
     }
 };
 

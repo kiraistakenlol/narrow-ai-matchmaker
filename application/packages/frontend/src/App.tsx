@@ -12,7 +12,6 @@ import { checkAuth } from './state/slices/authSlice';
 // Import pages
 import HomePage from './pages/HomePage';
 import EventPage from './pages/EventPage';
-import AuthPage from './pages/AuthPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 
 function App() {
@@ -56,8 +55,7 @@ function App() {
                 {/* Event detail page */}
                 <Route path="/event/:id" element={<EventPage />} />
 
-                {/* Sign in / Onboarding prompt page */}
-                <Route path="/signin" element={<AuthPage />} />
+                {/* Sign in / Onboarding prompt page REMOVED */}
 
                 {/* Cognito Callback - Page shows loading, Hub listener triggers state update */}
                 <Route path="/auth/callback" element={<AuthCallbackPage />} />

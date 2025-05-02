@@ -4,15 +4,16 @@ import {useAppDispatch} from "../state/hooks.ts";
 
 interface SignInWithGoogleButtonProps {
     disabled?: boolean;
+    onClick?: () => void;
 }
 
-function SignInWithGoogleButton({disabled = false}: SignInWithGoogleButtonProps) {
+function SignInWithGoogleButton({disabled = false, onClick = () => {}}: SignInWithGoogleButtonProps) {
     const dispatch = useAppDispatch();
     return (
         <button
             onClick={() => {
                 dispatch(signInWithGoogle());
-                onClick()
+                onClick();
             }}
             style={{...styles.button, ...styles.googleButton}}
             disabled={disabled}

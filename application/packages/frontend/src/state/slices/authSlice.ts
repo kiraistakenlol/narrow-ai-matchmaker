@@ -25,37 +25,55 @@ const initialState: AuthState = {
     isOnboarded: false,
 };
 
+// Return type is now UserDto | null
 export const checkAuth = createAsyncThunk<
-    UserDto, // Return full UserDto on success
+    UserDto | null, // Can fulfill with UserDto or null
     void,
     { rejectValue: string }
 >('auth/checkAuth', async (_, { rejectWithValue }) => {
     try {
-        const session = await fetchAuthSession({ forceRefresh: true });
+        let session;
+        try {
+             session = await fetchAuthSession({ forceRefresh: true });
+        } catch (sessionError: any) {
+             // Amplify throws specific errors, e.g., if user is not signed in.
+             // We'll treat this as "not logged in" rather than a failure.
+            console.log('Auth check: No active session found.', sessionError?.message || sessionError);
+            return null; // Fulfill with null to indicate no session
+        }
+
         const idToken = session.tokens?.idToken?.toString();
         if (!idToken) {
-            throw new Error('No ID token found in session.');
+            console.log('Auth check: Session found but no ID token present.');
+            return null; // Fulfill with null if session exists but token doesn't
         }
+
+        // If we have a token, try fetching user data from backend
         const response = await fetch(`${API_BASE_URL}/users/me`, {
             headers: { 'Authorization': `Bearer ${idToken}` },
         });
+
         if (!response.ok) {
+            // If backend fails AFTER we found a token, THIS is a failure
             const errorBody = await response.text();
-            console.error(`Auth check: /users/me fetch failed (${response.status})`, errorBody);
+            console.error(`Auth check: /users/me fetch failed (${response.status}) after finding token.`, errorBody);
             return rejectWithValue(`Backend fetch failed: ${response.status}`);
         }
-        const userData: UserDto = await response.json(); 
-        
-        // Basic validation before returning
-        if (!userData.id || typeof userData.email === 'undefined') { // Check email existence
-             console.error('Missing id or email in fetched UserDto', userData);
+
+        const userData: UserDto = await response.json();
+
+        if (!userData.id || typeof userData.email === 'undefined') {
+            console.error('Missing id or email in fetched UserDto', userData);
+            // Treat incomplete data after successful fetch as a failure
             return rejectWithValue('Incomplete user data received from backend.');
         }
 
-        return userData; // Fulfill with the full UserDto object
+        return userData; // Fulfill with the full UserDto object on success
+
     } catch (error) {
-        console.log('Auth check failed:', error);
-        return rejectWithValue(error instanceof Error ? error.message : 'Authentication check failed');
+        // Catch any other unexpected errors during the process
+        console.error('Auth check unexpected error:', error);
+        return rejectWithValue(error instanceof Error ? error.message : 'Unexpected error during authentication check');
     }
 });
 
@@ -63,7 +81,6 @@ export const checkAuth = createAsyncThunk<
 export const signInWithGoogle = createAsyncThunk('auth/signInWithGoogle', async (_, { rejectWithValue }) => {
     try {
         await signInWithRedirect({ provider: 'Google' });
-        // No return value needed, Amplify handles redirect
     } catch (error) {
         console.error('Google Sign In initiation failed:', error);
         return rejectWithValue(error instanceof Error ? error.message : 'Failed to start Google Sign In');
@@ -74,7 +91,6 @@ export const signInWithGoogle = createAsyncThunk('auth/signInWithGoogle', async 
 export const signOutUser = createAsyncThunk('auth/signOutUser', async (_, { rejectWithValue }) => {
     try {
         await signOut();
-        // No return value needed
     } catch (error) {
         console.error('Sign out failed:', error);
         return rejectWithValue(error instanceof Error ? error.message : 'Failed to sign out');
@@ -100,21 +116,30 @@ export const authSlice = createSlice({
                 state.error = null;
                 state.isOnboarded = false; // Reset on pending
             })
-            .addCase(checkAuth.fulfilled, (state, action: PayloadAction<UserDto>) => {
-                state.status = 'succeeded';
-                // Extract id/email for state.user
-                state.user = {
-                    id: action.payload.id,
-                    email: action.payload.email ?? '' // Handle potential null email if schema allows
-                };
-                // Set onboarding status based on profile presence
-                state.isOnboarded = !!action.payload.profile;
-                state.error = null; // Clear error on success
+            .addCase(checkAuth.fulfilled, (state, action: PayloadAction<UserDto | null>) => {
+                const userData = action.payload;
+                if (userData) {
+                    // User is authenticated and data received
+                    state.status = 'succeeded';
+                    state.user = {
+                        id: userData.id,
+                        email: userData.email ?? ''
+                    };
+                    state.isOnboarded = !!userData.profile;
+                    state.error = null;
+                } else {
+                    // No session found, user is not logged in
+                    state.status = 'idle'; // Set to idle instead of failed
+                    state.user = null;
+                    state.isOnboarded = false;
+                    state.error = null; // No error, just not logged in
+                }
             })
             .addCase(checkAuth.rejected, (state, action) => {
+                // This now only handles actual errors during the check
                 state.status = 'failed';
                 state.user = null;
-                state.isOnboarded = false; // Reset on failure
+                state.isOnboarded = false;
                 state.error = (action.payload as string) ?? 'Authentication check failed (unknown error)';
             })
             // signInWithGoogle (only handles initiation errors)
@@ -124,6 +149,7 @@ export const authSlice = createSlice({
                 state.isOnboarded = false;
             })
             .addCase(signInWithGoogle.rejected, (state, action) => {
+                // If sign-in initiation fails, return to idle, show error
                 state.status = 'idle'; 
                 state.error = (action.payload as string) ?? 'Google sign-in failed'; 
                 state.isOnboarded = false;
@@ -131,18 +157,21 @@ export const authSlice = createSlice({
              // signOutUser
             .addCase(signOutUser.pending, (state) => {
                 state.status = 'loading';
+                state.user = null; // Clear user optimistically
+                state.isOnboarded = false;
+                state.error = null;
             })
             .addCase(signOutUser.fulfilled, (state) => {
                 state.status = 'idle';
                 state.user = null;
                 state.error = null;
-                state.isOnboarded = false; // Reset on sign out
+                state.isOnboarded = false;
             })
             .addCase(signOutUser.rejected, (state, action) => {
-                state.status = 'idle'; 
-                state.user = null;
+                state.status = 'idle'; // Or maybe 'failed'? Let's stick to idle for now.
+                state.user = null; // Assume sign out happened despite error, or state is uncertain
                 state.error = (action.payload as string) ?? 'Sign out failed'; 
-                state.isOnboarded = false; // Reset on sign out failure too
+                state.isOnboarded = false;
             });
     },
 });
