@@ -1,19 +1,15 @@
 import {createAsyncThunk, createSlice, PayloadAction} from '@reduxjs/toolkit';
 import {fetchAuthSession, signInWithRedirect, signOut} from 'aws-amplify/auth';
 import {UserDto} from '@narrow-ai-matchmaker/common';
-import type {RootState} from '../store'; // For selector typing
-import apiClient from '../../lib/apiClient'; // Corrected import path
+import type {RootState} from '../store';
+import apiClient from '../../lib/apiClient';
 import {AxiosError} from 'axios';
 
 
-interface AuthUser {
-    id: string;
-    email: string;
-}
 export type AuthStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
 
 interface AuthState {
-    user: AuthUser | null;
+    user: UserDto | null;
     status: AuthStatus;
     error: string | null;
     isOnboarded: boolean;
@@ -116,10 +112,7 @@ export const authSlice = createSlice({
                 if (userData) {
                     // User is authenticated and data received
                     state.status = 'succeeded';
-                    state.user = {
-                        id: userData.id,
-                        email: userData.email ?? ''
-                    };
+                    state.user = userData;
                     state.isOnboarded = !!userData.profile;
                     state.error = null;
                 } else {

@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../state/hooks';
-import {selectAuthStatus, selectAuthUser, signInWithGoogle, signOutUser,} from '../state/slices/authSlice';
+import {selectAuthStatus, selectAuthUser, signInWithGoogle, signOutUser, checkAuth} from '../state/slices/authSlice';
 import SigninOrOnboardView from '../components/SigninOrOnboardView';
 import apiClient from '../lib/apiClient';
 import {OnboardingSessionDto} from '@narrow-ai-matchmaker/common';
@@ -12,45 +12,47 @@ function HomePage() {
     const authStatus = useAppSelector(selectAuthStatus);
 
     const [onboardingSession, setOnboardingSession] = useState<OnboardingSessionDto | null | undefined>(undefined);
-    const [isLoadingOnboardingSession, setIsLoadingOnboadingSession] = useState<boolean>(false);
-    const [sessionError, setSessionError] = useState<string | undefined>(undefined);
+    const [isLoadingSession, setIsLoadingSession] = useState<boolean>(false);
+    const [error, setError] = useState<string | undefined>(undefined);
     const [showOnboardingInput, setShowOnboardingInput] = useState<boolean>(false);
     const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         setOnboardingSession(undefined);
-        setSessionError(undefined);
+        setError(undefined);
         setShowOnboardingInput(false);
-        setIsLoadingOnboadingSession(false);
+        setIsLoadingSession(false);
         if (pollingIntervalRef.current) {
             clearInterval(pollingIntervalRef.current);
             pollingIntervalRef.current = null;
         }
 
         if (user && authStatus === 'succeeded') {
-            const fetchOnboardingSession = async () => {
-                setIsLoadingOnboadingSession(true);
+            const fetchSession = async () => {
+                setIsLoadingSession(true);
+                setError(undefined);
+                let fetchedSession: OnboardingSessionDto | null = null;
+                let fetchError: string | undefined = undefined;
+
                 try {
-                    const response = await apiClient.get<OnboardingSessionDto>('/onboarding');
-                    setOnboardingSession(response.data);
+                    const sessionResponse = await apiClient.get<OnboardingSessionDto>('/onboarding');
+                    fetchedSession = sessionResponse.data;
                 } catch (err: any) {
                     if (err.response?.status === 404) {
-                        console.log('No onboarding session found (404), user needs to start.');
-                        setOnboardingSession(null);
-                        setShowOnboardingInput(true);
-                        setSessionError(undefined);
+                        console.log('No onboarding session found (404).');
+                        fetchedSession = null;
                     } else {
-                        const apiErrorMessage = err.response?.data?.message || err.message || 'Failed to fetch onboarding session';
-                        setSessionError(apiErrorMessage);
-                        setOnboardingSession(undefined);
-                        setShowOnboardingInput(false);
-                        console.error('Error fetching onboarding session:', err);
+                        fetchError = `Failed to fetch onboarding session: ${err.response?.data?.message || err.message}`;
+                        console.error(fetchError);
                     }
                 } finally {
-                    setIsLoadingOnboadingSession(false);
+                    setOnboardingSession(fetchedSession);
+                    setShowOnboardingInput(fetchedSession === null || (!!fetchedSession && fetchedSession.status !== 'COMPLETED'));
+                    setError(fetchError);
+                    setIsLoadingSession(false);
                 }
             };
-            fetchOnboardingSession();
+            fetchSession();
         }
     }, [user, authStatus]);
 
@@ -60,15 +62,11 @@ function HomePage() {
             pollingIntervalRef.current = null;
         }
 
-        const needsPolling = onboardingSession && onboardingSession.status !== "COMPLETED"
+        const needsPolling = onboardingSession && onboardingSession.status !== "COMPLETED";
+        const shouldShowInput = onboardingSession === null || needsPolling;
 
-        const needsInput = needsPolling;
-
-        if (needsInput || onboardingSession === null) {
-            if (needsInput) console.log(`Session status is ${onboardingSession.status}, showing input view.`);
-            setShowOnboardingInput(true);
-        } else {
-            setShowOnboardingInput(false);
+        if (showOnboardingInput !== shouldShowInput) {
+            setShowOnboardingInput(shouldShowInput);
         }
 
         if (needsPolling) {
@@ -77,11 +75,13 @@ function HomePage() {
                 try {
                     console.log(`Polling status for ${onboardingSession?.id}...`);
                     const response = await apiClient.get<OnboardingSessionDto>('/onboarding');
-                    setOnboardingSession(response.data);
-                    setSessionError(undefined);
+                    if (JSON.stringify(response.data) !== JSON.stringify(onboardingSession)) {
+                        setOnboardingSession(response.data);
+                    }
+                    setError(undefined);
                 } catch (err: any) {
                     const apiErrorMessage = err.response?.data?.message || err.message || 'Failed to poll onboarding status';
-                    setSessionError(`Polling error: ${apiErrorMessage}`);
+                    setError(`Polling error: ${apiErrorMessage}`);
                     console.error('Polling error:', err);
                     if (pollingIntervalRef.current) {
                         clearInterval(pollingIntervalRef.current);
@@ -89,7 +89,6 @@ function HomePage() {
                     }
                 }
             };
-
             pollingIntervalRef.current = setInterval(poll, 5000);
 
             return () => {
@@ -101,7 +100,7 @@ function HomePage() {
             };
         }
         return undefined;
-    }, [onboardingSession]);
+    }, [onboardingSession, showOnboardingInput]);
 
     const handleSignOut = () => {
         dispatch(signOutUser());
@@ -113,31 +112,32 @@ function HomePage() {
 
     const handleOnboardingComplete = () => {
         console.log("Onboarding reported complete by input view.");
-        setShowOnboardingInput(false);
-        const fetchNow = async () => {
-            setIsLoadingOnboadingSession(true);
+        dispatch(checkAuth());
+
+        const fetchSessionNow = async () => {
+            setIsLoadingSession(true);
             try {
-                const response = await apiClient.get<OnboardingSessionDto>('/onboarding');
-                setOnboardingSession(response.data);
-                setSessionError(undefined);
+                const sessionResponse = await apiClient.get<OnboardingSessionDto>('/onboarding');
+                setOnboardingSession(sessionResponse.data);
+                setError(undefined);
             } catch (err: any) {
-                const apiErrorMessage = err.response?.data?.message || err.message || 'Failed to re-fetch onboarding session';
-                setSessionError(apiErrorMessage);
-                console.error('Error re-fetching onboarding session:', err);
+                const sessionError = `Failed to re-fetch session after onboarding: ${err.response?.data?.message || err.message}`;
+                console.error(sessionError, err);
+                setError(sessionError);
             } finally {
-                setIsLoadingOnboadingSession(false);
+                setIsLoadingSession(false);
             }
         }
-        fetchNow();
+        fetchSessionNow();
     };
 
     const handleOnboardingError = (errorMsg: string) => {
         console.error("Onboarding input view reported error:", errorMsg);
-        setSessionError(`Onboarding attempt failed: ${errorMsg}`);
+        setError(`Onboarding attempt failed: ${errorMsg}`);
     };
 
     if (authStatus === 'loading') {
-        return <div style={styles.container}><p>Loading home...</p></div>;
+        return <div style={styles.container}><p>Authenticating...</p></div>;
     }
 
     if (!user) {
@@ -149,6 +149,9 @@ function HomePage() {
                     showSignIn={true}
                     onSignInWithGoogle={handleSignIn}
                 />
+                {authStatus === 'failed' && error && (
+                    <p style={styles.errorText}>Authentication Error: {error}</p>
+                )}
             </div>
         );
     }
@@ -164,10 +167,25 @@ function HomePage() {
                 </button>
             </div>
 
-            <div style={{marginTop: '20px'}}>
-                {isLoadingOnboardingSession && <p>Loading session info...</p>}
+            {error && (
+                <p style={styles.errorText}>Error: {error}</p>
+            )}
 
-                {onboardingSession && (
+            {user.profile && (
+                <div style={{marginTop: '20px'}}>
+                    <h3>User Profile:</h3>
+                    <pre style={styles.jsonOutput}>
+                        {JSON.stringify(user.profile, null, 2)}
+                    </pre>
+                </div>
+            )}
+            {!user.profile && <p style={{marginTop: '20px'}}>Profile data not yet available.</p>}
+
+            <div style={{marginTop: '20px'}}>
+                <h3>Onboarding Status:</h3>
+                {isLoadingSession && <p>Loading session info...</p>}
+
+                {!isLoadingSession && onboardingSession && (
                     <>
                         <p>Current Session State:</p>
                         <pre style={styles.jsonOutput}>
@@ -176,7 +194,7 @@ function HomePage() {
                     </>
                 )}
 
-                {showOnboardingInput && (
+                {!isLoadingSession && showOnboardingInput && (
                     <div style={styles.onboardingPrompt}>
                         <p>Action Required:</p>
                         <OnboardingInputView
@@ -189,15 +207,8 @@ function HomePage() {
                     </div>
                 )}
 
-                {sessionError && (
-                    <p style={styles.errorText}>Error: {sessionError}</p>
-                )}
-
-                {onboardingSession === null && !showOnboardingInput && !isLoadingOnboardingSession && !sessionError && (
-                    <p>No onboarding required currently.</p>
-                )}
-
-                {onboardingSession && onboardingSession.status === "COMPLETED" && !showOnboardingInput && (
+                {!isLoadingSession && onboardingSession === null && !showOnboardingInput && <p>No onboarding needed.</p>}
+                {!isLoadingSession && onboardingSession && onboardingSession.status === "COMPLETED" && !showOnboardingInput && (
                     <p style={{color: 'green', fontWeight: 'bold'}}>Onboarding Completed!</p>
                 )}
             </div>
