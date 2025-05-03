@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import apiClient from '../lib/apiClient';
 import AudioRecorder from './AudioRecorder';
 import { AxiosError } from 'axios';
+import { InitiateOnboardingResponseDto } from '@narrow-ai-matchmaker/common';
 
 type DisplayState = 'initial' | 'recording' | 'processing' | 'error' | 'success';
 
@@ -42,12 +43,14 @@ const StartOnboardingView: React.FC<StartOnboardingViewProps> = ({
             if (eventId) {
                 initiatePayload.event_id = eventId;
             }
-            const initiateResponse = await apiClient.post('/onboarding/initiate', initiatePayload);
+            const initiateResponse = await apiClient.post<InitiateOnboardingResponseDto>('/onboarding/initiate', initiatePayload);
 
-            const { onboarding_id, s3_key, upload_url } = initiateResponse.data;
+            // Destructure from the nested upload_details
+            const { onboarding_id, upload_details } = initiateResponse.data;
+            const { s3_key, upload_url } = upload_details;
 
             if (!onboarding_id || !s3_key || !upload_url) {
-                throw new Error('Invalid response from initiation endpoint.');
+                throw new Error('Invalid response data from initiation endpoint.');
             }
 
             // 2. Upload Audio to S3

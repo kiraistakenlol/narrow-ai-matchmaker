@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OnboardingSession, OnboardingStatus } from './entities/onboarding-session.entity';
 import { S3AudioStorageService } from '@backend/audio-storage/s3-audio-storage.service';
-import { InitiateOnboardingRequestDto, InitiateOnboardingResponseDto } from './dto/initiate-onboarding.dto';
+import { InitiateOnboardingRequestDto, InitiateOnboardingResponseDto, PresignedUrlResponseDto } from '@narrow-ai-matchmaker/common';
 import { UserService } from '@backend/users/users.service';
 import { ProfileService } from '@backend/profiles/profiles.service';
 import { EventService } from '@backend/events/events.service';
@@ -70,8 +70,10 @@ export class OnboardingService {
 
             return {
                 onboarding_id: onboarding.id,
-                upload_url: uploadUrl,
-                s3_key: storagePath,
+                upload_details: {
+                    upload_url: uploadUrl,
+                    s3_key: storagePath,
+                }
             };
 
         } catch (error) {
@@ -92,13 +94,6 @@ export class OnboardingService {
             this.logger.error(`Onboarding session with ID ${onboardingId} not found.`);
             throw new NotFoundException(`Onboarding session ${onboardingId} not found.`);
         }
-
-        // Updated check: eventId is optional, participationId is removed
-        if (!onboarding.userId || !onboarding.profileId) {
-             this.logger.error(`Session ${onboardingId} is missing required linked IDs (userId, profileId). Session data: ${JSON.stringify(onboarding)}`);
-             throw new InternalServerErrorException(`Session ${onboardingId} is incomplete or missing required linked entity IDs.`);
-        }
-
         try {
             this.logger.log(`Starting transcription for onboarding ${onboardingId}, key: ${s3_key}`);
             const transcriptText = await this.transcriptionService.transcribeAudio(s3_key);
@@ -187,6 +182,43 @@ export class OnboardingService {
             return OnboardingStatus.NEEDS_CLARIFICATION;
         } else {
             return OnboardingStatus.AWAITING_AUDIO;
+        }
+    }
+
+    // Method to generate a pre-signed URL for subsequent audio uploads
+    async requestSubsequentAudioUploadUrl(onboardingId: string): Promise<PresignedUrlResponseDto> {
+        this.logger.log(`Requesting subsequent audio upload URL for onboarding session: ${onboardingId}`);
+        
+        // Verify the session exists
+        const onboarding = await this.onboardingSessionRepository.findOneBy({ id: onboardingId });
+        if (!onboarding) {
+            this.logger.error(`Onboarding session ${onboardingId} not found when requesting upload URL.`);
+            throw new NotFoundException(`Onboarding session ${onboardingId} not found.`);
+        }
+
+        // Generate a unique key for the subsequent audio file
+        // TODO: Refine key generation based on context tracking later
+        const timestamp = Date.now();
+        const fileExtension = '.webm'; // Assuming same format
+        const storageKey = `onboarding/${onboardingId}/audio-extra-${timestamp}${fileExtension}`;
+        const contentType = 'audio/webm';
+
+        try {
+            const { uploadUrl, storagePath } = await this.audioStorageService.generatePresignedUploadUrl(
+                storageKey,
+                contentType,
+            );
+            this.logger.log(`Generated subsequent pre-signed URL for session ${onboardingId} at path: ${storagePath}`);
+
+            // Map to DTO (matches the service method return type directly)
+            return {
+                upload_url: uploadUrl,
+                s3_key: storagePath,
+            };
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown S3 error';
+            this.logger.error(`Failed to generate subsequent pre-signed URL for session ${onboardingId}: ${message}`, error instanceof Error ? error.stack : undefined);
+            throw new InternalServerErrorException('Failed to generate audio upload URL.');
         }
     }
 

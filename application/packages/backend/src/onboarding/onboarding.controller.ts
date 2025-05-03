@@ -1,10 +1,9 @@
 import { Controller, Post, Body, HttpCode, HttpStatus, ValidationPipe, Param, ParseUUIDPipe, Logger, Get, Query, NotFoundException } from '@nestjs/common';
 import { OnboardingService } from './onboarding.service';
-import { InitiateOnboardingRequestDto, InitiateOnboardingResponseDto } from './dto/initiate-onboarding.dto';
+import { InitiateOnboardingRequestDto, InitiateOnboardingResponseDto, OnboardingSessionDto, PresignedUrlResponseDto } from '@narrow-ai-matchmaker/common';
 import { NotifyUploadRequestDto, OnboardingStatusResponseDto } from './dto/notify-upload.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { CognitoIdTokenPayload } from '../common/types/auth.types';
-import { OnboardingSessionDto } from '@narrow-ai-matchmaker/common';
 import { IsOptional, IsUUID } from 'class-validator';
 
 class GetMyOnboardingQueryDto {
@@ -55,6 +54,15 @@ export class OnboardingController {
         };
 
         return sessionDto;
+    }
+
+    @Post(':onboarding_id/audio-upload-url')
+    @HttpCode(HttpStatus.OK)
+    async getSubsequentAudioUploadUrl(
+        @Param('onboarding_id', ParseUUIDPipe) onboardingId: string,
+    ): Promise<PresignedUrlResponseDto> {
+        this.logger.log(`Request for subsequent audio upload URL for onboarding ID: ${onboardingId}`);
+        return this.onboardingService.requestSubsequentAudioUploadUrl(onboardingId);
     }
 
     @Post(':onboarding_id/notify-upload')

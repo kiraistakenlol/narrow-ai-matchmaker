@@ -100,20 +100,21 @@ paths:
       operationId: requestAudioUploadUrl
       parameters:
         - $ref: '#/components/parameters/OnboardingIdPath'
-      requestBody:
-        description: Context for the audio upload (e.g., which question is being answered).
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AudioUploadContextRequest'
+      # Removing requestBody for now as context is not implemented
+      # requestBody:
+      #   description: Context for the audio upload (e.g., which question is being answered).
+      #   required: true
+      #   content:
+      #     application/json:
+      #       schema:
+      #         $ref: '#/components/schemas/AudioUploadContextRequest'
       responses:
         '200':
           description: Pre-signed URL generated successfully.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PresignedUrlResponse'
+                $ref: '#/components/schemas/PresignedUrlResponse' # Use existing schema
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
