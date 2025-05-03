@@ -1,7 +1,4 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { Profile } from '@backend/profiles/entities/profile.entity';
-import { User } from '@backend/users/entities/user.entity';
-import { Event } from '@backend/events/entities/event.entity';
 
 export enum OnboardingStatus {
     STARTED = 'STARTED',
@@ -20,19 +17,11 @@ export class OnboardingSession {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({ nullable: true })
+    @Column()
     eventId: string | null;
-
-    @ManyToOne(() => Event, { nullable: true })
-    @JoinColumn({ name: 'eventId' })
-    event: Event | null;
 
     @Column()
     userId: string;
-
-    @ManyToOne(() => User, { nullable: false })
-    @JoinColumn({ name: 'userId' })
-    user: User;
 
     @Column()
     profileId: string;
