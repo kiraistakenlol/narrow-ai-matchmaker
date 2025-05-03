@@ -58,6 +58,25 @@ export class ProfileService {
         }
     }
 
+    // New method to find a profile by userId
+    async findProfileByUserId(userId: string): Promise<Profile | null> {
+        this.logger.log(`Finding profile for user: ${userId}`);
+        try {
+            const profile = await this.profileRepository.findOneBy({ userId: userId });
+            if (profile) {
+                this.logger.log(`Found profile ${profile.id} for user ${userId}`);
+            } else {
+                this.logger.log(`No profile found for user ${userId}`);
+            }
+            return profile;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown database error';
+            this.logger.error(`Failed to find profile for user ${userId}: ${message}`, error instanceof Error ? error.stack : undefined);
+            // Depending on the use case, you might just return null or throw
+            throw new InternalServerErrorException('Could not retrieve profile by user ID.');
+        }
+    }
+
     async createInitialProfile(userId: string): Promise<Profile> {
         this.logger.log(`Creating initial profile for user: ${userId}`);
         try {

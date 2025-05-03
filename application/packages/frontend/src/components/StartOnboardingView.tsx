@@ -7,7 +7,7 @@ import { AxiosError } from 'axios';
 type DisplayState = 'initial' | 'recording' | 'processing' | 'error' | 'success';
 
 interface StartOnboardingViewProps {
-    eventId: string;
+    eventId?: string;
     onOnboardingStarted?: () => void;
     onOnboardingComplete?: () => void;
     onOnboardingError?: (error: string) => void;
@@ -37,10 +37,13 @@ const StartOnboardingView: React.FC<StartOnboardingViewProps> = ({
         onOnboardingStarted?.();
 
         try {
-            // 1. Initiate Onboarding
-            const initiateResponse = await apiClient.post('/onboarding/initiate', {
-                event_id: eventId
-            });
+            // 1. Initiate Onboarding - conditionally include event_id
+            const initiatePayload: { event_id?: string } = {};
+            if (eventId) {
+                initiatePayload.event_id = eventId;
+            }
+            const initiateResponse = await apiClient.post('/onboarding/initiate', initiatePayload);
+
             const { onboarding_id, s3_key, upload_url } = initiateResponse.data;
 
             if (!onboarding_id || !s3_key || !upload_url) {

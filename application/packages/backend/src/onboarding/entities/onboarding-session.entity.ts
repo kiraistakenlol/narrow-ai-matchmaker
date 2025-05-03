@@ -1,6 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToOne, JoinColumn, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Profile } from '@backend/profiles/entities/profile.entity';
-import { EventParticipation } from '@backend/events/entities/event-participation.entity';
 import { User } from '@backend/users/entities/user.entity';
 import { Event } from '@backend/events/entities/event.entity';
 
@@ -21,12 +20,12 @@ export class OnboardingSession {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column()
-    eventId: string;
+    @Column({ nullable: true })
+    eventId: string | null;
 
-    @ManyToOne(() => Event, { nullable: false })
+    @ManyToOne(() => Event, { nullable: true })
     @JoinColumn({ name: 'eventId' })
-    event: Event;
+    event: Event | null;
 
     @Column()
     userId: string;
@@ -37,17 +36,6 @@ export class OnboardingSession {
 
     @Column()
     profileId: string;
-
-    @OneToOne(() => Profile, { nullable: false })
-    @JoinColumn({ name: 'profileId' })
-    profile: Profile;
-
-    @Column()
-    participationId: string;
-
-    @OneToOne(() => EventParticipation, { nullable: false })
-    @JoinColumn({ name: 'participationId' })
-    eventParticipation: EventParticipation;
 
     @Column()
     status: OnboardingStatus;

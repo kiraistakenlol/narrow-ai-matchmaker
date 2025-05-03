@@ -2,6 +2,7 @@ import { Injectable, InternalServerErrorException, Logger, NotFoundException } f
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { UserDto } from '@narrow-ai-matchmaker/common';
 
 @Injectable()
 export class UserService {
@@ -13,18 +14,91 @@ export class UserService {
     ) {}
 
     async createUnauthenticatedUser(): Promise<User> {
-        this.logger.log('Creating new unauthenticated user record');
-        const newUser = this.userRepository.create();
+        this.logger.log('Creating new unauthenticated user...');
         try {
+            const newUser = this.userRepository.create({}); // No externalId initially
             const savedUser = await this.userRepository.save(newUser);
-            this.logger.log(`Created user with internal ID: ${savedUser.id}`);
+            this.logger.log(`Created unauthenticated user with internal ID: ${savedUser.id}`);
             return savedUser;
         } catch (error) {
-            const stack = error instanceof Error ? error.stack : undefined;
-            const message = error instanceof Error ? error.message : 'Unknown error';
-            this.logger.error(`Failed to create user: ${message}`, stack);
-            throw new InternalServerErrorException('Failed to create user record.');
+             const message = error instanceof Error ? error.message : 'Unknown database error';
+             this.logger.error(`Failed to create unauthenticated user: ${message}`, error instanceof Error ? error.stack : undefined);
+             throw new InternalServerErrorException('Could not create user.');
         }
+    }
+
+    async findById(id: string): Promise<User | null> {
+        this.logger.log(`Finding user by internal ID: ${id}`);
+        return this.userRepository.findOneBy({ id });
+    }
+
+    // New method to find user by external ID (e.g., Cognito sub)
+    async findByExternalId(externalId: string): Promise<User | null> {
+        this.logger.log(`Finding user by external ID: ${externalId}`);
+        try {
+            const user = await this.userRepository.findOneBy({ externalId: externalId });
+            if (user) {
+                this.logger.log(`Found user ${user.id} for external ID ${externalId}`);
+            } else {
+                this.logger.warn(`User with external ID ${externalId} not found.`);
+            }
+            return user;
+        } catch (error) {
+             const message = error instanceof Error ? error.message : 'Unknown database error';
+             this.logger.error(`Failed to find user by external ID ${externalId}: ${message}`, error instanceof Error ? error.stack : undefined);
+             throw new InternalServerErrorException('Could not retrieve user by external ID.');
+        }
+    }
+
+    // New method to GET user by external ID, throwing if not found
+    async getByExternalId(externalId: string): Promise<User> {
+        this.logger.log(`Getting user by external ID: ${externalId}`);
+        const user = await this.findByExternalId(externalId);
+        if (!user) {
+            this.logger.error(`User with external ID ${externalId} not found.`);
+            throw new NotFoundException(`User with external ID ${externalId} not found`);
+        }
+        this.logger.log(`Successfully retrieved user ${user.id} for external ID ${externalId}`);
+        return user;
+    }
+
+    async updateUserAuthDetails(userId: string, externalId: string, email?: string): Promise<User> {
+        this.logger.log(`Updating auth details for internal user ID: ${userId}. Setting external ID: ${externalId}`);
+        const user = await this.userRepository.findOneBy({ id: userId });
+        if (!user) {
+            this.logger.error(`User with internal ID ${userId} not found for auth update.`);
+            throw new NotFoundException(`User with internal ID ${userId} not found`);
+        }
+
+        user.externalId = externalId;
+        if (email) {
+            user.email = email;
+            this.logger.log(`Updating email for user ${userId}.`);
+        }
+
+        try {
+             const updatedUser = await this.userRepository.save(user);
+             this.logger.log(`Successfully updated auth details for user ${userId}.`);
+             return updatedUser;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown database error';
+            this.logger.error(`Failed to update auth details for user ${userId}: ${message}`, error instanceof Error ? error.stack : undefined);
+            throw new InternalServerErrorException('Could not update user authentication details.');
+        }
+    }
+
+    async getUserDtoById(userId: string): Promise<UserDto | null> {
+        this.logger.log(`Getting UserDto for internal ID: ${userId}`);
+        const user = await this.findById(userId);
+        if (!user) {
+            return null;
+        }
+        // Map User entity to UserDto
+        return {
+            id: user.id,
+            email: user.email ?? null, // Handle potential null email
+            // Add other fields as needed, potentially loading relations like profile
+        };
     }
 
     async findUserWithProfileById(externalId: string): Promise<User | null> {

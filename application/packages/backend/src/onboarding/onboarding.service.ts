@@ -11,6 +11,7 @@ import { Profile } from '@backend/profiles/entities/profile.entity';
 import { EventParticipation } from '@backend/events/entities/event-participation.entity';
 import { AwsTranscribeService } from '@backend/transcription/aws-transcribe.service';
 import { Event } from '@backend/events/entities/event.entity';
+import { User } from '@backend/users/entities/user.entity';
 
 @Injectable()
 export class OnboardingService {
@@ -26,65 +27,49 @@ export class OnboardingService {
         private readonly transcriptionService: AwsTranscribeService,
     ) {}
 
-    async initiate(request: InitiateOnboardingRequestDto): Promise<InitiateOnboardingResponseDto> {
-        let event: Event | null;
-
-        if (request.event_id) {
-            this.logger.log(`Initiating onboarding for specific event: ${request.event_id}`);
-            event = await this.eventService.findEventById(request.event_id);
+    async initiate(eventId?: string, externalUserId?: string): Promise<InitiateOnboardingResponseDto> {
+        let event: Event | null = null;
+        if (eventId) {
+            this.logger.log(`Initiating onboarding for specific event: ${eventId}`);
+            event = await this.eventService.findEventById(eventId);
             if (!event) {
-                throw new NotFoundException(`Event with ID ${request.event_id} not found.`);
-            }
-        } else {
-            this.logger.log(`Initiating onboarding without specific event_id, finding first available event.`);
-            event = await this.eventService.findFirstAvailableEvent();
-            if (!event) {
-                this.logger.error('No events found in the database to use for default onboarding.');
-                throw new NotFoundException('No available events found for onboarding.');
+                throw new NotFoundException(`Event with ID ${eventId} not found.`);
             }
             this.logger.log(`Using event ${event.id} (${event.name}) for onboarding.`);
         }
+        
+        const user = externalUserId 
+            ? await this.userService.getByExternalId(externalUserId)
+            : await this.userService.createUnauthenticatedUser();
+
+        const profile = await this.profileService.findProfileByUserId(user.id) || 
+            await this.profileService.createInitialProfile(user.id);
+
+            
+          const onboarding = await this.onboardingSessionRepository.save(
+            this.onboardingSessionRepository.create({
+                eventId: event?.id,
+                userId: user.id,
+                profileId: profile.id,
+                status: OnboardingStatus.AWAITING_AUDIO
+            })
+        );
+        this.logger.log(`Created onboarding session ID: ${onboarding.id} (Event: ${event?.id ?? 'None'})`);
+
 
         try {
-            // 1. Create User
-            const newUser = await this.userService.createUnauthenticatedUser();
-            this.logger.log(`Created new user: ${newUser.id}`);
-
-            // 2. Create initial Profile
-            const newProfile = await this.profileService.createInitialProfile(newUser.id);
-            this.logger.log(`Created initial profile: ${newProfile.id}`);
-
-            // 3. Create initial Event Participation (using the determined event.id)
-            const newParticipation = await this.eventService.createInitialParticipation(newUser.id, event.id, '');
-            this.logger.log(`Created initial event participation: ${newParticipation.id} for event ${event.id}`);
-
-            // 4. Create the Onboarding Session
-            const newOnboarding = await this.onboardingSessionRepository.save(
-                this.onboardingSessionRepository.create({
-                    eventId: event.id,
-                    userId: newUser.id,
-                    profileId: newProfile.id,
-                    participationId: newParticipation.id,
-                    status: OnboardingStatus.AWAITING_AUDIO
-                })
-            );
-            this.logger.log(`Created onboarding session with ID: ${newOnboarding.id}`);
-
-            // 5. Construct storage key
             const fileExtension = '.webm';
-            const storageKey = `onboarding/${newOnboarding.id}/audio-initial${fileExtension}`;
+            const storageKey = `onboarding/${onboarding.id}/audio-initial${fileExtension}`;
             const contentType = 'audio/webm';
 
-            // 6. Generate the presigned URL
             const { uploadUrl, storagePath } = await this.audioStorageService.generatePresignedUploadUrl(
                 storageKey,
                 contentType,
             );
-            this.logger.log(`Generated pre-signed URL for session ${newOnboarding.id} at path: ${storagePath}`);
+            this.logger.log(`Generated pre-signed URL for session ${onboarding.id}`);
 
-            // 7. Return response
             return {
-                onboarding_id: newOnboarding.id,
+                onboarding_id: onboarding.id,
                 upload_url: uploadUrl,
                 s3_key: storagePath,
             };
@@ -92,21 +77,26 @@ export class OnboardingService {
         } catch (error) {
             const stack = error instanceof Error ? error.stack : undefined;
             const message = error instanceof Error ? error.message : 'Unknown error';
-            this.logger.error(`Failed to initiate onboarding session for event ${event.id}: ${message}`, stack);
+            const eventContext = event ? `Event: ${event.id}` : 'No Event Context';
+            this.logger.error(`Failed to initiate onboarding session (${eventContext}, User: ${externalUserId || '[New User]'}): ${message}`, stack);
             throw new InternalServerErrorException('Failed to initiate onboarding session.');
         }
     }
 
     async processAudio(onboardingId: string, s3_key: string): Promise<OnboardingSession> {
         this.logger.log(`Processing audio for onboarding: ${onboardingId}`);
-        
-        const onboarding = await this.onboardingSessionRepository.findOne({
-            where: { id: onboardingId },
-            relations: ['profile', 'eventParticipation'],
-        });
 
-        if (!onboarding || !onboarding.profile || !onboarding.eventParticipation) {
-            throw new Error(`Session ${onboardingId} or required relations not found.`);
+        const onboarding = await this.onboardingSessionRepository.findOneBy({ id: onboardingId });
+
+        if (!onboarding) {
+            this.logger.error(`Onboarding session with ID ${onboardingId} not found.`);
+            throw new NotFoundException(`Onboarding session ${onboardingId} not found.`);
+        }
+
+        // Updated check: eventId is optional, participationId is removed
+        if (!onboarding.userId || !onboarding.profileId) {
+             this.logger.error(`Session ${onboardingId} is missing required linked IDs (userId, profileId). Session data: ${JSON.stringify(onboarding)}`);
+             throw new InternalServerErrorException(`Session ${onboardingId} is incomplete or missing required linked entity IDs.`);
         }
 
         try {
@@ -114,23 +104,27 @@ export class OnboardingService {
             const transcriptText = await this.transcriptionService.transcribeAudio(s3_key);
             this.logger.log(`Transcription completed for onboarding ${onboardingId}, transcript length: ${transcriptText?.length || 0}`);
 
-            // Delegate profile processing to ProfileService with TEXT
+            // Process profile update (always required)
             await this.profileService.processProfileUpdate(onboarding.userId, transcriptText);
             
-            // Delegate event participation processing to EventService with TEXT
-            await this.eventService.processParticipationUpdate(onboarding.userId, onboarding.eventId, transcriptText);
+            // Process event participation only if eventId exists
+            if (onboarding.eventId) {
+                this.logger.log(`Processing event participation update for event ${onboarding.eventId}`);
+                 await this.eventService.processParticipationUpdate(onboarding.userId, onboarding.eventId, transcriptText);
+            } else {
+                 this.logger.log(`Skipping event participation update as no eventId is linked to session ${onboardingId}.`);
+            }
             
-            this.logger.log(`Updated profile and event participation data for onboarding ${onboardingId}`);
+            this.logger.log(`Updated profile data (and event participation if applicable) for onboarding ${onboardingId}`);
             
             onboarding.status = OnboardingStatus.COMPLETED;
             await this.onboardingSessionRepository.save(onboarding);
             
             this.logger.log(`Updated session ${onboardingId} status to ${onboarding.status}`);
             
-            // Re-fetch to include potentially updated relations if needed by caller
+            // Re-fetch session (no longer need eventParticipation relation)
             const updatedSession = await this.onboardingSessionRepository.findOne({
-                where: { id: onboardingId }, 
-                relations: ['profile', 'eventParticipation'] 
+                where: { id: onboardingId },
             });
             
             if (!updatedSession) {
@@ -194,5 +188,48 @@ export class OnboardingService {
         } else {
             return OnboardingStatus.AWAITING_AUDIO;
         }
+    }
+
+    // New method to find the latest onboarding session for a user
+    async findLatestUserOnboardingSession(userId: string, eventId?: string): Promise<OnboardingSession | null> {
+        this.logger.log(`Finding latest onboarding session for user ${userId}` + (eventId ? ` and event ${eventId}` : ' (any event)'));
+        
+        const whereClause: any = { userId: userId };
+        if (eventId) {
+            whereClause.eventId = eventId;
+        }
+
+        try {
+            const session = await this.onboardingSessionRepository.findOne({
+                where: whereClause,
+                order: { createdAt: 'DESC' } // Get the most recent session
+            });
+            
+            if (session) {
+                this.logger.log(`Found latest session ${session.id} created at ${session.createdAt}`);
+            } else {
+                 this.logger.log(`No onboarding session found for user ${userId}` + (eventId ? ` and event ${eventId}` : ''));
+            }
+            return session;
+
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown database error';
+            this.logger.error(`Failed to find onboarding session for user ${userId}: ${message}`, error instanceof Error ? error.stack : undefined);
+            throw new InternalServerErrorException('Could not retrieve onboarding session.');
+        }
+    }
+
+    // New method wrapper to find by external ID
+    async findLatestUserOnboardingSessionByExternalId(externalUserId: string, eventId?: string): Promise<OnboardingSession | null> {
+        this.logger.log(`Attempting to find user by external ID: ${externalUserId}`);
+        // Get internal user ID first
+        const user = await this.userService.findByExternalId(externalUserId); // Use find, as user might not exist
+        if (!user) {
+            this.logger.log(`No user found for external ID ${externalUserId}. Cannot find onboarding session.`);
+            return null; // No user means no session
+        }
+        this.logger.log(`User found (internal ID: ${user.id}). Finding their latest session.`);
+        // Call the existing method with the internal ID
+        return this.findLatestUserOnboardingSession(user.id, eventId);
     }
 }

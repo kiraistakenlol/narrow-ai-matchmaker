@@ -24,21 +24,19 @@ tags:
     description: Operations related to viewing matches within events.
 
 paths:
-  /onboarding/initiate:
+  /onboarding:
     post:
       summary: Initiate Onboarding & Get First Upload URL
       description: >-
-        Starts a new onboarding session for an event, creates the initial
-        unauthenticated user and linked entities (Profile, Participation),
-        and returns the pre-signed URL for the *initial* audio context
-        (e.g., 'general introduction'). This replaces the separate /start
-        and the first /audio-upload-url call.
+        Starts a new onboarding session, potentially linking to an authenticated user
+        or creating an unauthenticated one. Can be specific to an event or general.
+        Returns the session ID and pre-signed URL for the first audio upload.
       tags:
         - Onboarding
       operationId: initiateOnboarding
       requestBody:
-        description: The event ID and the context for the first required audio.
-        required: true
+        description: Optional event ID.
+        required: false # Body is optional if event_id is optional
         content:
           application/json:
             schema:
@@ -53,7 +51,40 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
-          $ref: '#/components/responses/NotFound' # e.g., Event not found
+          $ref: '#/components/responses/NotFound' # e.g., Event not found if ID provided
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      tags:
+        - Onboarding
+      summary: Get current user's latest onboarding session
+      description: >-
+        Retrieves the most recent onboarding session associated with the
+        currently authenticated user. Optionally filters by event ID.
+        Requires authentication.
+      operationId: getCurrentUserOnboarding
+      parameters:
+        - in: query
+          name: event_id
+          schema:
+            type: string
+            format: uuid
+          required: false
+          description: Optional UUID of the event to filter sessions by.
+      security:
+        - bearerAuth: [] # Indicates this endpoint requires Bearer token auth
+      responses:
+        '200':
+          description: Successfully retrieved the latest onboarding session.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OnboardingSession'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -268,6 +299,19 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /auth/google:
+    get:
+      tags:
+        - Authentication
+      summary: Initiate Google OAuth flow
+      description: >-
+        Redirects the client to the Google OAuth consent screen.
+        After successful authentication, Google redirects back to the
+        frontend with a code, which can be exchanged for tokens.
+      responses:
+        '302':
+          description: Redirect to Google OAuth consent screen.
+
   # --- Profiles ---
 
   /profiles/me:
@@ -337,7 +381,7 @@ paths:
           description: The ID of the user whose profile is to be retrieved.
           schema:
             type: string
-            format: uuid # Assuming user_id is also a UUID
+            format: uuid
       responses:
         '200':
           description: Public user profile data.
@@ -897,6 +941,43 @@ components:
               nullable: true
               description: User-specific context provided for this event (null if not joined).
               additionalProperties: true
+
+    # --- Onboarding Schemas ---
+    OnboardingSession: # Added Schema Definition
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+          format: uuid
+          nullable: true
+        userId:
+          type: string
+          format: uuid
+        profileId:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/OnboardingStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - id
+        - userId
+        - profileId
+        - status
+        - createdAt
+        - updatedAt
 
   parameters:
     OnboardingIdPath:
