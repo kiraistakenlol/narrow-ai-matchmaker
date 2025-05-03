@@ -9,7 +9,15 @@ interface StartOnboardingButtonProps {
 function StartOnboardingButton({text, disabled = false, onClick}: StartOnboardingButtonProps) {
     return (
         <button
-            style={styles.button}
+            style={
+                {
+                    padding: '10px 20px',
+                    fontSize: '1rem',
+                    cursor: disabled ? 'not-allowed' : 'pointer',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px'
+                }
+            }
             disabled={disabled}
             onClick={onClick}
         >
@@ -17,16 +25,5 @@ function StartOnboardingButton({text, disabled = false, onClick}: StartOnboardin
         </button>
     );
 }
-
-// Minimal styles (consider centralizing)
-const styles: { [key: string]: React.CSSProperties } = {
-    button: {
-        padding: '10px 20px',
-        fontSize: '1rem',
-        cursor: 'pointer',
-        border: '1px solid #ccc',
-        borderRadius: '4px'
-    },
-};
 
 export default StartOnboardingButton; 

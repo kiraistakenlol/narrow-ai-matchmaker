@@ -56,13 +56,8 @@ function App() {
                 {/* Event detail page */}
                 <Route path="/event/:id" element={<EventPage />} />
 
-                {/* Sign in / Onboarding prompt page REMOVED */}
-
                 {/* Cognito Callback - Page shows loading, Hub listener triggers state update */}
                 <Route path="/auth/callback" element={<AuthCallbackPage />} />
-
-                {/* Test Onboarding View */}
-                <Route path="/test/onboarding" element={<StartOnboardingViewTest />} />
 
                 {/* Catch-all route: Redirects any unmatched path to Home */}
                 <Route path="*" element={<Navigate to="/" replace />} />

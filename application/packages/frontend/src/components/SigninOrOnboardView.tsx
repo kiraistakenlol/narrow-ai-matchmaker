@@ -17,8 +17,8 @@ interface ContainerProps {
 function SigninOrOnboardView({
     title,
     description,
-    showSignIn = false, // Default to false
-    showOnboarding = false, // Default to false
+    showSignIn = false,
+    showOnboarding = false,
     onStartOnboarding = () => {},
     isProcessing = false,
     onSignInWithGoogle = () => {}
@@ -33,8 +33,14 @@ function SigninOrOnboardView({
             <div style={styles.actionArea}>
                 {showOnboarding && (
                     <StartOnboardingView
-                        onStartOnboarding={onStartOnboarding}
-                        disabled={isProcessing}
+                        onOnboardingStarted={onStartOnboarding}
+                        onOnboardingComplete={() => {}}
+                        onOnboardingError={() => {}}
+                        hints={[
+                            "Speak clearly into your microphone",
+                            "Tell us about yourself in a few sentences",
+                            "Include your interests and what brings you here"
+                        ]}
                     />
                 )}
                 {/* Optional: Add a visual separator if both are shown */}
@@ -86,11 +92,6 @@ const styles: { [key: string]: React.CSSProperties } = {
         lineHeight: '0.1em',
         fontSize: '0.9em'
     },
-    // Ensure the separator text has a background to cover the line if used
-    // separatorText: {
-    //     background:'#f8f9fa', // Match promptBox background
-    //     padding:'0 10px'
-    // }
 };
 
 export default SigninOrOnboardView;

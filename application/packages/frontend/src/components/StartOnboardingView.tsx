@@ -1,47 +1,45 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import StartOnboardingButton from './StartOnboardingButton';
 import RecordingIndicator from './RecordingIndicator';
 
+type DisplayState = 'initial' | 'recording' | 'processing' | 'error' | 'success';
+
 interface StartOnboardingViewProps {
-    onStartRecording: () => void; // Callback when start recording is clicked
-    onStopRecording: () => void;  // Callback when stop recording is clicked
-    disabled?: boolean;         // To disable buttons (general)
-    hints?: string[];           // Optional hints
-    isRecording?: boolean;      // Is recording currently active?
-    isProcessing?: boolean;     // Is audio processing?
-    isSuccess?: boolean;        // Was processing successful?
-    error?: string | null;      // Error message, if any
+    onOnboardingStarted?: () => void;
+    onOnboardingComplete?: () => void;
+    onOnboardingError?: (error: string) => void;
+    hints?: string[];
 }
 
 const StartOnboardingView: React.FC<StartOnboardingViewProps> = ({
-    onStartRecording,
-    onStopRecording,
-    disabled = false, // General disabled prop from parent
+    onOnboardingStarted,
+    onOnboardingComplete,
+    onOnboardingError,
     hints = [],
-    isRecording = false,
-    isProcessing = false,
-    isSuccess = false,
-    error = null,
 }) => {
-    // Determine the display state purely based on props
-    let displayState: 'initial' | 'recording' | 'processing' | 'error' | 'success' = 'initial';
-    if (isSuccess) {
-        displayState = 'success';
-    } else if (error) {
-        displayState = 'error';
-    } else if (isProcessing) {
-        displayState = 'processing';
-    } else if (isRecording) { // Use the isRecording prop
-        displayState = 'recording';
-    }
 
-    // Show recording indicator if recording or processing
-    const showIndicator = displayState === 'recording' || displayState === 'processing';
-    // Show button unless successful
-    const showButton = displayState !== 'success';
+    const [onboardingState, setOnboardingState] = useState<DisplayState>('initial');
 
-    // Determine if the button itself should be disabled
-    const isButtonDisabled = disabled || isProcessing || isSuccess || !!error;
+    const isButtonDisabled = onboardingState === 'processing' || onboardingState === 'success' || onboardingState === 'error';
+
+    const handleStartClick = () => {
+        onOnboardingStarted?.()
+        setOnboardingState("recording")
+    };
+
+    const handleStopClick = () => {
+        if (onboardingState === 'recording') {
+            onOnboardingComplete?.();
+            setOnboardingState('processing');
+        }
+
+        // todo call /initiate, get upload url in response and use this to upload the audio and then call /notify-upload and wait for the response
+        // once response is obtained handle it as success or error and switch the state accordingly 
+    };
+
+    const showRecordingIndicator = onboardingState === 'recording' || onboardingState === 'processing';
+    
+    const showButton = onboardingState !== 'success';
 
     return (
         <div style={styles.container}>
@@ -50,13 +48,13 @@ const StartOnboardingView: React.FC<StartOnboardingViewProps> = ({
                 <ul style={styles.hints}>
                     {hints.map((hint, index) => (
                         <li key={index} style={styles.hintItem}>
-                            <span 
+                            <span
                                 style={{
-                                    ...styles.marker, 
-                                    ...(displayState === 'success' ? styles.checkedMarker : styles.uncheckedMarker)
+                                    ...styles.marker,
+                                    ...(onboardingState === 'success' ? styles.checkedMarker : styles.uncheckedMarker)
                                 }}
                             >
-                                {displayState === 'success' && '✓'} {/* Checkmark inside the marker on success */}
+                                {onboardingState === 'success' && '✓'} {/* Checkmark inside the marker on success */}
                             </span>
                             <span>{hint}</span> {/* Hint text in its own span */}
                         </li>
@@ -67,28 +65,28 @@ const StartOnboardingView: React.FC<StartOnboardingViewProps> = ({
             {/* Button */}
             {showButton && (
                 <StartOnboardingButton
-                    text={displayState === 'recording' ? "Stop Recording" : "Start Recording"}
-                    disabled={isButtonDisabled} // Use calculated disabled state
-                    onClick={displayState === 'recording' ? onStopRecording : onStartRecording} // Directly use passed callbacks
+                    text={onboardingState === 'recording' ? "Stop Recording" : "Start Recording"}
+                    disabled={isButtonDisabled}
+                    onClick={onboardingState === 'recording' ? handleStopClick : handleStartClick}
                 />
             )}
 
             {/* Indicator */}
-            {showIndicator && (
+            {showRecordingIndicator && (
                 <RecordingIndicator
-                    isRecording={displayState === 'recording'} // Use isRecording prop directly
-                    isProcessing={displayState === 'processing'}
+                    isRecording={onboardingState === 'recording'}
+                    isProcessing={onboardingState === 'processing'}
                     // recordingTime is managed internally by RecordingIndicator
                 />
             )}
 
             {/* Error Message */}
-            {displayState === 'error' && (
+            {onboardingState === 'error' && error && (
                 <div style={styles.error}>{error}</div>
             )}
 
             {/* Success Message */}
-            {displayState === 'success' && (
+            {onboardingState === 'success' && (
                 <div style={styles.success}>Success! Your information has been processed.</div>
             )}
         </div>
@@ -124,7 +122,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         display: 'inline-flex', // Use flex for centering checkmark inside
         justifyContent: 'center',
         alignItems: 'center',
-        width: '10px', 
+        width: '10px',
         height: '10px',
         borderRadius: '50%', // Make it circular
         border: '2px solid #ccc', // Default border
@@ -134,7 +132,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     uncheckedMarker: {
         // Specific styles for unchecked state (mostly covered by base marker style)
-        backgroundColor: '#fff' 
+        backgroundColor: '#fff'
     },
     checkedMarker: {
         // Specific styles for checked state
