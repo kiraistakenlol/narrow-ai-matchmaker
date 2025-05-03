@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import StartOnboardingButton from './StartOnboardingButton'; // Reusing the button style
 import RecordingIndicator from './RecordingIndicator'; // Reusing the indicator
 

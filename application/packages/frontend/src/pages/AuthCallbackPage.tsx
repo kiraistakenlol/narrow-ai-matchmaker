@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAppSelector } from '../state/hooks';
-import { selectAuthStatus } from '../state/slices/authSlice';
+import React, {useEffect} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {useAppSelector} from '../state/hooks';
+import {selectAuthStatus} from '../state/slices/authSlice';
 
 function AuthCallbackPage() {
     const navigate = useNavigate();

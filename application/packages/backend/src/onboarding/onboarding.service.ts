@@ -112,7 +112,7 @@ export class OnboardingService {
             
             this.logger.log(`Updated profile data (and event participation if applicable) for onboarding ${onboardingId}`);
             
-            onboarding.status = OnboardingStatus.COMPLETED;
+            onboarding.status = OnboardingStatus.NEEDS_CLARIFICATION;
             await this.onboardingSessionRepository.save(onboarding);
             
             this.logger.log(`Updated session ${onboardingId} status to ${onboarding.status}`);

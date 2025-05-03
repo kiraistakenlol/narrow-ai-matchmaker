@@ -1,16 +1,8 @@
-import React, { useEffect } from 'react';
-import {
-    BrowserRouter as Router,
-    Routes,
-    Route,
-    Navigate,
-} from 'react-router-dom';
-import { Hub } from 'aws-amplify/utils';
-import { useAppDispatch } from './state/hooks';
-import { checkAuth } from './state/slices/authSlice';
-import StartOnboardingViewTest from './components/StartOnboardingViewTest';
-
-// Import pages
+import {useEffect} from 'react';
+import {BrowserRouter as Router, Navigate, Route, Routes,} from 'react-router-dom';
+import {Hub} from 'aws-amplify/utils';
+import {useAppDispatch} from './state/hooks';
+import {checkAuth} from './state/slices/authSlice';
 import HomePage from './pages/HomePage';
 import EventPage from './pages/EventPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';

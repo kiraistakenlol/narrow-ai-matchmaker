@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { fetchAuthSession } from 'aws-amplify/auth';
+import {fetchAuthSession} from 'aws-amplify/auth';
 // import { store } from '../state/store'; // No longer needed for token
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';

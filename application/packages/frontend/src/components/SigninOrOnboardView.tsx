@@ -1,5 +1,5 @@
 import React from 'react';
-import StartOnboardingView from './StartOnboardingView';
+import OnboardingInputView from './OnboardingInputView.tsx';
 import SignInWithGoogleButton from './SignInWithGoogleButton';
 
 
@@ -10,7 +10,6 @@ interface ContainerProps {
     showOnboarding?: boolean;
     onStartOnboarding?: () => void;
     isRecording?: boolean;
-    isProcessing?: boolean;
     onSignInWithGoogle?: () => void;
 }
 
@@ -20,7 +19,6 @@ function SigninOrOnboardView({
     showSignIn = false,
     showOnboarding = false,
     onStartOnboarding = () => {},
-    isProcessing = false,
     onSignInWithGoogle = () => {}
 }: ContainerProps) {
     // Determine if both sections are shown to add divider/spacing
@@ -32,7 +30,7 @@ function SigninOrOnboardView({
             <p style={styles.description}>{description}</p>
             <div style={styles.actionArea}>
                 {showOnboarding && (
-                    <StartOnboardingView
+                    <OnboardingInputView
                         onOnboardingStarted={onStartOnboarding}
                         onOnboardingComplete={() => {}}
                         onOnboardingError={() => {}}

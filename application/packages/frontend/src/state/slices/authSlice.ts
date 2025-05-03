@@ -1,9 +1,9 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { fetchAuthSession, signInWithRedirect, signOut } from 'aws-amplify/auth';
-import { UserDto } from '@narrow-ai-matchmaker/common';
-import type { RootState } from '../store'; // For selector typing
+import {createAsyncThunk, createSlice, PayloadAction} from '@reduxjs/toolkit';
+import {fetchAuthSession, signInWithRedirect, signOut} from 'aws-amplify/auth';
+import {UserDto} from '@narrow-ai-matchmaker/common';
+import type {RootState} from '../store'; // For selector typing
 import apiClient from '../../lib/apiClient'; // Corrected import path
-import { AxiosError } from 'axios';
+import {AxiosError} from 'axios';
 
 
 interface AuthUser {

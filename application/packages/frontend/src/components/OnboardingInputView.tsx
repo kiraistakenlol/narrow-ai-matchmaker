@@ -1,27 +1,29 @@
-import React, { useState, useEffect } from 'react';
-// import RecordingIndicator from './RecordingIndicator'; // No longer needed here
+import React, {useState} from 'react';
 import apiClient from '../lib/apiClient';
 import AudioRecorder from './AudioRecorder';
-import { AxiosError } from 'axios';
-import { InitiateOnboardingResponseDto } from '@narrow-ai-matchmaker/common';
+import {AxiosError} from 'axios';
+import {InitiateOnboardingResponseDto, PresignedUrlResponseDto} from '@narrow-ai-matchmaker/common';
 
 type DisplayState = 'initial' | 'recording' | 'processing' | 'error' | 'success';
 
-interface StartOnboardingViewProps {
+interface OnboardingInputViewProps {
     eventId?: string;
+    onboardingId?: string;
     onOnboardingStarted?: () => void;
     onOnboardingComplete?: () => void;
     onOnboardingError?: (error: string) => void;
     hints?: string[];
 }
 
-const StartOnboardingView: React.FC<StartOnboardingViewProps> = ({
-    eventId,
-    onOnboardingStarted,
-    onOnboardingComplete,
-    onOnboardingError,
-    hints = [],
-}) => {
+const OnboardingInputView: React.FC<OnboardingInputViewProps> = ({
+                                                                     eventId,
+                                                                     onboardingId,
+                                                                     onOnboardingStarted,
+                                                                     onOnboardingComplete,
+                                                                     onOnboardingError,
+                                                                     hints = [],
+                                                                 }) => {
+                                                                    
     const [onboardingState, setOnboardingState] = useState<DisplayState>('initial');
     const [error, setError] = useState<string | null>(null);
 
@@ -37,35 +39,61 @@ const StartOnboardingView: React.FC<StartOnboardingViewProps> = ({
         setError(null);
         onOnboardingStarted?.();
 
+        let currentOnboardingId: string;
+        let s3Key: string;
+        let uploadUrl: string;
+
         try {
-            // 1. Initiate Onboarding - conditionally include event_id
-            const initiatePayload: { event_id?: string } = {};
-            if (eventId) {
-                initiatePayload.event_id = eventId;
+            if (onboardingId) {
+                // If onboardingId is provided, use it to get a new upload URL
+                console.log(`Using existing onboardingId: ${onboardingId}`);
+                currentOnboardingId = onboardingId;
+                // Assuming the endpoint for subsequent uploads needs the ID in the URL
+                const subsequentUploadResponse = await apiClient.post<PresignedUrlResponseDto>(
+                    `/onboarding/${onboardingId}/audio-upload-url`
+                );
+                s3Key = subsequentUploadResponse.data.s3_key;
+                uploadUrl = subsequentUploadResponse.data.upload_url;
+
+                if (!s3Key || !uploadUrl) {
+                     throw new Error('Invalid response data from subsequent upload URL endpoint.');
+                 }
+
+            } else {
+                // If no onboardingId, initiate a new session
+                console.log('No onboardingId provided, initiating new session...');
+                const initiatePayload: { event_id?: string } = {};
+                if (eventId) {
+                    initiatePayload.event_id = eventId;
+                }
+                const initiateResponse = await apiClient.post<InitiateOnboardingResponseDto>('/onboarding/initiate', initiatePayload);
+
+                // Destructure from the nested upload_details
+                const {onboarding_id, upload_details} = initiateResponse.data;
+
+                 if (!onboarding_id || !upload_details?.s3_key || !upload_details?.upload_url) {
+                    throw new Error('Invalid response data from initiation endpoint.');
+                }
+                currentOnboardingId = onboarding_id;
+                s3Key = upload_details.s3_key;
+                uploadUrl = upload_details.upload_url;
             }
-            const initiateResponse = await apiClient.post<InitiateOnboardingResponseDto>('/onboarding/initiate', initiatePayload);
 
-            // Destructure from the nested upload_details
-            const { onboarding_id, upload_details } = initiateResponse.data;
-            const { s3_key, upload_url } = upload_details;
-
-            if (!onboarding_id || !s3_key || !upload_url) {
-                throw new Error('Invalid response data from initiation endpoint.');
-            }
-
-            // 2. Upload Audio to S3
-            const uploadResponse = await fetch(upload_url, {
-                 method: 'PUT',
-                 body: audioBlob,
-                 headers: { 'Content-Type': audioBlob.type || 'audio/webm' }
+            // 2. Upload Audio to S3 (using details obtained above)
+            console.log(`Uploading to S3 key: ${s3Key}`);
+            const uploadResponse = await fetch(uploadUrl, {
+                method: 'PUT',
+                body: audioBlob,
+                headers: {'Content-Type': audioBlob.type || 'audio/webm'}
             });
             if (!uploadResponse.ok) {
                 throw new Error(`S3 upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
             }
 
-            // 3. Notify Backend
-            await apiClient.post(`/onboarding/${onboarding_id}/notify-upload`, {
-                s3_key: s3_key
+            // 3. Notify Backend (using the correct onboardingId)
+            console.log(`Notifying upload complete for onboardingId: ${currentOnboardingId}`);
+            await apiClient.post(`/onboarding/${currentOnboardingId}/notify-upload`, {
+                s3_key: s3Key
             });
 
             // Success
@@ -75,11 +103,11 @@ const StartOnboardingView: React.FC<StartOnboardingViewProps> = ({
 
         } catch (err: any) {
             let apiErrorMessage = 'An unknown error occurred during processing.';
-             if (err instanceof AxiosError) {
-                 apiErrorMessage = `API Error: ${err.response?.data?.message || err.message} (Status: ${err.response?.status || 'N/A'})`;
-             } else if (err instanceof Error) {
-                 apiErrorMessage = err.message;
-             }
+            if (err instanceof AxiosError) {
+                apiErrorMessage = `API Error: ${err.response?.data?.message || err.message} (Status: ${err.response?.status || 'N/A'})`;
+            } else if (err instanceof Error) {
+                apiErrorMessage = err.message;
+            }
             const fullError = `Processing failed: ${apiErrorMessage}`;
             setError(fullError);
             setOnboardingState('error');
@@ -87,9 +115,6 @@ const StartOnboardingView: React.FC<StartOnboardingViewProps> = ({
         }
     };
 
-    // Determine which high-level elements to show
-    // AudioRecorder handles its own internal states (idle, recording, stopped, recorder-error)
-    const showRecorder = onboardingState === 'initial' || onboardingState === 'error';
     const showSuccess = onboardingState === 'success';
     // Processing indicator is now INSIDE AudioRecorder, triggered by isProcessing prop
     // Error message is shown below the recorder if the overall state is error
@@ -195,4 +220,4 @@ const styles: { [key: string]: React.CSSProperties } = {
     }
 };
 
-export default StartOnboardingView;
+export default OnboardingInputView;
