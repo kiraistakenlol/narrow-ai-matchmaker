@@ -2,8 +2,9 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { fetchAuthSession, signInWithRedirect, signOut } from 'aws-amplify/auth';
 import { UserDto } from '@narrow-ai-matchmaker/common';
 import type { RootState } from '../store'; // For selector typing
+import apiClient from '../../lib/apiClient'; // Corrected import path
+import { AxiosError } from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
 
 interface AuthUser {
     id: string;
@@ -31,49 +32,43 @@ export const checkAuth = createAsyncThunk<
     void,
     { rejectValue: string }
 >('auth/checkAuth', async (_, { rejectWithValue }) => {
+    let session;
     try {
-        let session;
-        try {
-             session = await fetchAuthSession({ forceRefresh: true });
-        } catch (sessionError: any) {
-             // Amplify throws specific errors, e.g., if user is not signed in.
-             // We'll treat this as "not logged in" rather than a failure.
-            console.log('Auth check: No active session found.', sessionError?.message || sessionError);
-            return null; // Fulfill with null to indicate no session
-        }
+        session = await fetchAuthSession({ forceRefresh: true }); // Keep forceRefresh here for explicit checks
+    } catch (sessionError: any) {
+        console.log('Auth check: No active session found.', sessionError?.message || sessionError);
+        return null; // Not an error, just no session
+    }
 
-        const idToken = session.tokens?.idToken?.toString();
-        if (!idToken) {
-            console.log('Auth check: Session found but no ID token present.');
-            return null; // Fulfill with null if session exists but token doesn't
-        }
+    const idToken = session.tokens?.idToken?.toString();
+    if (!idToken) {
+        console.log('Auth check: Session found but no ID token present.');
+        return null; // No token, can't proceed
+    }
 
-        // If we have a token, try fetching user data from backend
-        const response = await fetch(`${API_BASE_URL}/users/me`, {
-            headers: { 'Authorization': `Bearer ${idToken}` },
-        });
-
-        if (!response.ok) {
-            // If backend fails AFTER we found a token, THIS is a failure
-            const errorBody = await response.text();
-            console.error(`Auth check: /users/me fetch failed (${response.status}) after finding token.`, errorBody);
-            return rejectWithValue(`Backend fetch failed: ${response.status}`);
-        }
-
-        const userData: UserDto = await response.json();
+    try {
+        const response = await apiClient.get<UserDto>('/users/me');
+        const userData = response.data;
 
         if (!userData.id || typeof userData.email === 'undefined') {
             console.error('Missing id or email in fetched UserDto', userData);
-            // Treat incomplete data after successful fetch as a failure
             return rejectWithValue('Incomplete user data received from backend.');
         }
 
-        return userData; // Fulfill with the full UserDto object on success
+        return userData;
 
     } catch (error) {
-        // Catch any other unexpected errors during the process
-        console.error('Auth check unexpected error:', error);
-        return rejectWithValue(error instanceof Error ? error.message : 'Unexpected error during authentication check');
+        let errorMessage = 'Unexpected error during authentication check';
+        if (error instanceof AxiosError) {
+            const status = error.response?.status;
+            const backendMessage = error.response?.data?.message;
+            errorMessage = `Backend fetch failed (${status || 'N/A'}): ${backendMessage || error.message}`;
+            console.error(`Auth check: /users/me fetch failed (${status || 'N/A'})`, error.response?.data || error);
+        } else if (error instanceof Error) {
+            errorMessage = error.message;
+            console.error('Auth check unexpected error:', error);
+        }
+        return rejectWithValue(errorMessage);
     }
 });
 

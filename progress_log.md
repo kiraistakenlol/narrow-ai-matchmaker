@@ -10,8 +10,17 @@ For the first step, let's keep it simple and just treat any info in the event pa
 
 done:
 
-implemented 5 different state in Start onboardin view 
+*   implemented 5 different state in Start onboardin view 
+*   extracted audio recording logic to `AudioRecorder.tsx`
+*   created centralized `apiClient.ts` with auth interceptor
+*   refactored `StartOnboardingView.tsx` to use `AudioRecorder` and `apiClient`
+*   implemented onboarding API happy path (`initiate`, upload, `notify`) in `StartOnboardingView`
+*   made `event_id` optional in backend `/onboarding/initiate`, defaulting to first event
 
-Todo; 
+Todo;
 
-now use this component in home and event pages
+*   now use this component in home and event pages
+*   if user is authenticated, use their existing ID for onboarding instead of creating a new one (update backend logic and `@sequence_onboarding.mmd`)
+*   if user is anonymous, ensure the flow prompts for signup/login after audio submission to connect the onboarding session to the authenticated user (clarify in `@sequence_onboarding.mmd`)
+*   adjust frontend (`StartOnboardingView`, pages) to handle truly optional event context (don't always pass eventId if not relevant)
+*   remove the backend default behavior of using the "first available event" when no `event_id` is provided. Require event context explicitly if onboarding is event-specific.

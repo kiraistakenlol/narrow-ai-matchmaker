@@ -10,6 +10,7 @@ import { EventService } from '@backend/events/events.service';
 import { Profile } from '@backend/profiles/entities/profile.entity';
 import { EventParticipation } from '@backend/events/entities/event-participation.entity';
 import { AwsTranscribeService } from '@backend/transcription/aws-transcribe.service';
+import { Event } from '@backend/events/entities/event.entity';
 
 @Injectable()
 export class OnboardingService {
@@ -25,12 +26,23 @@ export class OnboardingService {
         private readonly transcriptionService: AwsTranscribeService,
     ) {}
 
-    async initiate(dto: InitiateOnboardingRequestDto): Promise<InitiateOnboardingResponseDto> {
-        this.logger.log(`Initiating onboarding for event: ${dto.event_id}`);
+    async initiate(request: InitiateOnboardingRequestDto): Promise<InitiateOnboardingResponseDto> {
+        let event: Event | null;
 
-        const event = await this.eventService.findEventById(dto.event_id);
-        if (!event) {
-            throw new NotFoundException(`Event with ID ${dto.event_id} not found.`);
+        if (request.event_id) {
+            this.logger.log(`Initiating onboarding for specific event: ${request.event_id}`);
+            event = await this.eventService.findEventById(request.event_id);
+            if (!event) {
+                throw new NotFoundException(`Event with ID ${request.event_id} not found.`);
+            }
+        } else {
+            this.logger.log(`Initiating onboarding without specific event_id, finding first available event.`);
+            event = await this.eventService.findFirstAvailableEvent();
+            if (!event) {
+                this.logger.error('No events found in the database to use for default onboarding.');
+                throw new NotFoundException('No available events found for onboarding.');
+            }
+            this.logger.log(`Using event ${event.id} (${event.name}) for onboarding.`);
         }
 
         try {
@@ -42,11 +54,11 @@ export class OnboardingService {
             const newProfile = await this.profileService.createInitialProfile(newUser.id);
             this.logger.log(`Created initial profile: ${newProfile.id}`);
 
-            // 3. Create initial Event Participation
+            // 3. Create initial Event Participation (using the determined event.id)
             const newParticipation = await this.eventService.createInitialParticipation(newUser.id, event.id, '');
-            this.logger.log(`Created initial event participation: ${newParticipation.id}`);
+            this.logger.log(`Created initial event participation: ${newParticipation.id} for event ${event.id}`);
 
-            // 4. Create the Onboarding Session 
+            // 4. Create the Onboarding Session
             const newOnboarding = await this.onboardingSessionRepository.save(
                 this.onboardingSessionRepository.create({
                     eventId: event.id,
@@ -58,12 +70,12 @@ export class OnboardingService {
             );
             this.logger.log(`Created onboarding session with ID: ${newOnboarding.id}`);
 
-            // 5. Construct storage key using the session ID and new format
-            const fileExtension = '.webm'; // New format
+            // 5. Construct storage key
+            const fileExtension = '.webm';
             const storageKey = `onboarding/${newOnboarding.id}/audio-initial${fileExtension}`;
-            const contentType = 'audio/webm'; // New format
+            const contentType = 'audio/webm';
 
-            // 6. Generate the presigned URL using the final storage key
+            // 6. Generate the presigned URL
             const { uploadUrl, storagePath } = await this.audioStorageService.generatePresignedUploadUrl(
                 storageKey,
                 contentType,
@@ -80,7 +92,7 @@ export class OnboardingService {
         } catch (error) {
             const stack = error instanceof Error ? error.stack : undefined;
             const message = error instanceof Error ? error.message : 'Unknown error';
-            this.logger.error(`Failed to initiate onboarding session for event ${dto.event_id}: ${message}`, stack);
+            this.logger.error(`Failed to initiate onboarding session for event ${event.id}: ${message}`, stack);
             throw new InternalServerErrorException('Failed to initiate onboarding session.');
         }
     }
@@ -100,29 +112,32 @@ export class OnboardingService {
         try {
             this.logger.log(`Starting transcription for onboarding ${onboardingId}, key: ${s3_key}`);
             const transcriptText = await this.transcriptionService.transcribeAudio(s3_key);
-            this.logger.log(`Transcription completed for onboarding ${onboardingId}, transcript: ${transcriptText}`);
+            this.logger.log(`Transcription completed for onboarding ${onboardingId}, transcript length: ${transcriptText?.length || 0}`);
 
             // Delegate profile processing to ProfileService with TEXT
-            const updatedProfile = await this.profileService.processProfileUpdate(onboarding.userId, transcriptText);
+            await this.profileService.processProfileUpdate(onboarding.userId, transcriptText);
             
             // Delegate event participation processing to EventService with TEXT
-            const updatedParticipation = await this.eventService.processParticipationUpdate(onboarding.userId, onboarding.eventId, transcriptText);
+            await this.eventService.processParticipationUpdate(onboarding.userId, onboarding.eventId, transcriptText);
             
             this.logger.log(`Updated profile and event participation data for onboarding ${onboardingId}`);
-
-            // // Calculate completeness and update status
-            // const profileCompleteness = this.calculateProfileCompleteness(updatedProfile);
-            // const eventCompleteness = this.calculateEventCompleteness(updatedParticipation);
-            
-            // Update session status based on completeness
-            // onboarding.status = this.determineOnboardingStatus(profileCompleteness, eventCompleteness);
             
             onboarding.status = OnboardingStatus.COMPLETED;
             await this.onboardingSessionRepository.save(onboarding);
             
             this.logger.log(`Updated session ${onboardingId} status to ${onboarding.status}`);
             
-            return onboarding;
+            // Re-fetch to include potentially updated relations if needed by caller
+            const updatedSession = await this.onboardingSessionRepository.findOne({
+                where: { id: onboardingId }, 
+                relations: ['profile', 'eventParticipation'] 
+            });
+            
+            if (!updatedSession) {
+                 throw new InternalServerErrorException('Failed to reload session after update.');
+            }
+            return updatedSession;
+
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Unknown processing error';
             this.logger.error(`Audio processing failed for session ${onboardingId}: ${message}`, error instanceof Error ? error.stack : undefined);

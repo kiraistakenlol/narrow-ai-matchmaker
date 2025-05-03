@@ -8,8 +8,8 @@ import {
     signInWithGoogle,
 } from '../state/slices/authSlice';
 import SigninOrOnboardView from '../components/SigninOrOnboardView';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
+import apiClient from '../lib/apiClient';
+import { AxiosError } from 'axios';
 
 function EventPage() {
     const { id: eventId } = useParams<{ id: string }>();
@@ -31,20 +31,21 @@ function EventPage() {
             setIsLoading(true);
             setError(null);
             try {
-                const headers: HeadersInit = {};
-                const response = await fetch(`${API_BASE_URL}/events/${eventId}`, { headers });
-
-                if (response.status === 404) {
-                    throw new Error('Event not found.');
-                }
-                if (!response.ok) {
-                    const errorBody = await response.text();
-                    throw new Error(`Failed to fetch event: ${response.status}. ${errorBody}`);
-                }
-                const data: JoinedEventDto = await response.json();
-                setEventDto(data);
+                const response = await apiClient.get<JoinedEventDto>(`/events/${eventId}`);
+                setEventDto(response.data);
             } catch (err) {
-                setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
+                let errorMessage = 'An unexpected error occurred.';
+                if (err instanceof AxiosError) {
+                    if (err.response?.status === 404) {
+                        errorMessage = 'Event not found.';
+                    } else {
+                        const errorDetails = err.response?.data?.message || err.message;
+                        errorMessage = `Failed to fetch event: ${errorDetails} (Status: ${err.response?.status || 'N/A'})`;
+                    }
+                } else if (err instanceof Error) {
+                    errorMessage = err.message;
+                }
+                setError(errorMessage);
             } finally {
                 setIsLoading(false);
             }

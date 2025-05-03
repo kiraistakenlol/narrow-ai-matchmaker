@@ -1,9 +1,9 @@
-import { IsNotEmpty, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsUUID, IsOptional } from 'class-validator';
 
 export class InitiateOnboardingRequestDto {
     @IsUUID()
-    @IsNotEmpty()
-    event_id: string;
+    @IsOptional()
+    event_id?: string;
 }
 
 export class InitiateOnboardingResponseDto {

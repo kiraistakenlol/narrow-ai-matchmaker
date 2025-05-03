@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DeepPartial } from 'typeorm';
 import { Event } from './entities/event.entity';
 import { EventParticipation } from './entities/event-participation.entity';
 import { ContentExtractionService } from '../content-extraction/content-extraction.service';
@@ -13,31 +13,20 @@ export class EventService {
         @InjectRepository(Event)
         private eventRepository: Repository<Event>,
         @InjectRepository(EventParticipation)
-        private participationRepository: Repository<EventParticipation>,
+        private eventParticipationRepository: Repository<EventParticipation>,
         private readonly contentExtractionService: ContentExtractionService,
     ) {}
 
-    async findEventById(eventId: string): Promise<Event | null> {
-        this.logger.log(`Finding event by ID: ${eventId}`);
-        try {
-            const event = await this.eventRepository.findOneBy({ id: eventId });
-            if (!event) {
-                this.logger.warn(`Event with ID ${eventId} not found.`);
-                // Consider throwing NotFoundException here or let the caller handle null
-            }
-            return event;
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'Unknown database error';
-            this.logger.error(`Failed to find event by ID ${eventId}: ${message}`, error instanceof Error ? error.stack : undefined);
-            throw new InternalServerErrorException('Could not retrieve event.');
-        }
+    async findEventById(id: string): Promise<Event | null> {
+        this.logger.log(`Finding event by ID: ${id}`);
+        return this.eventRepository.findOneBy({ id });
     }
 
     // New method to find events joined by a user
     async findJoinedEventsByUserId(userId: string): Promise<{ event: Event, participation: EventParticipation }[]> {
         this.logger.log(`Finding events joined by user ID: ${userId}`);
         try {
-            const participations = await this.participationRepository.find({
+            const participations = await this.eventParticipationRepository.find({
                 where: { userId: userId },
                 relations: {
                     event: true
@@ -59,65 +48,77 @@ export class EventService {
         }
     }
 
-    async createInitialParticipation(userId: string, eventId: string, onboardingId: string): Promise<EventParticipation> {
-        this.logger.log(`Creating initial participation for user ${userId}, event ${eventId}, onboarding ${onboardingId}`);
+    // New method to find the first event
+    async findFirstAvailableEvent(): Promise<Event | null> {
+        this.logger.log('Finding first available event...');
         try {
-            const newParticipation = this.participationRepository.create({
-                userId: userId,
-                eventId: eventId,
-                contextData: {},
-                completenessScore: 0,
+            // Use find with order and take: 1 to get the first event
+            const events = await this.eventRepository.find({
+                order: { createdAt: 'ASC' }, // Ensure Event entity has createdAt
+                take: 1,
             });
-            const savedParticipation = await this.participationRepository.save(newParticipation);
-            this.logger.log(`Successfully created initial participation ${savedParticipation.id}`);
-            return savedParticipation;
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'Unknown database error';
-            this.logger.error(`Failed to create initial participation for user ${userId}, event ${eventId}: ${message}`, error instanceof Error ? error.stack : undefined);
-            throw new InternalServerErrorException('Could not create initial event participation.');
-        }
-    }
-
-    async save(participation: EventParticipation): Promise<EventParticipation> {
-        this.logger.log(`Saving participation ${participation.id} for user ${participation.userId}, event ${participation.eventId}`);
-        try {
-            const savedParticipation = await this.participationRepository.save(participation);
-            this.logger.log(`Successfully saved participation ${savedParticipation.id}`);
-            return savedParticipation;
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'Unknown database error';
-            this.logger.error(`Failed to save participation ${participation.id}: ${message}`, error instanceof Error ? error.stack : undefined);
-            throw new InternalServerErrorException(`Could not save participation ${participation.id}.`);
-        }
-    }
-
-    async processParticipationUpdate(userId: string, eventId: string, transcriptText: string): Promise<EventParticipation> {
-        this.logger.log(`Processing event participation update for user: ${userId}, event: ${eventId} using transcript`);
-        
-        const participation = await this.participationRepository.findOne({ 
-            where: { userId, eventId } 
-        });
-        
-        if (!participation) {
-            throw new NotFoundException(`Event participation for user ${userId} and event ${eventId} not found`);
-        }
-        
-        const eventContextSchema = { 
-            type: 'object', 
-            properties: { 
-                goals: { type: 'array', items: { type: 'string' } }, 
-                availability: { type: 'string' } 
-            }, 
-            required: ['goals'] 
-        };
-        
-        const extractedEventData = await this.contentExtractionService.extractStructuredDataFromText<any>(
-            transcriptText,
-            eventContextSchema
-        );
             
-        participation.contextData = extractedEventData;
-        return this.save(participation);
+            if (events.length > 0) {
+                this.logger.log(`Found first event with ID: ${events[0].id}`);
+                return events[0]; // Return the first event found
+            } else {
+                this.logger.warn('No events found in the database.');
+                return null; // No events exist
+            }
+        } catch (error) {
+             const message = error instanceof Error ? error.message : 'Unknown database error';
+             this.logger.error(`Failed to find first available event: ${message}`, error instanceof Error ? error.stack : undefined);
+             // Depending on requirements, you might want to throw an exception or return null
+             // Throwing InternalServerErrorException for unexpected DB errors
+             throw new InternalServerErrorException('Could not retrieve the first event.');
+        }
+    }
+
+    async createInitialParticipation(
+        userId: string,
+        eventId: string,
+        userContext: string,
+    ): Promise<EventParticipation> {
+        this.logger.log(`Creating initial participation for user ${userId} in event ${eventId}`);
+        // Use direct IDs assuming columns userId and eventId exist on EventParticipation
+        const newParticipation = this.eventParticipationRepository.create({
+            userId: userId,
+            eventId: eventId,
+            contextData: { initialContext: userContext },
+            // status: EventParticipationStatus.INITIALIZED // Set initial status
+        });
+        return this.eventParticipationRepository.save(newParticipation);
+    }
+
+    async processParticipationUpdate(
+        userId: string,
+        eventId: string,
+        transcript: string,
+    ): Promise<EventParticipation> {
+        this.logger.log(`Processing participation update for user ${userId}, event ${eventId}`);
+        let participation = await this.eventParticipationRepository.findOne({
+            // Correct: Use direct IDs in where clause
+            where: { userId: userId, eventId: eventId },
+        });
+
+        if (!participation) {
+            this.logger.warn(`No existing participation found for user ${userId}, event ${eventId}. Creating new.`);
+            participation = await this.createInitialParticipation(userId, eventId, 'Created during transcript update.');
+        }
+
+        this.logger.log(`Updating context data for participation ${participation.id}`);
+        // TODO: Implement actual LLM/data processing
+        const updatedData = {
+            ...(participation.contextData as object || {}),
+            transcript: transcript,
+            processedGoals: ["Example Goal 1", "Example Goal 2"],
+            processedAvailability: "Example Availability"
+        };
+
+        participation.contextData = updatedData;
+        // participation.status = EventParticipationStatus.COMPLETED; // Update status
+
+        return this.eventParticipationRepository.save(participation);
     }
 
     // New method to find event and optionally the user's participation
@@ -136,7 +137,7 @@ export class EventService {
             let participation: EventParticipation | null = null;
             if (userId) {
                 // Attempt to find participation only if userId is provided
-                participation = await this.participationRepository.findOne({
+                participation = await this.eventParticipationRepository.findOne({
                     where: { userId: userId, eventId: eventId },
                     // No need to load event relation again here
                 });

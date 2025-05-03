@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
-import StartOnboardingButton from './StartOnboardingButton';
-import RecordingIndicator from './RecordingIndicator';
+import React, { useState, useEffect } from 'react';
+// import RecordingIndicator from './RecordingIndicator'; // No longer needed here
+import apiClient from '../lib/apiClient';
+import AudioRecorder from './AudioRecorder';
+import { AxiosError } from 'axios';
 
 type DisplayState = 'initial' | 'recording' | 'processing' | 'error' | 'success';
 
 interface StartOnboardingViewProps {
+    eventId: string;
     onOnboardingStarted?: () => void;
     onOnboardingComplete?: () => void;
     onOnboardingError?: (error: string) => void;
@@ -12,34 +15,78 @@ interface StartOnboardingViewProps {
 }
 
 const StartOnboardingView: React.FC<StartOnboardingViewProps> = ({
+    eventId,
     onOnboardingStarted,
     onOnboardingComplete,
     onOnboardingError,
     hints = [],
 }) => {
-
     const [onboardingState, setOnboardingState] = useState<DisplayState>('initial');
+    const [error, setError] = useState<string | null>(null);
 
-    const isButtonDisabled = onboardingState === 'processing' || onboardingState === 'success' || onboardingState === 'error';
-
-    const handleStartClick = () => {
-        onOnboardingStarted?.()
-        setOnboardingState("recording")
+    const handleRecordingError = (recorderError: string) => {
+        const fullError = `Recording Error: ${recorderError}`;
+        setError(fullError);
+        setOnboardingState('error');
+        onOnboardingError?.(fullError);
     };
 
-    const handleStopClick = () => {
-        if (onboardingState === 'recording') {
+    const handleRecordingComplete = async (audioBlob: Blob) => {
+        setOnboardingState('processing');
+        setError(null);
+        onOnboardingStarted?.();
+
+        try {
+            // 1. Initiate Onboarding
+            const initiateResponse = await apiClient.post('/onboarding/initiate', {
+                event_id: eventId
+            });
+            const { onboarding_id, s3_key, upload_url } = initiateResponse.data;
+
+            if (!onboarding_id || !s3_key || !upload_url) {
+                throw new Error('Invalid response from initiation endpoint.');
+            }
+
+            // 2. Upload Audio to S3
+            const uploadResponse = await fetch(upload_url, {
+                 method: 'PUT',
+                 body: audioBlob,
+                 headers: { 'Content-Type': audioBlob.type || 'audio/webm' }
+            });
+            if (!uploadResponse.ok) {
+                throw new Error(`S3 upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
+            }
+
+            // 3. Notify Backend
+            await apiClient.post(`/onboarding/${onboarding_id}/notify-upload`, {
+                s3_key: s3_key
+            });
+
+            // Success
+            setOnboardingState('success');
             onOnboardingComplete?.();
-            setOnboardingState('processing');
-        }
+            setError(null);
 
-        // todo call /initiate, get upload url in response and use this to upload the audio and then call /notify-upload and wait for the response
-        // once response is obtained handle it as success or error and switch the state accordingly 
+        } catch (err: any) {
+            let apiErrorMessage = 'An unknown error occurred during processing.';
+             if (err instanceof AxiosError) {
+                 apiErrorMessage = `API Error: ${err.response?.data?.message || err.message} (Status: ${err.response?.status || 'N/A'})`;
+             } else if (err instanceof Error) {
+                 apiErrorMessage = err.message;
+             }
+            const fullError = `Processing failed: ${apiErrorMessage}`;
+            setError(fullError);
+            setOnboardingState('error');
+            onOnboardingError?.(fullError);
+        }
     };
 
-    const showRecordingIndicator = onboardingState === 'recording' || onboardingState === 'processing';
-    
-    const showButton = onboardingState !== 'success';
+    // Determine which high-level elements to show
+    // AudioRecorder handles its own internal states (idle, recording, stopped, recorder-error)
+    const showRecorder = onboardingState === 'initial' || onboardingState === 'error';
+    const showSuccess = onboardingState === 'success';
+    // Processing indicator is now INSIDE AudioRecorder, triggered by isProcessing prop
+    // Error message is shown below the recorder if the overall state is error
 
     return (
         <div style={styles.container}>
@@ -54,45 +101,36 @@ const StartOnboardingView: React.FC<StartOnboardingViewProps> = ({
                                     ...(onboardingState === 'success' ? styles.checkedMarker : styles.uncheckedMarker)
                                 }}
                             >
-                                {onboardingState === 'success' && '✓'} {/* Checkmark inside the marker on success */}
+                                {onboardingState === 'success' && '✓'}
                             </span>
-                            <span>{hint}</span> {/* Hint text in its own span */}
+                            <span>{hint}</span>
                         </li>
                     ))}
                 </ul>
             )}
 
-            {/* Button */}
-            {showButton && (
-                <StartOnboardingButton
-                    text={onboardingState === 'recording' ? "Stop Recording" : "Start Recording"}
-                    disabled={isButtonDisabled}
-                    onClick={onboardingState === 'recording' ? handleStopClick : handleStartClick}
-                />
-            )}
+            {/* Recorder Area (conditionally renders based on overall state) */}
+            {/* Pass processing state down to the recorder */}
+            <AudioRecorder
+                isProcessing={onboardingState === 'processing'}
+                onRecordingComplete={handleRecordingComplete}
+                onRecordingError={handleRecordingError}
+            />
 
-            {/* Indicator */}
-            {showRecordingIndicator && (
-                <RecordingIndicator
-                    isRecording={onboardingState === 'recording'}
-                    isProcessing={onboardingState === 'processing'}
-                    // recordingTime is managed internally by RecordingIndicator
-                />
-            )}
-
-            {/* Error Message */}
+            {/* Error Message (Show only overall processing/API errors here) */}
             {onboardingState === 'error' && error && (
-                <div style={styles.error}>{error}</div>
+                <div style={styles.error}>{error}</div> // Shows recording or processing errors
             )}
 
             {/* Success Message */}
-            {onboardingState === 'success' && (
+            {showSuccess && (
                 <div style={styles.success}>Success! Your information has been processed.</div>
             )}
         </div>
     );
 };
 
+// Styles remain the same
 const styles: { [key: string]: React.CSSProperties } = {
     container: {
         display: 'flex',
@@ -102,43 +140,41 @@ const styles: { [key: string]: React.CSSProperties } = {
         width: '100%'
     },
     hints: {
-        listStyleType: 'none', // Remove default bullets
-        padding: 0, // Remove default padding
+        listStyleType: 'none',
+        padding: 0,
         margin: '0 auto 15px auto',
         textAlign: 'left',
         width: '100%',
         maxWidth: '400px'
     },
     hintItem: {
-        display: 'flex', // Use flex to align marker and text
+        display: 'flex',
         alignItems: 'center',
-        gap: '10px', // Space between marker and text
+        gap: '10px',
         marginBottom: '10px',
         color: '#333',
         fontSize: '16px',
         lineHeight: '1.5'
     },
-    marker: { // Base style for the marker span
-        display: 'inline-flex', // Use flex for centering checkmark inside
+    marker: {
+        display: 'inline-flex',
         justifyContent: 'center',
         alignItems: 'center',
         width: '10px',
         height: '10px',
-        borderRadius: '50%', // Make it circular
-        border: '2px solid #ccc', // Default border
-        flexShrink: 0, // Prevent marker from shrinking
-        fontSize: '12px', // Size for the checkmark
+        borderRadius: '50%',
+        border: '2px solid #ccc',
+        flexShrink: 0,
+        fontSize: '12px',
         fontWeight: 'bold'
     },
     uncheckedMarker: {
-        // Specific styles for unchecked state (mostly covered by base marker style)
         backgroundColor: '#fff'
     },
     checkedMarker: {
-        // Specific styles for checked state
-        backgroundColor: '#4CAF50', // Green background
-        borderColor: '#4CAF50', // Green border
-        color: '#fff' // White checkmark
+        backgroundColor: '#4CAF50',
+        borderColor: '#4CAF50',
+        color: '#fff'
     },
     error: {
         color: '#f44336',
