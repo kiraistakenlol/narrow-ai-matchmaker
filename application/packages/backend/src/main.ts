@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { Logger } from '@nestjs/common';
 import { GlobalHttpExceptionFilter } from './common/filters/http-exception.filter';
+import { ApiResponseInterceptor } from './common/interceptors/api-response.interceptor';
 // import * as bodyParser from 'body-parser'; // Remove import if no longer needed
 
 async function bootstrap() {
@@ -21,6 +22,7 @@ async function bootstrap() {
 
     app.setGlobalPrefix('api/v1'); // Set global API prefix
     app.useGlobalFilters(new GlobalHttpExceptionFilter()); // Apply the filter globally
+    app.useGlobalInterceptors(new ApiResponseInterceptor()); // Apply the interceptor globally
 
     // app.use(bodyParser.raw({ type: '*/*', limit: '50mb' })); // REMOVE THIS LINE
 

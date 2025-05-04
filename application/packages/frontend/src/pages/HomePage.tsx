@@ -3,7 +3,7 @@ import {useAppDispatch, useAppSelector} from '../hooks/hooks';
 import {selectAuthStatus, selectAuthUser, signInWithGoogle, signOutUser, checkAuth} from '../state/slices/authSlice';
 import SigninOrOnboardView from '../components/SigninOrOnboardView';
 import apiClient from '../lib/apiClient';
-import {OnboardingSessionDto, ApiResponse} from '@narrow-ai-matchmaker/common';
+import {OnboardingSessionDto} from '@narrow-ai-matchmaker/common';
 import OnboardingInputView from '../components/OnboardingInputView';
 
 function HomePage() {
@@ -35,16 +35,18 @@ function HomePage() {
                 let fetchError: string | undefined = undefined;
 
                 try {
-                    const response = await apiClient.get<ApiResponse<OnboardingSessionDto>>('/onboarding');
-                    fetchedSession = response.data.data;
+                    const response = await apiClient.get<OnboardingSessionDto | null>('/onboarding');
+                    fetchedSession = response.data;
+                    console.log('HomePage: fetchedSession', fetchedSession);
                     if (fetchedSession === null) {
                         console.log('No onboarding session found (API returned null data).');
                     }
+                    setOnboardingSession(fetchedSession);
+
                 } catch (err: any) {
                     fetchError = `Failed to fetch onboarding session: ${err.response?.data?.message || err.message}`;
                     console.error(fetchError);
                 } finally {
-                    setOnboardingSession(fetchedSession);
                     setShowOnboardingInput(fetchedSession === null || (!!fetchedSession && fetchedSession.status === 'NEEDS_CLARIFICATION'));
                     setError(fetchError);
                     setIsLoadingSession(false);
@@ -72,8 +74,8 @@ function HomePage() {
             const poll = async () => {
                 try {
                     console.log(`Polling status for ${onboardingSession?.id}...`);
-                    const response = await apiClient.get<ApiResponse<OnboardingSessionDto>>('/onboarding');
-                    const currentSessionData = response.data.data;
+                    const response = await apiClient.get<OnboardingSessionDto | null>('/onboarding');
+                    const currentSessionData = response.data;
                     if (JSON.stringify(currentSessionData) !== JSON.stringify(onboardingSession)) {
                         setOnboardingSession(currentSessionData);
                         if (currentSessionData?.status === 'COMPLETED' || currentSessionData?.status === 'NEEDS_CLARIFICATION') {
@@ -121,8 +123,9 @@ function HomePage() {
         const fetchSessionNow = async () => {
             setIsLoadingSession(true);
             try {
-                const response = await apiClient.get<ApiResponse<OnboardingSessionDto>>('/onboarding');
-                setOnboardingSession(response.data.data);
+                const response = await apiClient.get<OnboardingSessionDto | null>('/onboarding');
+                const sessionData = response.data;
+                setOnboardingSession(sessionData);
                 setError(undefined);
             } catch (err: any) {
                 const sessionError = `Failed to re-fetch session after onboarding: ${err.response?.data?.message || err.message}`;
@@ -175,18 +178,17 @@ function HomePage() {
                 <p style={styles.errorText}>Error: {error}</p>
             )}
 
-            {user.profile && (
+            {user && (
                 <div style={{marginTop: '20px'}}>
-                    <h3>User Profile:</h3>
+                    <h3>User Object:</h3>
                     <pre style={styles.jsonOutput}>
-                        {JSON.stringify(user.profile, null, 2)}
+                        {JSON.stringify(user, null, 2)}
                     </pre>
                 </div>
             )}
-            {!user.profile && <p style={{marginTop: '20px'}}>Profile data not yet available.</p>}
 
             <div style={{marginTop: '20px'}}>
-                <h3>Onboarding Status:</h3>
+                <h3>Onboarding</h3>
                 {isLoadingSession && <p>Loading session info...</p>}
 
                 {!isLoadingSession && onboardingSession && (
@@ -200,7 +202,6 @@ function HomePage() {
 
                 {!isLoadingSession && showOnboardingInput && (
                     <div style={styles.onboardingPrompt}>
-                        <p>Action Required:</p>
                         <OnboardingInputView
                             onboardingId={onboardingSession?.id}
                             eventId={onboardingSession?.eventId ?? undefined}

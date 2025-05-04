@@ -44,6 +44,7 @@ export const checkAuth = createAsyncThunk<
 
     try {
         const response = await apiClient.get<UserDto>('/users/me');
+        console.log('Auth check: /users/me response:', response);
         const userData = response.data;
 
         if (!userData.id || typeof userData.email === 'undefined') {

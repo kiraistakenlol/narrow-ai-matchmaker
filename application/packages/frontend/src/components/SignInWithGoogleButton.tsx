@@ -12,16 +12,6 @@ function SignInWithGoogleButton({disabled = false, onClick = () => {}}: SignInWi
     
     const handleSignInClick = async () => {
         try {
-            // 1. Attempt sign out first
-            console.log('SignInButton: Attempting sign out...');
-            await dispatch(signOutUser()).unwrap();
-            console.log('SignInButton: Sign out successful.');
-        } catch (signOutError) {
-            // Log the sign-out error but proceed anyway
-            console.warn('SignInButton: Sign out failed or user was not signed in, proceeding with sign in attempt.', signOutError);
-        }
-        
-        try {
              // 2. Attempt sign in with Google
             console.log('SignInButton: Dispatching signInWithGoogle...');
             await dispatch(signInWithGoogle()).unwrap();

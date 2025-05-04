@@ -31,37 +31,31 @@ export class OnboardingController {
     }
 
     @Get()
-    @HttpCode(HttpStatus.OK)
     async getCurrentUserOnboarding(
         @CurrentUser() user: CognitoIdTokenPayload,
         @Query(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
         query: GetMyOnboardingQueryDto
-    ): Promise<ApiResponse<OnboardingSessionDto>> {
+    ): Promise<OnboardingSessionDto | null> {
         const externalUserId = user.sub;
         this.logger.log(`Fetching latest onboarding session for external user ${externalUserId}` + (query.event_id ? ` for event ${query.event_id}` : ''));
 
-        try {
-            const session = await this.onboardingService.findLatestUserOnboardingSessionByExternalId(externalUserId, query.event_id);
+        const session = await this.onboardingService.findLatestUserOnboardingSessionByExternalId(externalUserId, query.event_id);
 
-            const sessionDto: OnboardingSessionDto = {
-                id: session.id,
-                eventId: session.eventId,
-                status: session.status,
-                createdAt: session.createdAt.toISOString(),
-                updatedAt: session.updatedAt.toISOString(),
-            };
-
-            return new ApiResponse(sessionDto);
-        } catch (error) {
-            if (error instanceof NotFoundException) {
-                this.logger.log(`No matching onboarding session found for user ${externalUserId}, returning OK with null data.`);
-                return new ApiResponse<OnboardingSessionDto>(null);
-            }
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            const errorStack = error instanceof Error ? error.stack : undefined;
-            this.logger.error(`Unexpected error fetching onboarding session for user ${externalUserId}: ${errorMessage}`, errorStack);
-            throw error;
+        console.log('OnboardingController: session', session);
+        
+        if (!session) {
+            return null;
         }
+
+        const sessionDto: OnboardingSessionDto = {
+            id: session.id,
+            eventId: session.eventId,
+            status: session.status,
+            createdAt: session.createdAt.toISOString(),
+            updatedAt: session.updatedAt.toISOString(),
+        };
+
+        return sessionDto;
     }
 
     @Post(':onboarding_id/audio-upload-url')

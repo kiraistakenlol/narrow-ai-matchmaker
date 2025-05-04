@@ -22,14 +22,6 @@ const createDefaultEmptyProfileData = (): ProfileData => ({
     industries: [],
     hobbies: [],
     roles: [],
-    // Need a default EventContext, assuming a placeholder ID initially
-    event_context: {
-        event_id: 'initial_placeholder', // Or consider making EventContext nullable if appropriate
-        goals: {
-            looking_for: [],
-            offering: [],
-        },
-    },
     extra_notes: null,
 });
 
