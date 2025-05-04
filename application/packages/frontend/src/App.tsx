@@ -2,6 +2,7 @@ import {BrowserRouter as Router, Navigate, Route, Routes,} from 'react-router-do
 import { useAuthListener } from './hooks/useAuthListener';
 import HomePage from './pages/HomePage';
 import EventPage from './pages/EventPage';
+import DevPage from './pages/DevPage';
 
 function App() {
     useAuthListener();
@@ -14,6 +15,9 @@ function App() {
 
                 {/* Event detail page */}
                 <Route path="/event/:id" element={<EventPage />} />
+
+                {/* Developer Playground */}
+                <Route path="/dev" element={<DevPage />} />
 
                 {/* Catch-all route: Redirects any unmatched path to Home */}
                 <Route path="*" element={<Navigate to="/" replace />} />

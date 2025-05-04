@@ -14,6 +14,7 @@ import { ContentExtractionModule } from './content-extraction/content-extraction
 import { AuthModule } from './auth/auth.module';
 import { AuthMiddleware } from './common/middleware/auth.middleware';
 import { JwtModule } from '@nestjs/jwt';
+import { DevModule } from './dev/dev.module';
 
 @Module({
     imports: [
@@ -60,6 +61,7 @@ import { JwtModule } from '@nestjs/jwt';
         OnboardingModule,
         ContentExtractionModule,
         AuthModule,
+        DevModule,
     ],
     controllers: [HealthController],
     providers: [],
