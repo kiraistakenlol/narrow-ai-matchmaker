@@ -6,7 +6,7 @@ import apiClient from '../../lib/apiClient';
 import {AxiosError} from 'axios';
 
 
-export type AuthStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
+export type AuthStatus = 'not-signed-in' | 'loading' | 'succeeded' | 'failed';
 
 interface AuthState {
     user: UserDto | null;
@@ -17,7 +17,7 @@ interface AuthState {
 
 const initialState: AuthState = {
     user: null,
-    status: 'idle',
+    status: 'not-signed-in',
     error: null,
     isOnboarded: false,
 };
@@ -44,7 +44,6 @@ export const checkAuth = createAsyncThunk<
 
     try {
         const response = await apiClient.get<UserDto>('/users/me');
-        console.log('Auth check: /users/me response:', response);
         const userData = response.data;
 
         if (!userData.id || typeof userData.email === 'undefined') {
@@ -98,6 +97,13 @@ export const authSlice = createSlice({
         // Optional: Add specific reducers if needed, e.g., clearError
         clearAuthError: (state) => {
             state.error = null;
+        },
+        // New reducer to reset state to initial (not-signed-in) values
+        resetAuth: (state) => {
+            state.user = null;
+            state.status = 'not-signed-in';
+            state.error = null;
+            state.isOnboarded = false;
         }
     },
     extraReducers: (builder) => {
@@ -118,7 +124,7 @@ export const authSlice = createSlice({
                     state.error = null;
                 } else {
                     // No session found, user is not logged in
-                    state.status = 'idle'; // Set to idle instead of failed
+                    state.status = 'not-signed-in'; // Set to not-signed-in instead of failed
                     state.user = null;
                     state.isOnboarded = false;
                     state.error = null; // No error, just not logged in
@@ -138,8 +144,8 @@ export const authSlice = createSlice({
                 state.isOnboarded = false;
             })
             .addCase(signInWithGoogle.rejected, (state, action) => {
-                // If sign-in initiation fails, return to idle, show error
-                state.status = 'idle'; 
+                // If sign-in initiation fails, return to not-signed-in, show error
+                state.status = 'not-signed-in'; 
                 state.error = (action.payload as string) ?? 'Google sign-in failed'; 
                 state.isOnboarded = false;
             })
@@ -151,13 +157,13 @@ export const authSlice = createSlice({
                 state.error = null;
             })
             .addCase(signOutUser.fulfilled, (state) => {
-                state.status = 'idle';
+                state.status = 'not-signed-in';
                 state.user = null;
                 state.error = null;
                 state.isOnboarded = false;
             })
             .addCase(signOutUser.rejected, (state, action) => {
-                state.status = 'idle'; // Or maybe 'failed'? Let's stick to idle for now.
+                state.status = 'not-signed-in'; // Or maybe 'failed'? Let's stick to not-signed-in for now.
                 state.user = null; // Assume sign out happened despite error, or state is uncertain
                 state.error = (action.payload as string) ?? 'Sign out failed'; 
                 state.isOnboarded = false;
@@ -166,7 +172,7 @@ export const authSlice = createSlice({
 });
 
 // --- Export Actions and Selectors --- 
-export const { clearAuthError } = authSlice.actions;
+export const { clearAuthError, resetAuth } = authSlice.actions;
 
 // 5. Selector return type is now AuthUser | null
 export const selectAuthUser = (state: RootState) => state.auth.user;
@@ -177,5 +183,7 @@ export const selectIsOnboarded = (state: RootState) => state.auth.isOnboarded;
 // Updated isAuthenticated to also check onboarding status?
 // No, keep isAuthenticated separate - it just means logged in.
 export const selectIsAuthenticated = (state: RootState) => state.auth.status === 'succeeded' && !!state.auth.user;
+
+export const selectAuthState = (state: RootState) => state.auth;
 
 export default authSlice.reducer; 

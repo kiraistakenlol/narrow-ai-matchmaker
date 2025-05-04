@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../hooks/hooks';
-import {selectAuthStatus, selectAuthUser, signInWithGoogle, signOutUser, checkAuth} from '../state/slices/authSlice';
+import {selectAuthStatus, selectAuthUser, signInWithGoogle, signOutUser, selectAuthState} from '../state/slices/authSlice';
 import SigninOrOnboardView from '../components/SigninOrOnboardView';
 import apiClient from '../lib/apiClient';
 import {OnboardingSessionDto} from '@narrow-ai-matchmaker/common';
@@ -115,7 +115,6 @@ function HomePage() {
     };
 
     const handleSignIn = () => {
-        dispatch(signInWithGoogle());
     };
 
     const handleOnboardingComplete = () => {

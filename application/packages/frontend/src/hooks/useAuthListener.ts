@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Hub } from 'aws-amplify/utils';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { useAppDispatch } from './hooks';
-import { checkAuth, signOutUser } from '../state/slices/authSlice';
+import { checkAuth, resetAuth } from '../state/slices/authSlice';
 import apiClient from '../lib/apiClient';
 import { UserDto } from '@narrow-ai-matchmaker/common';
 
@@ -50,7 +50,7 @@ export function useAuthListener() {
 
                 case 'signedOut':
                     console.log('Amplify Hub: signedOut event detected.');
-                    dispatch(signOutUser());
+                    dispatch(resetAuth());
                     break;
 
                 case 'signInWithRedirect_failure':
