@@ -1,26 +1,14 @@
-1. **Event participation needs a status** like "joined," "initialized," or something similar. These statuses help us check if the user has filled in all the info that the event needs (different events might ask for different things). It's kinda like how the profile works — we've got a profile template, and until the user completes it, it's not marked as done.
+## Done
 
-For the first step, let's keep it simple and just treat any info in the event participation as "completed."
+*   Refactored authentication flow to handle backend user creation sync and `UserAlreadyAuthenticatedException`.
+*   Implemented global API response wrapper (`ApiResponse`) and interceptor for consistent backend responses (200 OK with `data: null` for not found).
+*   Updated frontend API client to handle the wrapped response.
+*   Created `/dev` page and backend service/controller for developer operations (initially database cleanup).
 
-2. Also, the onboarding block should actually kick off the onboarding flow.
-   I want to think through how the flow might be different between general profile onboarding and joining an event.
-   Maybe for now, I'll just focus on getting the full flow working for the general profile — like when someone visits the main page but their profile's not done yet.
+## TODO
 
-**Final note:** Yeah, go ahead and start with building out the onboarding flow for the general user profile.
-
-done:
-
-*   implemented 5 different state in Start onboardin view 
-*   extracted audio recording logic to `AudioRecorder.tsx`
-*   created centralized `apiClient.ts` with auth interceptor
-*   refactored `StartOnboardingView.tsx` to use `AudioRecorder` and `apiClient`
-*   implemented onboarding API happy path (`initiate`, upload, `notify`) in `StartOnboardingView`
-*   made `event_id` optional in backend `/onboarding/initiate`, defaulting to first event
-
-Todo;
-
-*   now use this component in home and event pages
-*   if user is authenticated, use their existing ID for onboarding instead of creating a new one (update backend logic and `@sequence_onboarding.mmd`)
-*   if user is anonymous, ensure the flow prompts for signup/login after audio submission to connect the onboarding session to the authenticated user (clarify in `@sequence_onboarding.mmd`)
-*   adjust frontend (`StartOnboardingView`, pages) to handle truly optional event context (don't always pass eventId if not relevant)
-*   remove the backend default behavior of using the "first available event" when no `event_id` is provided. Require event context explicitly if onboarding is event-specific.
+*   Implement profile quality assessment and provide dynamic hints/guidance to the user.
+    *   Goal: If **the** profile isn't sufficient (initially based on onboarding status like `NEEDS_CLARIFICATION`), inform the user what's missing.
+    *   Idea: Create a backend endpoint (e.g., `GET /onboarding/guidance`) that returns the current onboarding session *and* context-specific hints.
+    *   First Step: Backend returns hardcoded hints based on onboarding status (e.g., initial hints if no session, clarification hints if `NEEDS_CLARIFICATION`).
+    *   Frontend: `HomePage` calls this new endpoint, extracts hints, and passes them to `OnboardingInputView`.
