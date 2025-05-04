@@ -44,12 +44,5 @@
         "active": true
       }
     ],
-    "event_context": {
-      "event_id": "<TechConf2025>",
-      "goals": {
-        "looking_for": [],
-        "offering": []
-      }
-    },
     "extra_notes": null
   }

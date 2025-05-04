@@ -246,29 +246,6 @@ schema = {
                 "additionalProperties": False
             }
         },
-        "event_context": {
-            "type": "object",
-            "properties": {
-                "event_id": {"type": "string"},
-                "goals": {
-                    "type": "object",
-                    "properties": {
-                        "looking_for": {
-                            "type": "array",
-                            "items": {"type": "string", "enum": load_enum_values("goals.looking_for")}
-                        },
-                        "offering": {
-                            "type": "array",
-                            "items": {"type": "string", "enum": load_enum_values("goals.offering")}
-                        }
-                    },
-                    "required": ["looking_for", "offering"],
-                    "additionalProperties": False
-                }
-            },
-            "required": ["event_id", "goals"],
-            "additionalProperties": False
-        },
         "extra_notes": {"type": ["string", "null"]}
     },
     "required": [

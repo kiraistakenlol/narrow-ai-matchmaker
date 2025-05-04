@@ -67,7 +67,8 @@ export class AwsTranscribeService {
             const transcriptText = await this.pollForTranscriptionResult(jobId);
             
             this.logger.log(`Transcription completed for audio: ${s3Key}`);
-            return "I'm an experienced software engineer with a passion for building scalable and efficient systems. I'm currently working as a Senior Software Engineer at Amazon, where I'm responsible for developing and maintaining our core search platform. I'm also a member of the AWS AI team, where I'm working on building new AI services for our customers.";
+    
+            return transcriptText;
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Unknown transcription error';
             this.logger.error(`Failed to transcribe audio ${s3Key}: ${message}`, error instanceof Error ? error.stack : undefined);

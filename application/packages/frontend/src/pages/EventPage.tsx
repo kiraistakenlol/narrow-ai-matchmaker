@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {useParams} from 'react-router-dom';
 import {JoinedEventDto} from '@narrow-ai-matchmaker/common';
-import {useAppDispatch, useAppSelector} from '../state/hooks';
+import {useAppDispatch, useAppSelector} from '../hooks/hooks';
 import {selectAuthUser, selectIsOnboarded, signInWithGoogle,} from '../state/slices/authSlice';
 import SigninOrOnboardView from '../components/SigninOrOnboardView';
 import apiClient from '../lib/apiClient';

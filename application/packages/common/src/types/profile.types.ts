@@ -71,6 +71,5 @@ export interface ProfileData {
     industries: string[];
     hobbies: string[];
     roles: Role[];
-    event_context: EventContext;
     extra_notes: string | null;
 } 

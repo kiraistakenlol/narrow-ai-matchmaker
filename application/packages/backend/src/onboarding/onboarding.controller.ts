@@ -1,6 +1,6 @@
 import { Controller, Post, Body, HttpCode, HttpStatus, ValidationPipe, Param, ParseUUIDPipe, Logger, Get, Query, NotFoundException } from '@nestjs/common';
 import { OnboardingService } from './onboarding.service';
-import { InitiateOnboardingRequestDto, InitiateOnboardingResponseDto, OnboardingSessionDto, PresignedUrlResponseDto } from '@narrow-ai-matchmaker/common';
+import { InitiateOnboardingRequestDto, InitiateOnboardingResponseDto, OnboardingSessionDto, PresignedUrlResponseDto, ApiResponse } from '@narrow-ai-matchmaker/common';
 import { NotifyUploadRequestDto, OnboardingStatusResponseDto } from './dto/notify-upload.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { CognitoIdTokenPayload } from '../common/types/auth.types';
@@ -31,29 +31,37 @@ export class OnboardingController {
     }
 
     @Get()
+    @HttpCode(HttpStatus.OK)
     async getCurrentUserOnboarding(
-        @CurrentUser() currentUser: CognitoIdTokenPayload,
-        @Query(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true })) 
+        @CurrentUser() user: CognitoIdTokenPayload,
+        @Query(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
         query: GetMyOnboardingQueryDto
-    ): Promise<OnboardingSessionDto> {
-        const externalUserId = currentUser.sub;
-        
+    ): Promise<ApiResponse<OnboardingSessionDto>> {
+        const externalUserId = user.sub;
         this.logger.log(`Fetching latest onboarding session for external user ${externalUserId}` + (query.event_id ? ` for event ${query.event_id}` : ''));
-        const session = await this.onboardingService.findLatestUserOnboardingSessionByExternalId(externalUserId, query.event_id);
-        
-        if (!session) {
-            throw new NotFoundException('No matching onboarding session found for the current user.');
+
+        try {
+            const session = await this.onboardingService.findLatestUserOnboardingSessionByExternalId(externalUserId, query.event_id);
+
+            const sessionDto: OnboardingSessionDto = {
+                id: session.id,
+                eventId: session.eventId,
+                status: session.status,
+                createdAt: session.createdAt.toISOString(),
+                updatedAt: session.updatedAt.toISOString(),
+            };
+
+            return new ApiResponse(sessionDto);
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                this.logger.log(`No matching onboarding session found for user ${externalUserId}, returning OK with null data.`);
+                return new ApiResponse<OnboardingSessionDto>(null);
+            }
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            const errorStack = error instanceof Error ? error.stack : undefined;
+            this.logger.error(`Unexpected error fetching onboarding session for user ${externalUserId}: ${errorMessage}`, errorStack);
+            throw error;
         }
-
-        const sessionDto: OnboardingSessionDto = {
-            id: session.id,
-            eventId: session.eventId,
-            status: session.status,
-            createdAt: session.createdAt.toISOString(),
-            updatedAt: session.updatedAt.toISOString(),
-        };
-
-        return sessionDto;
     }
 
     @Post(':onboarding_id/audio-upload-url')
