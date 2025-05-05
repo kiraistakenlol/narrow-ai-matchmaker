@@ -16,11 +16,13 @@ export const configValidationSchema = Joi.object({
     // Audio Storage (S3 Only)
     AWS_S3_BUCKET_AUDIO: Joi.string().required(),
 
-    // Transcription Service (AWS Only)
-    AWS_REGION: Joi.string().required(),
-    AWS_ACCESS_KEY_ID: Joi.string().optional(),
-    AWS_SECRET_ACCESS_KEY: Joi.string().optional(),
-    AWS_TRANSCRIBE_OUTPUT_BUCKET: Joi.string().required(),
+    // Transcription Service
+    TRANSCRIPTION_PROVIDER: Joi.string().valid('aws', 'test').default('aws'),
+    // AWS Transcription
+    AWS_REGION: Joi.string().when('TRANSCRIPTION_PROVIDER', { is: 'aws', then: Joi.required() }),
+    AWS_ACCESS_KEY_ID: Joi.string().when('TRANSCRIPTION_PROVIDER', { is: 'aws', then: Joi.required() }),
+    AWS_SECRET_ACCESS_KEY: Joi.string().when('TRANSCRIPTION_PROVIDER', { is: 'aws', then: Joi.required() }),
+    AWS_TRANSCRIBE_OUTPUT_BUCKET: Joi.string().when('TRANSCRIPTION_PROVIDER', { is: 'aws', then: Joi.required() }),
     AWS_TRANSCRIBE_ROLE_ARN: Joi.string().optional(),
 
     // LLM Provider

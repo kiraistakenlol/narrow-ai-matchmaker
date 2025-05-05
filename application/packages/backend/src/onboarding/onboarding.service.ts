@@ -1,4 +1,4 @@
-import { Injectable, Logger, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, InternalServerErrorException, NotFoundException, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OnboardingSession, OnboardingStatus } from './entities/onboarding-session.entity';
@@ -9,10 +9,10 @@ import { ProfileService } from '@backend/profiles/profiles.service';
 import { EventService } from '@backend/events/events.service';
 import { Profile } from '@backend/profiles/entities/profile.entity';
 import { EventParticipation } from '@backend/events/entities/event-participation.entity';
-import { AwsTranscribeService } from '@backend/transcription/aws-transcribe.service';
 import { Event } from '@backend/events/entities/event.entity';
 import { ProfileValidationService } from '../profile-validation/profile-validation.service';
 import { User } from '@backend/users/entities/user.entity';
+import { ITranscriptionService } from '../transcription/transcription.interface';
 
 @Injectable()
 export class OnboardingService {
@@ -25,7 +25,8 @@ export class OnboardingService {
         private readonly userService: UserService,
         private readonly profileService: ProfileService,
         private readonly eventService: EventService,
-        private readonly transcriptionService: AwsTranscribeService,
+        @Inject('ITranscriptionService')
+        private readonly transcriptionService: ITranscriptionService,
         private readonly profileValidationService: ProfileValidationService,
     ) {}
 

@@ -15,6 +15,7 @@ export default () => ({
         s3Bucket: process.env.AWS_S3_BUCKET_AUDIO,
     },
     transcription: {
+        provider: process.env.TRANSCRIPTION_PROVIDER || 'aws',
         aws: {
             region: process.env.AWS_REGION,
             accessKeyId: process.env.AWS_ACCESS_KEY_ID,

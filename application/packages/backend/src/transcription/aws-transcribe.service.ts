@@ -10,9 +10,10 @@ import {
 } from '@aws-sdk/client-transcribe';
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { Readable } from 'stream';
+import { ITranscriptionService } from './transcription.interface';
 
 @Injectable()
-export class AwsTranscribeService {
+export class AwsTranscribeService implements ITranscriptionService {
     private readonly logger = new Logger(AwsTranscribeService.name);
     private readonly transcribeClient: TranscribeClient;
     private readonly s3Client: S3Client;
