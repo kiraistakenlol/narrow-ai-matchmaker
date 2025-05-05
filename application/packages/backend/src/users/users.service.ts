@@ -109,4 +109,18 @@ export class UserService {
         });
         return user;
     }
+
+    /**
+     * Saves a User entity to the database.
+     */
+    async save(user: User): Promise<User> {
+        this.logger.log(`Saving user with ID: ${user.id}`);
+        try {
+            return await this.userRepository.save(user);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown database error';
+            this.logger.error(`Failed to save user ${user.id}: ${message}`, error instanceof Error ? error.stack : undefined);
+            throw new InternalServerErrorException(`Could not save user ${user.id}.`);
+        }
+    }
 } 

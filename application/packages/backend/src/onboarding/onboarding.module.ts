@@ -11,6 +11,7 @@ import { Profile } from '@backend/profiles/entities/profile.entity';
 import { EventParticipation } from '@backend/events/entities/event-participation.entity';
 import { AudioStorageModule } from '@backend/audio-storage/audio-storage.module';
 import { TranscriptionModule } from '@backend/transcription/transcription.module';
+import { ProfileValidationModule } from '../profile-validation/profile-validation.module';
 
 @Module({
     imports: [
@@ -25,6 +26,7 @@ import { TranscriptionModule } from '@backend/transcription/transcription.module
         ContentExtractionModule,
         AudioStorageModule,
         TranscriptionModule,
+        ProfileValidationModule,
     ],
     controllers: [OnboardingController],
     providers: [OnboardingService],

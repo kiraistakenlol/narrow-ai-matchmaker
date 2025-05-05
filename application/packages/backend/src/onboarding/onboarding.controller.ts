@@ -12,6 +12,9 @@ import { NotifyUploadRequestDto, OnboardingStatusResponseDto } from './dto/notif
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { CognitoIdTokenPayload } from '../common/types/auth.types';
 import { IsOptional, IsUUID, validate } from 'class-validator';
+import { ProfileService } from '../profiles/profiles.service';
+import { ProfileValidationService } from '../profile-validation/profile-validation.service';
+import { ProfileData } from '@narrow-ai-matchmaker/common';
 
 class GetMyOnboardingQueryDto {
     @IsUUID()
@@ -22,7 +25,11 @@ class GetMyOnboardingQueryDto {
 @Controller('onboarding')
 export class OnboardingController {
     private readonly logger = new Logger(OnboardingController.name);
-    constructor(private readonly onboardingService: OnboardingService) {}
+    constructor(
+        private readonly onboardingService: OnboardingService,
+        private readonly profileService: ProfileService,
+        private readonly profileValidationService: ProfileValidationService
+    ) {}
 
     @Post('initiate')
     @HttpCode(HttpStatus.CREATED)
@@ -44,6 +51,7 @@ export class OnboardingController {
     ): Promise<OnboardingDto> {
         let sessionDto: OnboardingSessionDto | null = null;
         let eventIdQuery: string | undefined = undefined;
+        let profileData: ProfileData | null = null;
 
         if (request?.query) {
             const queryDto = new GetMyOnboardingQueryDto();
@@ -59,8 +67,13 @@ export class OnboardingController {
 
         if (user) {
             const externalUserId = user.sub;
-            this.logger.log(`Fetching latest onboarding session/guidance for external user ${externalUserId}` + (eventIdQuery ? ` for event ${eventIdQuery}` : ''));
-            const session = await this.onboardingService.findLatestUserOnboardingSessionByExternalId(externalUserId, eventIdQuery);
+            this.logger.log(`Fetching latest onboarding session/guidance for user ${externalUserId}` + (eventIdQuery ? ` for event ${eventIdQuery}` : ''));
+            
+            const [session, profile] = await Promise.all([
+                this.onboardingService.findLatestUserOnboardingSessionByExternalId(externalUserId, eventIdQuery),
+                this.profileService.findProfileByUserId(externalUserId)
+            ]);
+
             if (session) {
                 sessionDto = {
                     id: session.id,
@@ -70,16 +83,16 @@ export class OnboardingController {
                     updatedAt: session.updatedAt.toISOString(),
                 };
             }
+            if (profile) {
+                profileData = profile.data;
+            }
         } else {
             this.logger.log('Fetching onboarding guidance for anonymous user.');
         }
         
-        const hardcodedHints = [
-            "Hint 1: Tell us about your background.",
-            "Hint 2: What are your main goals?",
-            "Hint 3: Mention any specific skills."
-        ];
-        const guidance = { hints: hardcodedHints };
+        const validationResult = this.profileValidationService.validateProfile(profileData);
+        
+        const guidance = { hints: validationResult.hints };
 
         const onboardingDto = new OnboardingDto(sessionDto, guidance);
         return onboardingDto;

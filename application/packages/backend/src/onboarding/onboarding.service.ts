@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OnboardingSession, OnboardingStatus } from './entities/onboarding-session.entity';
 import { S3AudioStorageService } from '@backend/audio-storage/s3-audio-storage.service';
-import { InitiateOnboardingRequestDto, InitiateOnboardingResponseDto, PresignedUrlResponseDto } from '@narrow-ai-matchmaker/common';
+import { InitiateOnboardingResponseDto, PresignedUrlResponseDto } from '@narrow-ai-matchmaker/common';
 import { UserService } from '@backend/users/users.service';
 import { ProfileService } from '@backend/profiles/profiles.service';
 import { EventService } from '@backend/events/events.service';
@@ -11,6 +11,7 @@ import { Profile } from '@backend/profiles/entities/profile.entity';
 import { EventParticipation } from '@backend/events/entities/event-participation.entity';
 import { AwsTranscribeService } from '@backend/transcription/aws-transcribe.service';
 import { Event } from '@backend/events/entities/event.entity';
+import { ProfileValidationService } from '../profile-validation/profile-validation.service';
 import { User } from '@backend/users/entities/user.entity';
 
 @Injectable()
@@ -25,6 +26,7 @@ export class OnboardingService {
         private readonly profileService: ProfileService,
         private readonly eventService: EventService,
         private readonly transcriptionService: AwsTranscribeService,
+        private readonly profileValidationService: ProfileValidationService,
     ) {}
 
     async initiate(eventId?: string, externalUserId?: string): Promise<InitiateOnboardingResponseDto> {
@@ -94,13 +96,20 @@ export class OnboardingService {
             this.logger.error(`Onboarding session with ID ${onboardingId} not found.`);
             throw new NotFoundException(`Onboarding session ${onboardingId} not found.`);
         }
+        
+        let user: User | null = null; // To hold the user entity for update
+        
         try {
             this.logger.log(`Starting transcription for onboarding ${onboardingId}, key: ${s3_key}`);
             const transcriptText = await this.transcriptionService.transcribeAudio(s3_key);
             this.logger.log(`Transcription completed for onboarding ${onboardingId}, transcript length: ${transcriptText?.length || 0}`);
 
             // Process profile update (always required)
-            await this.profileService.processProfileUpdate(onboarding.userId, transcriptText);
+            const updatedProfile = await this.profileService.processProfileUpdate(onboarding.userId, transcriptText);
+            
+            // Validate the updated profile data
+            const validationResult = this.profileValidationService.validateProfile(updatedProfile.data);
+            this.logger.log(`Profile validation for user ${onboarding.userId}: isComplete=${validationResult.isComplete}, hints=${validationResult.hints.join(' | ')}`);
             
             // Process event participation only if eventId exists
             if (onboarding.eventId) {
@@ -112,19 +121,36 @@ export class OnboardingService {
             
             this.logger.log(`Updated profile data (and event participation if applicable) for onboarding ${onboardingId}`);
             
-            onboarding.status = OnboardingStatus.NEEDS_CLARIFICATION;
+            // Determine the new status based on validation
+            if (validationResult.isComplete) {
+                onboarding.status = OnboardingStatus.COMPLETED;
+                // Fetch the user to update their onboarding status
+                user = await this.userService.findById(onboarding.userId);
+                if (user) {
+                    user.onboardingComplete = true;
+                    // Note: We save the user later in a single transaction if possible, or separately
+                } else {
+                    this.logger.error(`Could not find user ${onboarding.userId} to mark onboarding complete.`);
+                    // Decide how to handle - throw error? Log warning? 
+                }
+            } else {
+                onboarding.status = OnboardingStatus.NEEDS_CLARIFICATION;
+            }
+            
+            // Save both in a transaction if your setup supports it easily.
+            // For simplicity here, save them sequentially.
             await this.onboardingSessionRepository.save(onboarding);
+            if (user && user.onboardingComplete) {
+                 // Save the user ONLY if the onboardingComplete flag was set to true
+                await this.userService.save(user);
+                this.logger.log(`Marked user ${user.id} onboarding as complete.`);
+            }
             
             this.logger.log(`Updated session ${onboardingId} status to ${onboarding.status}`);
             
-            // Re-fetch session (no longer need eventParticipation relation)
-            const updatedSession = await this.onboardingSessionRepository.findOne({
-                where: { id: onboardingId },
-            });
-            
-            if (!updatedSession) {
-                 throw new InternalServerErrorException('Failed to reload session after update.');
-            }
+            // Re-fetch session
+            const updatedSession = await this.onboardingSessionRepository.findOne({ where: { id: onboardingId } });
+            if (!updatedSession) throw new InternalServerErrorException('Failed to reload session after update.');
             return updatedSession;
 
         } catch (error) {

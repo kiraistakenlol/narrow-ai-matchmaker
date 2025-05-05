@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Req, NotFoundException, Logger, Param, InternalServerErrorException } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, NotFoundException, Logger, Param, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { UserService } from './users.service';
 import { UserDto, JoinedEventDto } from '@narrow-ai-matchmaker/common';
 import { AuthenticatedGuard } from '../auth/guards/authenticated.guard';
@@ -30,7 +30,7 @@ export class UsersController {
 
         if (!userWithProfile) {
             this.logger.error('User data not found.');
-            throw new InternalServerErrorException('User data not found.');
+            throw new UnauthorizedException('User data not found.');
         }
 
         this.logger.log(`User with profile found for ID: ${userId}`);

@@ -57,6 +57,9 @@ export const checkAuth = createAsyncThunk<
         let errorMessage = 'Unexpected error during authentication check';
         if (error instanceof AxiosError) {
             const status = error.response?.status;
+            if (status === 401) {
+                await signOut();
+            }
             const backendMessage = error.response?.data?.message;
             errorMessage = `Backend fetch failed (${status || 'N/A'}): ${backendMessage || error.message}`;
             console.error(`Auth check: /users/me fetch failed (${status || 'N/A'})`, error.response?.data || error);

@@ -110,7 +110,7 @@ export class ProfileService {
         
         // Extract profile data from text transcript using the profile schema
         const { extractedData, suggestedNewEnumValues } = await this.contentExtractionService.extractStructuredDataFromText<ProfileData>(
-            transcriptText,
+            profile.data?.raw_input ? `${profile.data.raw_input}; ${transcriptText}` : transcriptText,
             this.profileSchema
         );
         
