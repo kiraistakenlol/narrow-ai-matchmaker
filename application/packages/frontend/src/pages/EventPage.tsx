@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import {useParams} from 'react-router-dom';
 import {JoinedEventDto} from '@narrow-ai-matchmaker/common';
-import {useAppDispatch, useAppSelector} from '../hooks/hooks';
-import {selectAuthUser, selectIsOnboarded, signInWithGoogle,} from '../state/slices/authSlice';
+import {useAppSelector} from '../hooks/hooks';
+import {selectAuthUser, selectIsOnboarded,} from '../state/slices/authSlice';
 import SigninOrOnboardView from '../components/SigninOrOnboardView';
 import apiClient from '../lib/apiClient';
 import {AxiosError} from 'axios';
@@ -12,7 +12,6 @@ function EventPage() {
     const [eventDto, setEventDto] = useState<JoinedEventDto | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const dispatch = useAppDispatch();
     const user = useAppSelector(selectAuthUser);
     const isOnboarded = useAppSelector(selectIsOnboarded);
 
@@ -50,10 +49,6 @@ function EventPage() {
         fetchEvent();
     }, [eventId]);
 
-    const handleSignIn = () => {
-        dispatch(signInWithGoogle());
-    };
-
     const handleStartOnboarding = () => {
         console.log('EventPage: Start Onboarding Clicked');
         // TODO: Implement onboarding start logic/navigation
@@ -84,7 +79,6 @@ function EventPage() {
                                 description={`Sign in or create an account to join ${eventDto.name}.`}
                                 showSignIn={true}
                                 showOnboarding={true}
-                                onSignInWithGoogle={handleSignIn}
                             />
                         ) : !isOnboarded ? (
                             <SigninOrOnboardView

@@ -9,8 +9,6 @@ interface ContainerProps {
     showSignIn?: boolean;
     showOnboarding?: boolean;
     onStartOnboarding?: () => void;
-    isRecording?: boolean;
-    onSignInWithGoogle?: () => void;
 }
 
 function SigninOrOnboardView({
@@ -18,8 +16,7 @@ function SigninOrOnboardView({
     description,
     showSignIn = false,
     showOnboarding = false,
-    onStartOnboarding = () => {},
-    onSignInWithGoogle = () => {}
+    onStartOnboarding = () => { },
 }: ContainerProps) {
     // Determine if both sections are shown to add divider/spacing
     const showBoth = showSignIn && showOnboarding;
@@ -32,8 +29,8 @@ function SigninOrOnboardView({
                 {showOnboarding && (
                     <OnboardingInputView
                         onOnboardingStarted={onStartOnboarding}
-                        onOnboardingComplete={() => {}}
-                        onOnboardingError={() => {}}
+                        onOnboardingComplete={() => { }}
+                        onOnboardingError={() => { }}
                         hints={[
                             "Speak clearly into your microphone",
                             "Tell us about yourself in a few sentences",
@@ -44,9 +41,7 @@ function SigninOrOnboardView({
                 {/* Optional: Add a visual separator if both are shown */}
                 {showBoth && <div style={styles.separator}>OR</div>}
 
-                {showSignIn && (
-                    <SignInWithGoogleButton onClick={onSignInWithGoogle} />
-                )}
+                {showSignIn && <SignInWithGoogleButton />}
             </div>
         </div>
     );

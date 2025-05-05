@@ -30,6 +30,7 @@ function HomePage() {
                     description="Please sign in or create an account to continue."
                     showSignIn={true}
                     showOnboarding={true}
+                    onStartOnboarding={() => {}}
                 />
                 {authStatus === 'failed' && (
                     <p style={styles.errorText}>Authentication Error: {useAppSelector(state => state.auth.error)}</p>

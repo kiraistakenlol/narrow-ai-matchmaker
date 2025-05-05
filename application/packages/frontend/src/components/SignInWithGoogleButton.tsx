@@ -5,10 +5,9 @@ import { fetchAuthSession, signOut } from 'aws-amplify/auth';
 
 interface SignInWithGoogleButtonProps {
     disabled?: boolean;
-    onClick?: () => void;
 }
 
-function SignInWithGoogleButton({disabled = false, onClick = () => {}}: SignInWithGoogleButtonProps) {
+function SignInWithGoogleButton({disabled = false}: SignInWithGoogleButtonProps) {
     const dispatch = useAppDispatch();
 
     const handleSignInClick = async () => {
@@ -41,7 +40,6 @@ function SignInWithGoogleButton({disabled = false, onClick = () => {}}: SignInWi
         try {
             console.log('SignInButton: Dispatching signInWithGoogle...');
             await dispatch(signInWithGoogle()).unwrap();
-            onClick(); // Call onClick if redirect is initiated successfully
          } catch (signInError) {
             // Handle errors specifically from the signInWithGoogle initiation
             console.error('SignInButton: Google Sign In initiation failed:', signInError);

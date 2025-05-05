@@ -50,7 +50,6 @@ export class ProfileService {
         }
     }
 
-    // New method to find a profile by userId
     async findProfileByUserId(userId: string): Promise<Profile | null> {
         this.logger.log(`Finding profile for user: ${userId}`);
         try {

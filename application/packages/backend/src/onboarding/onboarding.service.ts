@@ -291,4 +291,15 @@ export class OnboardingService {
         // Call the existing method with the internal ID
         return this.findLatestUserOnboardingSession(user.id, eventId);
     }
+
+    async findById(id: string): Promise<OnboardingSession | null> {
+        this.logger.log(`Finding onboarding session by ID: ${id}`);
+        try {
+            return await this.onboardingSessionRepository.findOneBy({ id });
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown database error';
+            this.logger.error(`Failed to find onboarding session ${id}: ${message}`, error instanceof Error ? error.stack : undefined);
+            throw new InternalServerErrorException(`Could not retrieve onboarding session ${id}.`);
+        }
+    }
 }

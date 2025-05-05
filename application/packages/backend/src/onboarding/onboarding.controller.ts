@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, ValidationPipe, Param, ParseUUIDPipe, Logger, Get, Query, NotFoundException, Req } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, ValidationPipe, Param, ParseUUIDPipe, Logger, Get, Query, NotFoundException, Req, UnauthorizedException } from '@nestjs/common';
 import { Request } from 'express';
 import { OnboardingService } from './onboarding.service';
 import { 
@@ -15,6 +15,7 @@ import { IsOptional, IsUUID, validate } from 'class-validator';
 import { ProfileService } from '../profiles/profiles.service';
 import { ProfileValidationService } from '../profile-validation/profile-validation.service';
 import { ProfileData } from '@narrow-ai-matchmaker/common';
+import { UserService } from '../users/users.service';
 
 class GetMyOnboardingQueryDto {
     @IsUUID()
@@ -28,7 +29,8 @@ export class OnboardingController {
     constructor(
         private readonly onboardingService: OnboardingService,
         private readonly profileService: ProfileService,
-        private readonly profileValidationService: ProfileValidationService
+        private readonly profileValidationService: ProfileValidationService,
+        private readonly userService: UserService,
     ) {}
 
     @Post('initiate')
@@ -116,5 +118,46 @@ export class OnboardingController {
     ): Promise<OnboardingStatusResponseDto> {
         this.logger.log(`Notify upload request for onboarding ID: ${onboardingId}`);
         return this.onboardingService.processAudio(onboardingId, dto.s3_key);
+    }
+
+    @Get(':id')
+    async getOnboardingById(
+        @Param('id', ParseUUIDPipe) id: string,
+        @CurrentUser() cognitoUser?: CognitoIdTokenPayload
+    ): Promise<OnboardingDto> {
+        this.logger.log(`Fetching onboarding by ID: ${id}`);
+        
+        const onboarding = await this.onboardingService.findById(id);
+        if (!onboarding) {
+            throw new NotFoundException(`Onboarding session ${id} not found.`);
+        }
+
+        if (cognitoUser) {
+            const user = await this.userService.findByExternalId(cognitoUser.sub);
+            if (!user || user.id !== onboarding.userId) {
+                throw new UnauthorizedException('You can only access your own onboarding sessions.');
+            }
+        }
+
+        let profileData: ProfileData | null = null;
+        if (onboarding.profileId) {
+            const profile = await this.profileService.findProfileByUserId(onboarding.userId);
+            if (profile) {
+                profileData = profile.data;
+            }
+        }
+
+        const validationResult = this.profileValidationService.validateProfile(profileData);
+        const guidance = { hints: validationResult.hints };
+
+        const sessionDto: OnboardingSessionDto = {
+            id: onboarding.id,
+            eventId: onboarding.eventId,
+            status: onboarding.status,
+            createdAt: onboarding.createdAt.toISOString(),
+            updatedAt: onboarding.updatedAt.toISOString(),
+        };
+
+        return new OnboardingDto(sessionDto, guidance);
     }
 } 
