@@ -1,6 +1,13 @@
 import { Controller, Post, Body, HttpCode, HttpStatus, ValidationPipe, Param, ParseUUIDPipe, Logger, Get, Query, NotFoundException } from '@nestjs/common';
 import { OnboardingService } from './onboarding.service';
-import { InitiateOnboardingRequestDto, InitiateOnboardingResponseDto, OnboardingSessionDto, PresignedUrlResponseDto, ApiResponse } from '@narrow-ai-matchmaker/common';
+import { 
+    InitiateOnboardingRequestDto, 
+    InitiateOnboardingResponseDto, 
+    OnboardingSessionDto, 
+    PresignedUrlResponseDto, 
+    ApiResponse,
+    OnboardingDto,
+} from '@narrow-ai-matchmaker/common';
 import { NotifyUploadRequestDto, OnboardingStatusResponseDto } from './dto/notify-upload.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { CognitoIdTokenPayload } from '../common/types/auth.types';
@@ -35,27 +42,35 @@ export class OnboardingController {
         @CurrentUser() user: CognitoIdTokenPayload,
         @Query(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
         query: GetMyOnboardingQueryDto
-    ): Promise<OnboardingSessionDto | null> {
+    ): Promise<OnboardingDto> {
         const externalUserId = user.sub;
-        this.logger.log(`Fetching latest onboarding session for external user ${externalUserId}` + (query.event_id ? ` for event ${query.event_id}` : ''));
+        this.logger.log(`Fetching latest onboarding session/guidance for external user ${externalUserId}` + (query.event_id ? ` for event ${query.event_id}` : ''));
 
         const session = await this.onboardingService.findLatestUserOnboardingSessionByExternalId(externalUserId, query.event_id);
 
-        console.log('OnboardingController: session', session);
-        
-        if (!session) {
-            return null;
+        let sessionDto: OnboardingSessionDto | null = null;
+        if (session) {
+            sessionDto = {
+                id: session.id,
+                eventId: session.eventId,
+                status: session.status,
+                createdAt: session.createdAt.toISOString(),
+                updatedAt: session.updatedAt.toISOString(),
+            };
         }
-
-        const sessionDto: OnboardingSessionDto = {
-            id: session.id,
-            eventId: session.eventId,
-            status: session.status,
-            createdAt: session.createdAt.toISOString(),
-            updatedAt: session.updatedAt.toISOString(),
+        
+        const hardcodedHints = [
+            "Hint 1: Tell us about your background.",
+            "Hint 2: What are your main goals?",
+            "Hint 3: Mention any specific skills."
+        ];
+        const guidance = {
+            hints: hardcodedHints
         };
 
-        return sessionDto;
+        const onboardingDto = new OnboardingDto(sessionDto, guidance);
+
+        return onboardingDto;
     }
 
     @Post(':onboarding_id/audio-upload-url')

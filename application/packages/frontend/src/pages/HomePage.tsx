@@ -1,9 +1,9 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {useAppDispatch, useAppSelector} from '../hooks/hooks';
-import {selectAuthStatus, selectAuthUser, signInWithGoogle, signOutUser, selectAuthState} from '../state/slices/authSlice';
+import {selectAuthStatus, selectAuthUser, signOutUser} from '../state/slices/authSlice';
 import SigninOrOnboardView from '../components/SigninOrOnboardView';
 import apiClient from '../lib/apiClient';
-import {OnboardingSessionDto} from '@narrow-ai-matchmaker/common';
+import {OnboardingSessionDto, OnboardingDto} from '@narrow-ai-matchmaker/common';
 import OnboardingInputView from '../components/OnboardingInputView';
 
 function HomePage() {
@@ -12,6 +12,7 @@ function HomePage() {
     const authStatus = useAppSelector(selectAuthStatus);
 
     const [onboardingSession, setOnboardingSession] = useState<OnboardingSessionDto | null | undefined>(undefined);
+    const [guidanceHints, setGuidanceHints] = useState<string[]>([]);
     const [isLoadingSession, setIsLoadingSession] = useState<boolean>(false);
     const [error, setError] = useState<string | undefined>(undefined);
     const [showOnboardingInput, setShowOnboardingInput] = useState<boolean>(false);
@@ -19,6 +20,7 @@ function HomePage() {
 
     useEffect(() => {
         setOnboardingSession(undefined);
+        setGuidanceHints([]);
         setError(undefined);
         setShowOnboardingInput(false);
         setIsLoadingSession(false);
@@ -28,31 +30,39 @@ function HomePage() {
         }
 
         if (user && authStatus === 'succeeded') {
-            const fetchSession = async () => {
+            const fetchSessionAndGuidance = async () => {
                 setIsLoadingSession(true);
                 setError(undefined);
                 let fetchedSession: OnboardingSessionDto | null = null;
+                let fetchedHints: string[] = [];
                 let fetchError: string | undefined = undefined;
 
                 try {
-                    const response = await apiClient.get<OnboardingSessionDto | null>('/onboarding');
-                    fetchedSession = response.data;
+                    const response = await apiClient.get<OnboardingDto>('/onboarding');
+                    const onboardingData = response.data;
+                    
+                    fetchedSession = onboardingData.session;
+                    fetchedHints = onboardingData.guidance?.hints || [];
+                    
                     console.log('HomePage: fetchedSession', fetchedSession);
+                    console.log('HomePage: fetchedHints', fetchedHints);
+
                     if (fetchedSession === null) {
-                        console.log('No onboarding session found (API returned null data).');
+                        console.log('No onboarding session found (API returned null session).');
                     }
                     setOnboardingSession(fetchedSession);
+                    setGuidanceHints(fetchedHints);
 
                 } catch (err: any) {
-                    fetchError = `Failed to fetch onboarding session: ${err.response?.data?.message || err.message}`;
+                    fetchError = `Failed to fetch onboarding data: ${err.response?.data?.message || err.message}`;
                     console.error(fetchError);
                 } finally {
-                    setShowOnboardingInput(fetchedSession === null || (!!fetchedSession && fetchedSession.status === 'NEEDS_CLARIFICATION'));
+                    setShowOnboardingInput(fetchedSession === null || fetchedSession?.status === 'NEEDS_CLARIFICATION');
                     setError(fetchError);
                     setIsLoadingSession(false);
                 }
             };
-            fetchSession();
+            fetchSessionAndGuidance();
         }
     }, [user, authStatus]);
 
@@ -62,25 +72,31 @@ function HomePage() {
             pollingIntervalRef.current = null;
         }
 
-        const needsPolling = onboardingSession && (onboardingSession.status !== "COMPLETED" && onboardingSession.status !== "NEEDS_CLARIFICATION");
-        const shouldShowInput = onboardingSession === null || (onboardingSession?.status === "NEEDS_CLARIFICATION");
+        const currentSession = onboardingSession;
+        const needsPolling = currentSession && (currentSession.status !== "COMPLETED" && currentSession.status !== "NEEDS_CLARIFICATION");
+        const shouldShowInput = currentSession === null || (currentSession?.status === "NEEDS_CLARIFICATION");
 
         if (showOnboardingInput !== shouldShowInput) {
             setShowOnboardingInput(shouldShowInput);
         }
 
-        if (needsPolling) {
-            console.log(`Starting polling for session ${onboardingSession?.id}, status: ${onboardingSession?.status}`);
+        if (needsPolling && currentSession) {
+            console.log(`Starting polling for session ${currentSession.id}, status: ${currentSession.status}`);
             const poll = async () => {
                 try {
-                    console.log(`Polling status for ${onboardingSession?.id}...`);
-                    const response = await apiClient.get<OnboardingSessionDto | null>('/onboarding');
-                    const currentSessionData = response.data;
-                    if (JSON.stringify(currentSessionData) !== JSON.stringify(onboardingSession)) {
-                        setOnboardingSession(currentSessionData);
-                        if (currentSessionData?.status === 'COMPLETED' || currentSessionData?.status === 'NEEDS_CLARIFICATION') {
+                    console.log(`Polling status for ${currentSession.id}...`);
+                    const response = await apiClient.get<OnboardingDto>('/onboarding');
+                    const polledData = response.data;
+                    const newSessionData = polledData.session;
+                    const newHints = polledData.guidance?.hints || [];
+
+                    if (JSON.stringify(newSessionData) !== JSON.stringify(onboardingSession) || JSON.stringify(newHints) !== JSON.stringify(guidanceHints)) {
+                        console.log('Polling detected change. New session:', newSessionData, 'New hints:', newHints);
+                        setOnboardingSession(newSessionData);
+                        setGuidanceHints(newHints);
+                        if (newSessionData?.status === 'COMPLETED' || newSessionData?.status === 'NEEDS_CLARIFICATION') {
                             if (pollingIntervalRef.current) {
-                                console.log(`Polling detected terminal state (${currentSessionData?.status}), stopping.`);
+                                console.log(`Polling detected terminal state (${newSessionData?.status}), stopping.`);
                                 clearInterval(pollingIntervalRef.current);
                                 pollingIntervalRef.current = null;
                             }
@@ -108,7 +124,7 @@ function HomePage() {
             };
         }
         return undefined;
-    }, [onboardingSession, showOnboardingInput]);
+    }, [onboardingSession, guidanceHints, showOnboardingInput]);
 
     const handleSignOut = () => {
         dispatch(signOutUser());
@@ -119,22 +135,23 @@ function HomePage() {
 
     const handleOnboardingComplete = () => {
         console.log("Onboarding reported complete by input view.");
-        const fetchSessionNow = async () => {
+        const fetchSessionAndGuidanceNow = async () => {
             setIsLoadingSession(true);
             try {
-                const response = await apiClient.get<OnboardingSessionDto | null>('/onboarding');
-                const sessionData = response.data;
-                setOnboardingSession(sessionData);
+                const response = await apiClient.get<OnboardingDto>('/onboarding');
+                const updatedData = response.data;
+                setOnboardingSession(updatedData.session);
+                setGuidanceHints(updatedData.guidance?.hints || []);
                 setError(undefined);
             } catch (err: any) {
-                const sessionError = `Failed to re-fetch session after onboarding: ${err.response?.data?.message || err.message}`;
+                const sessionError = `Failed to re-fetch onboarding data: ${err.response?.data?.message || err.message}`;
                 console.error(sessionError, err);
                 setError(sessionError);
             } finally {
                 setIsLoadingSession(false);
             }
         }
-        fetchSessionNow();
+        fetchSessionAndGuidanceNow();
     };
 
     const handleOnboardingError = (errorMsg: string) => {
@@ -204,7 +221,7 @@ function HomePage() {
                         <OnboardingInputView
                             onboardingId={onboardingSession?.id}
                             eventId={onboardingSession?.eventId ?? undefined}
-                            hints={["Introduce yourself", "Mention your interests or goals"]}
+                            hints={guidanceHints}
                             onOnboardingComplete={handleOnboardingComplete}
                             onOnboardingError={handleOnboardingError}
                         />

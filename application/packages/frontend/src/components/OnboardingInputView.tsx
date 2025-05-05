@@ -22,7 +22,7 @@ const OnboardingInputView: React.FC<OnboardingInputViewProps> = ({
                                                                      onOnboardingComplete,
                                                                      onOnboardingError,
                                                                      hints = [],
-                                                                 }) => {
+                                                                 }: OnboardingInputViewProps) => {
                                                                     
     const [onboardingState, setOnboardingState] = useState<DisplayState>('initial');
     const [error, setError] = useState<string | null>(null);
