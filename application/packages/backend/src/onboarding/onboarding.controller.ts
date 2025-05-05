@@ -1,17 +1,17 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, ValidationPipe, Param, ParseUUIDPipe, Logger, Get, Query, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, ValidationPipe, Param, ParseUUIDPipe, Logger, Get, Query, NotFoundException, Req } from '@nestjs/common';
+import { Request } from 'express';
 import { OnboardingService } from './onboarding.service';
 import { 
     InitiateOnboardingRequestDto, 
     InitiateOnboardingResponseDto, 
     OnboardingSessionDto, 
     PresignedUrlResponseDto, 
-    ApiResponse,
     OnboardingDto,
 } from '@narrow-ai-matchmaker/common';
 import { NotifyUploadRequestDto, OnboardingStatusResponseDto } from './dto/notify-upload.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { CognitoIdTokenPayload } from '../common/types/auth.types';
-import { IsOptional, IsUUID } from 'class-validator';
+import { IsOptional, IsUUID, validate } from 'class-validator';
 
 class GetMyOnboardingQueryDto {
     @IsUUID()
@@ -39,24 +39,39 @@ export class OnboardingController {
 
     @Get()
     async getCurrentUserOnboarding(
-        @CurrentUser() user: CognitoIdTokenPayload,
-        @Query(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }))
-        query: GetMyOnboardingQueryDto
+        @CurrentUser() user?: CognitoIdTokenPayload,
+        @Req() request?: Request
     ): Promise<OnboardingDto> {
-        const externalUserId = user.sub;
-        this.logger.log(`Fetching latest onboarding session/guidance for external user ${externalUserId}` + (query.event_id ? ` for event ${query.event_id}` : ''));
-
-        const session = await this.onboardingService.findLatestUserOnboardingSessionByExternalId(externalUserId, query.event_id);
-
         let sessionDto: OnboardingSessionDto | null = null;
-        if (session) {
-            sessionDto = {
-                id: session.id,
-                eventId: session.eventId,
-                status: session.status,
-                createdAt: session.createdAt.toISOString(),
-                updatedAt: session.updatedAt.toISOString(),
-            };
+        let eventIdQuery: string | undefined = undefined;
+
+        if (request?.query) {
+            const queryDto = new GetMyOnboardingQueryDto();
+            queryDto.event_id = request.query.event_id as string | undefined;
+            
+            const errors = await validate(queryDto);
+            if (errors.length > 0) {
+                this.logger.warn(`Invalid query parameters received: ${JSON.stringify(request.query)}`, errors);
+            } else {
+                eventIdQuery = queryDto.event_id;
+            }
+        }
+
+        if (user) {
+            const externalUserId = user.sub;
+            this.logger.log(`Fetching latest onboarding session/guidance for external user ${externalUserId}` + (eventIdQuery ? ` for event ${eventIdQuery}` : ''));
+            const session = await this.onboardingService.findLatestUserOnboardingSessionByExternalId(externalUserId, eventIdQuery);
+            if (session) {
+                sessionDto = {
+                    id: session.id,
+                    eventId: session.eventId,
+                    status: session.status,
+                    createdAt: session.createdAt.toISOString(),
+                    updatedAt: session.updatedAt.toISOString(),
+                };
+            }
+        } else {
+            this.logger.log('Fetching onboarding guidance for anonymous user.');
         }
         
         const hardcodedHints = [
@@ -64,12 +79,9 @@ export class OnboardingController {
             "Hint 2: What are your main goals?",
             "Hint 3: Mention any specific skills."
         ];
-        const guidance = {
-            hints: hardcodedHints
-        };
+        const guidance = { hints: hardcodedHints };
 
         const onboardingDto = new OnboardingDto(sessionDto, guidance);
-
         return onboardingDto;
     }
 
