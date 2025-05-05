@@ -10,12 +10,12 @@ export class ProfileValidationService {
         {
             path: 'personal.name',
             checkType: 'existsAndNotEmptyString',
-            hint: 'What is your name?' // User requested hint
+            hint: 'your name' // User requested hint
         },
         {
             path: 'roles',
             checkType: 'arrayNotEmpty',
-            hint: 'What are you working on?' // User requested hint
+            hint: 'project you\'re working on'
         }
         // Add more rules here
     ];
