@@ -7,6 +7,11 @@ export class TestTranscriptionService implements ITranscriptionService {
 
     async transcribeAudio(s3Key: string, languageCode?: string): Promise<string> {
         this.logger.log(`Test transcription for audio: ${s3Key}`);
-        return `This is a test transcription for ${s3Key}. Language code: ${languageCode || 'en-US'}.`;
+        return `Hi, I'm Olivia Parker, founder of HealthTrack, 
+            a health monitoring app that helps users track and analyze their wellness data. 
+            I have a business background and a clear vision for the product but I'm looking 
+            for a technical co-founder who can build and lead our tech stack. 
+            My app idea has received positive feedback from early testers, 
+            but I need a skilled engineer to turn this vision into reality.`;
     }
 } 
