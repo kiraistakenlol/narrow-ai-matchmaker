@@ -7,6 +7,7 @@ CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     "externalId" TEXT NULL, -- Corresponds to external_id
     email TEXT NULL,       -- Corresponds to email
+    "onboardingComplete" BOOLEAN NOT NULL DEFAULT FALSE,
     "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, -- Corresponds to created_at
     "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP  -- Corresponds to updated_at
 );

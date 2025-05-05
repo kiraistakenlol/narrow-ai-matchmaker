@@ -97,6 +97,7 @@ export class UserService {
         return {
             id: user.id,
             email: user.email ?? null, // Handle potential null email
+            onboardingComplete: user.onboardingComplete,
             // Add other fields as needed, potentially loading relations like profile
         };
     }

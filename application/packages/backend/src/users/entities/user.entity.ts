@@ -12,6 +12,9 @@ export class User {
     @Column()
     email?: string;
 
+    @Column()
+    onboardingComplete: boolean;
+
     @CreateDateColumn()
     createdAt: Date;
 

@@ -119,6 +119,7 @@ export class AuthService {
         const userDto: UserDto = {
             id: user.id,
             email: user.email!, // Non-null assertion okay due to logic above
+            onboardingComplete: user.onboardingComplete,
         };
         return userDto;
     }

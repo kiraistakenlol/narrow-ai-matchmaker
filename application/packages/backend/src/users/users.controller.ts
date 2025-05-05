@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Req, NotFoundException, Logger, Param } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, NotFoundException, Logger, Param, InternalServerErrorException } from '@nestjs/common';
 import { UserService } from './users.service';
 import { UserDto, JoinedEventDto } from '@narrow-ai-matchmaker/common';
 import { AuthenticatedGuard } from '../auth/guards/authenticated.guard';
@@ -28,11 +28,16 @@ export class UsersController {
 
         const userWithProfile = await this.usersService.findUserWithProfileById(userId);
 
-        this.logger.log(`User with profile: ${JSON.stringify(userWithProfile)}`);
-        // Map the User entity to UserDto
+        if (!userWithProfile) {
+            this.logger.error('User data not found.');
+            throw new InternalServerErrorException('User data not found.');
+        }
+
+        this.logger.log(`User with profile found for ID: ${userId}`);
         const userDto: UserDto = {
             id: userWithProfile.id,
-            email: userWithProfile.email ?? '', // Provide default or handle potential null
+            email: userWithProfile.email ?? '',
+            onboardingComplete: userWithProfile.onboardingComplete,
             profile: userWithProfile.profile ? userWithProfile.profile.data : null,
         };
 
