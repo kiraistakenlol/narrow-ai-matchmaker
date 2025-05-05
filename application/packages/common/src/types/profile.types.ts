@@ -43,16 +43,6 @@ export interface Role {
     active: boolean;
 }
 
-export interface EventGoals {
-    looking_for: string[];
-    offering: string[];
-}
-
-export interface EventContext {
-    event_id: string;
-    goals: EventGoals;
-}
-
 /**
  * Represents the structured data extracted for a user's profile.
  * This structure is stored within the 'data' JSONB column of the Profile entity.

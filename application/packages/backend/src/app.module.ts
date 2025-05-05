@@ -15,6 +15,7 @@ import { AuthModule } from './auth/auth.module';
 import { AuthMiddleware } from './common/middleware/auth.middleware';
 import { JwtModule } from '@nestjs/jwt';
 import { DevModule } from './dev/dev.module';
+import { ProfileValidationModule } from './profile-validation/profile-validation.module';
 
 @Module({
     imports: [
@@ -62,6 +63,7 @@ import { DevModule } from './dev/dev.module';
         ContentExtractionModule,
         AuthModule,
         DevModule,
+        ProfileValidationModule,
     ],
     controllers: [HealthController],
     providers: [],

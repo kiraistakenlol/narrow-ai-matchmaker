@@ -9,3 +9,4 @@ export * from './dto/onboarding/onboarding.dto';
 export * from './dto/api-response.dto';
 
 export * from './types/profile.types';
+export * from './types/profile-validation.types';
