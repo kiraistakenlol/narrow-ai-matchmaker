@@ -1,5 +1,5 @@
+import { OnboardingStatus } from '@narrow-ai-matchmaker/common';
 import { IsNotEmpty, IsString } from 'class-validator';
-import { OnboardingStatus } from '../entities/onboarding-session.entity';
 
 export class NotifyUploadRequestDto {
     @IsString()

@@ -1,27 +1,20 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, ValidationPipe, Param, ParseUUIDPipe, Logger, Get, Query, NotFoundException, Req, UnauthorizedException } from '@nestjs/common';
-import { Request } from 'express';
+import { Controller, Post, Body, HttpCode, HttpStatus, ValidationPipe, Param, ParseUUIDPipe, Logger, Get, Query, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { OnboardingService } from './onboarding.service';
-import { 
-    InitiateOnboardingRequestDto, 
-    InitiateOnboardingResponseDto, 
-    OnboardingSessionDto, 
-    PresignedUrlResponseDto, 
+import {
+    InitiateOnboardingRequestDto,
+    InitiateOnboardingResponseDto,
+    OnboardingSessionDto,
+    PresignedUrlResponseDto,
     OnboardingDto,
+    OnboardingGuidanceDto,
 } from '@narrow-ai-matchmaker/common';
 import { NotifyUploadRequestDto, OnboardingStatusResponseDto } from './dto/notify-upload.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { CognitoIdTokenPayload } from '../common/types/auth.types';
-import { IsOptional, IsUUID, validate } from 'class-validator';
 import { ProfileService } from '../profiles/profiles.service';
 import { ProfileValidationService } from '../profile-validation/profile-validation.service';
 import { ProfileData } from '@narrow-ai-matchmaker/common';
 import { UserService } from '../users/users.service';
-
-class GetMyOnboardingQueryDto {
-    @IsUUID()
-    @IsOptional()
-    event_id?: string;
-}
 
 @Controller('onboarding')
 export class OnboardingController {
@@ -31,78 +24,75 @@ export class OnboardingController {
         private readonly profileService: ProfileService,
         private readonly profileValidationService: ProfileValidationService,
         private readonly userService: UserService,
-    ) {}
+    ) { }
 
-    @Post('initiate')
+    @Get('base-guidance')
+    async getOnboardingSchema(): Promise<OnboardingGuidanceDto> {
+        const validationResult = this.profileValidationService.validateProfile(null);
+        return { hints: validationResult.hints } as OnboardingGuidanceDto;
+    }
+
+    @Post()
     @HttpCode(HttpStatus.CREATED)
-    async initiate(
+    async create(
         @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
         dto: InitiateOnboardingRequestDto,
         @CurrentUser() currentUser?: CognitoIdTokenPayload
-    ): Promise<InitiateOnboardingResponseDto> {
+    ): Promise<OnboardingDto> {
         const externalUserId = currentUser?.sub;
-        this.logger.log(`Initiate request received. Event ID: ${dto.event_id || '[None]'}. External User ID: ${externalUserId || '[Anonymous]'}`);
-        
-        return this.onboardingService.initiate(dto.event_id, externalUserId);
+        this.logger.log(` Event ID: ${dto.event_id || '[None]'}. External User ID: ${externalUserId || '[Anonymous]'}`);
+
+        const onboarding = await this.onboardingService.create(dto.event_id, externalUserId);
+
+        const validationResult = this.profileValidationService.validateProfile(null);
+
+        const guidance = { hints: validationResult.hints };
+
+        const sessionDto: OnboardingSessionDto = {
+            id: onboarding.id,
+            eventId: onboarding.eventId,
+            status: onboarding.status,
+            createdAt: onboarding.createdAt.toISOString(),
+            updatedAt: onboarding.updatedAt.toISOString(),
+        };
+
+        return new OnboardingDto(sessionDto, guidance);
     }
 
     @Get()
-    async getCurrentUserOnboarding(
-        @CurrentUser() user?: CognitoIdTokenPayload,
-        @Req() request?: Request
-    ): Promise<OnboardingDto> {
-        let sessionDto: OnboardingSessionDto | null = null;
-        let eventIdQuery: string | undefined = undefined;
-        let profileData: ProfileData | null = null;
+    async findOnboardingSession(
+        @CurrentUser() user: CognitoIdTokenPayload,
+        @Query('event_id', new ParseUUIDPipe({ optional: true })) event_id?: string
+    ): Promise<OnboardingDto | null> {
+        const externalUserId = user.sub;
+        this.logger.log(`Fetching latest onboarding for user ${externalUserId}${event_id ? ` event ${event_id}` : ''}`);
 
-        if (request?.query) {
-            const queryDto = new GetMyOnboardingQueryDto();
-            queryDto.event_id = request.query.event_id as string | undefined;
-            
-            const errors = await validate(queryDto);
-            if (errors.length > 0) {
-                this.logger.warn(`Invalid query parameters received: ${JSON.stringify(request.query)}`, errors);
-            } else {
-                eventIdQuery = queryDto.event_id;
-            }
+        const session = await this.onboardingService.findLatestUserOnboardingSessionByExternalId(externalUserId, event_id);
+        if (!session) {
+            return null;
         }
 
-        if (user) {
-            const externalUserId = user.sub;
-            this.logger.log(`Fetching latest onboarding session/guidance for user ${externalUserId}` + (eventIdQuery ? ` for event ${eventIdQuery}` : ''));
-            
-            const [session, profile] = await Promise.all([
-                this.onboardingService.findLatestUserOnboardingSessionByExternalId(externalUserId, eventIdQuery),
-                this.profileService.findProfileByUserId(externalUserId)
-            ]);
+        const profile = await this.profileService.findProfileByUserId(session.userId);
 
-            if (session) {
-                sessionDto = {
-                    id: session.id,
-                    eventId: session.eventId,
-                    status: session.status,
-                    createdAt: session.createdAt.toISOString(),
-                    updatedAt: session.updatedAt.toISOString(),
-                };
-            }
-            if (profile) {
-                profileData = profile.data;
-            }
-        } else {
-            this.logger.log('Fetching onboarding guidance for anonymous user.');
-        }
-        
-        const validationResult = this.profileValidationService.validateProfile(profileData);
-        
-        const guidance = { hints: validationResult.hints };
+        const validationResult = this.profileValidationService.validateProfile((profile?.data || null));
 
-        const onboardingDto = new OnboardingDto(sessionDto, guidance);
-        return onboardingDto;
+        return new OnboardingDto(
+            {
+                id: session.id,
+                eventId: session.eventId,
+                status: session.status,
+                createdAt: session.createdAt.toISOString(),
+                updatedAt: session.updatedAt.toISOString(),
+            } as OnboardingSessionDto,
+            {
+                hints: validationResult.hints
+            } as OnboardingGuidanceDto
+        );
     }
 
     @Post(':onboarding_id/audio-upload-url')
     @HttpCode(HttpStatus.OK)
-    async getSubsequentAudioUploadUrl(
+    async getAudioUploadUrl(
         @Param('onboarding_id', ParseUUIDPipe) onboardingId: string,
     ): Promise<PresignedUrlResponseDto> {
         this.logger.log(`Request for subsequent audio upload URL for onboarding ID: ${onboardingId}`);
@@ -111,7 +101,7 @@ export class OnboardingController {
 
     @Post(':onboarding_id/notify-upload')
     @HttpCode(HttpStatus.OK)
-    async notifyUpload(
+    async notifyAudioUploaded(
         @Param('onboarding_id', ParseUUIDPipe) onboardingId: string,
         @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
         dto: NotifyUploadRequestDto,
@@ -120,16 +110,16 @@ export class OnboardingController {
         return this.onboardingService.processAudio(onboardingId, dto.s3_key);
     }
 
-    @Get(':id')
+    @Get(':onboarding_id')
     async getOnboardingById(
-        @Param('id', ParseUUIDPipe) id: string,
+        @Param('onboarding_id', ParseUUIDPipe) onboardingId: string,
         @CurrentUser() cognitoUser?: CognitoIdTokenPayload
     ): Promise<OnboardingDto> {
-        this.logger.log(`Fetching onboarding by ID: ${id}`);
-        
-        const onboarding = await this.onboardingService.findById(id);
+        this.logger.log(`Fetching onboarding by ID: ${onboardingId}`);
+
+        const onboarding = await this.onboardingService.findById(onboardingId);
         if (!onboarding) {
-            throw new NotFoundException(`Onboarding session ${id} not found.`);
+            throw new NotFoundException(`Onboarding session ${onboardingId} not found.`);
         }
 
         if (cognitoUser) {

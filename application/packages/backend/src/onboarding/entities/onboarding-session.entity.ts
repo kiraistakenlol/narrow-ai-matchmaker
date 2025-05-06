@@ -1,16 +1,5 @@
+import { OnboardingStatus } from '@narrow-ai-matchmaker/common';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-
-export enum OnboardingStatus {
-    STARTED = 'STARTED',
-    AWAITING_AUDIO = 'AWAITING_AUDIO',
-    AUDIO_UPLOADED = 'AUDIO_UPLOADED',
-    PROCESSING = 'PROCESSING',
-    NEEDS_CLARIFICATION = 'NEEDS_CLARIFICATION',
-    READY_FOR_REVIEW = 'READY_FOR_REVIEW',
-    COMPLETED = 'COMPLETED',
-    FAILED = 'FAILED',
-    EXPIRED = 'EXPIRED',
-}
 
 @Entity('onboarding_sessions')
 export class OnboardingSession {

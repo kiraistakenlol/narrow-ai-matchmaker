@@ -1,4 +1,4 @@
-import { EventDto } from './event.dto';
+import { EventDto } from './event.dto.js';
 
 /**
  * Data Transfer Object representing an Event, potentially including

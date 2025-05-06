@@ -1,6 +1,6 @@
 import { IsUUID, IsOptional } from 'class-validator';
 // Import PresignedUrlResponseDto relatively within the common package
-import { PresignedUrlResponseDto } from './presigned-url-response.dto'; 
+import { PresignedUrlResponseDto } from './presigned-url-response.dto.js'; 
 
 export class InitiateOnboardingRequestDto {
     @IsUUID()

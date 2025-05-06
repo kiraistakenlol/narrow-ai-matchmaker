@@ -1,6 +1,6 @@
-import { OnboardingSessionDto } from './onboarding-session.dto';
+import { OnboardingSessionDto } from './onboarding-session.dto.js';
 
-interface OnboardingGuidance {
+export interface OnboardingGuidanceDto {
     hints: string[];
 }
 
@@ -8,10 +8,10 @@ interface OnboardingGuidance {
  * Represents the combined state and guidance for the onboarding process.
  */
 export class OnboardingDto {
-    session: OnboardingSessionDto | null;
-    guidance: OnboardingGuidance;
+    session: OnboardingSessionDto;
+    guidance: OnboardingGuidanceDto;
 
-    constructor(session: OnboardingSessionDto | null, guidance: OnboardingGuidance) {
+    constructor(session: OnboardingSessionDto, guidance: OnboardingGuidanceDto) {
         this.session = session;
         this.guidance = guidance;
     }

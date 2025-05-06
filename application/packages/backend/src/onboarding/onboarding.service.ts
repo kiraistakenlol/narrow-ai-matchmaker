@@ -1,14 +1,12 @@
 import { Injectable, Logger, InternalServerErrorException, NotFoundException, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { OnboardingSession, OnboardingStatus } from './entities/onboarding-session.entity';
+import { OnboardingSession } from './entities/onboarding-session.entity';
 import { S3AudioStorageService } from '@backend/audio-storage/s3-audio-storage.service';
-import { InitiateOnboardingResponseDto, PresignedUrlResponseDto } from '@narrow-ai-matchmaker/common';
+import { OnboardingStatus, PresignedUrlResponseDto } from '@narrow-ai-matchmaker/common';
 import { UserService } from '@backend/users/users.service';
 import { ProfileService } from '@backend/profiles/profiles.service';
 import { EventService } from '@backend/events/events.service';
-import { Profile } from '@backend/profiles/entities/profile.entity';
-import { EventParticipation } from '@backend/events/entities/event-participation.entity';
 import { Event } from '@backend/events/entities/event.entity';
 import { ProfileValidationService } from '../profile-validation/profile-validation.service';
 import { User } from '@backend/users/entities/user.entity';
@@ -30,7 +28,7 @@ export class OnboardingService {
         private readonly profileValidationService: ProfileValidationService,
     ) {}
 
-    async initiate(eventId?: string, externalUserId?: string): Promise<InitiateOnboardingResponseDto> {
+    async create(eventId?: string, externalUserId?: string): Promise<OnboardingSession> {
         let event: Event | null = null;
         if (eventId) {
             this.logger.log(`Initiating onboarding for specific event: ${eventId}`);
@@ -48,8 +46,7 @@ export class OnboardingService {
         const profile = await this.profileService.findProfileByUserId(user.id) || 
             await this.profileService.createInitialProfile(user.id);
 
-            
-          const onboarding = await this.onboardingSessionRepository.save(
+        const onboarding = await this.onboardingSessionRepository.save(
             this.onboardingSessionRepository.create({
                 eventId: event?.id,
                 userId: user.id,
@@ -58,7 +55,6 @@ export class OnboardingService {
             })
         );
         this.logger.log(`Created onboarding session ID: ${onboarding.id} (Event: ${event?.id ?? 'None'})`);
-
 
         try {
             const fileExtension = '.webm';
@@ -71,14 +67,7 @@ export class OnboardingService {
             );
             this.logger.log(`Generated pre-signed URL for session ${onboarding.id}`);
 
-            return {
-                onboarding_id: onboarding.id,
-                upload_details: {
-                    upload_url: uploadUrl,
-                    s3_key: storagePath,
-                }
-            };
-
+            return onboarding;
         } catch (error) {
             const stack = error instanceof Error ? error.stack : undefined;
             const message = error instanceof Error ? error.message : 'Unknown error';
@@ -239,7 +228,6 @@ export class OnboardingService {
         }
     }
 
-    // New method wrapper to find by external ID
     async findLatestUserOnboardingSessionByExternalId(externalUserId: string, eventId?: string): Promise<OnboardingSession | null> {
         this.logger.log(`Attempting to find user by external ID: ${externalUserId}`);
         // Get internal user ID first

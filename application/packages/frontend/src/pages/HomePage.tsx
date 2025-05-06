@@ -13,7 +13,7 @@ function HomePage() {
         dispatch(signOutUser());
     };
 
-    const handleOnboardingFinished = () => {
+    const handleOnboardingComplete = () => {
         console.log("HomePage: Onboarding process finished. Re-checking auth...");
         dispatch(checkAuth());
     };
@@ -30,7 +30,7 @@ function HomePage() {
                     description="Please sign in or create an account to continue."
                     showSignIn={true}
                     showOnboarding={true}
-                    onStartOnboarding={() => {}}
+                    onOnboardingComplete={handleOnboardingComplete}
                 />
                 {authStatus === 'failed' && (
                     <p style={styles.errorText}>Authentication Error: {useAppSelector(state => state.auth.error)}</p>
@@ -69,7 +69,7 @@ function HomePage() {
                     <h3>Onboarding</h3>
                     <div style={styles.onboardingPrompt}>
                         <OnboardingInputView
-                            onOnboardingFinished={handleOnboardingFinished}
+                            onOnboardingComplete={handleOnboardingComplete}
                         />
                     </div>
                 </div>

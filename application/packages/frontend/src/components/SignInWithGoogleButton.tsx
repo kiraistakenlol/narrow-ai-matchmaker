@@ -2,7 +2,6 @@ import React from 'react';
 import {signInWithGoogle, resetAuth} from "../state/slices/authSlice.ts";
 import {useAppDispatch} from "../hooks/hooks.ts";
 import { fetchAuthSession, signOut } from 'aws-amplify/auth';
-import { STORAGE_KEYS } from '../constants/storage';
 
 interface SignInWithGoogleButtonProps {
     disabled?: boolean;
@@ -37,13 +36,10 @@ function SignInWithGoogleButton({disabled = false}: SignInWithGoogleButtonProps)
             }
         }
 
-        // 3. Check for pending onboarding ID
-        const pendingOnboardingId = localStorage.getItem(STORAGE_KEYS.ONBOARDING_ID);
-
         // 4. Proceed with the sign-in attempt via Redux thunk
         try {
             console.log('SignInButton: Dispatching signInWithGoogle...');
-            await dispatch(signInWithGoogle({ onboardingId: pendingOnboardingId })).unwrap();
+            await dispatch(signInWithGoogle()).unwrap();
          } catch (signInError) {
             // Handle errors specifically from the signInWithGoogle initiation
             console.error('SignInButton: Google Sign In initiation failed:', signInError);

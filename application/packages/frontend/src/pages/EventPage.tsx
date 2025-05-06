@@ -49,10 +49,6 @@ function EventPage() {
         fetchEvent();
     }, [eventId]);
 
-    const handleStartOnboarding = () => {
-        console.log('EventPage: Start Onboarding Clicked');
-        // TODO: Implement onboarding start logic/navigation
-    };
 
     if (isLoading) {
         return <div style={styles.container}><p>Loading event...</p></div>;
@@ -85,7 +81,6 @@ function EventPage() {
                                 title="Complete Profile to Join"
                                 description={`Complete your video introduction to join ${eventDto.name}.`}
                                 showOnboarding={true}
-                                onStartOnboarding={handleStartOnboarding}
                             />
                         ) : eventDto.participationId ? (
                             <div>

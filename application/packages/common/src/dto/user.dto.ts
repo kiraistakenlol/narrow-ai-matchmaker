@@ -1,4 +1,4 @@
-import { ProfileData } from '../types/profile.types';
+import { ProfileData } from '../types/profile.types.js';
 
 export class UserDto {
     id!: string;

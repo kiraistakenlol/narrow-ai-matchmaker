@@ -1,67 +1,137 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import apiClient from '../lib/apiClient';
 import AudioRecorder from './AudioRecorder';
-import {AxiosError} from 'axios';
-import {InitiateOnboardingResponseDto, PresignedUrlResponseDto, OnboardingSessionDto, OnboardingDto} from '@narrow-ai-matchmaker/common';
+import { AxiosError } from 'axios';
+import { PresignedUrlResponseDto, OnboardingSessionDto, OnboardingDto, OnboardingGuidanceDto, OnboardingStatus } from '@narrow-ai-matchmaker/common';
 import { STORAGE_KEYS } from '../constants/storage';
+import { useAppSelector } from '../hooks/hooks';
+import { selectAuthStatus, selectAuthUser } from '../state/slices/authSlice';
 
-// Internal component state reflecting the overall process
-type OnboardingProcessState = 'idle' | 'loading' | 'needs_input' | 'processing_audio' | 'polling_status' | 'error' | 'completed';
 
 interface OnboardingInputViewProps {
-    onOnboardingFinished: () => void;
+    onOnboardingComplete?: () => void;
 }
 
+/**
+    possible cases:
+    1. user authorized:
+        1.1  onboarding session exists (onboardingId in local storage)
+            call /onboarding/:onboardingId to get session and hints
+        1.2  onboarding session does not exist
+            call GET /onboarding to fetch session and hints
+            if not found :
+            call GET /onboarding/guidance to fetch hints and then
+            call POST /onboarding to create session when start recording is clicked
+    2. user not authorized:
+        2.1  onboarding session exist (onboardingId in local storage)
+            call GET /onboarding/:onboardingId to fetch session and hints
+            if not found then call POST /onboarding to create session and hints
+        2.2  onboarding session does not exist
+            call POST /onboarding to create session and hints
+
+    ps.POST /onboarding should always set onboardingId in local storage
+*/
 const OnboardingInputView: React.FC<OnboardingInputViewProps> = ({
-    onOnboardingFinished,
+    onOnboardingComplete,
 }: OnboardingInputViewProps) => {
-    const [processState, setProcessState] = useState<OnboardingProcessState>('loading');
-    const [session, setSession] = useState<OnboardingSessionDto | null>(null);
+
+    const authStatus = useAppSelector(selectAuthStatus);
+
+    const [isProcessingAudio, setIsProcessingAudio] = useState<boolean>(false);
+
+    const [onboardingSession, setOnboardingSession] = useState<OnboardingSessionDto | null>(null);
     const [hints, setHints] = useState<string[]>([]);
+
+    const [isInitializing, setIsInitializing] = useState<boolean>(true);
+
     const [error, setError] = useState<string | null>(null);
-    const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-    const fetchOnboardingData = async () => {
-        console.log('OnboardingInputView: Fetching onboarding data...');
-        setProcessState('loading');
-        setError(null);
-        try {
-            const response = await apiClient.get<OnboardingDto>('/onboarding');
-            const onboardingData = response.data;
-            const fetchedSession = onboardingData.session;
-            const fetchedHints = onboardingData.guidance?.hints || [];
+    const pollingIntervalRef = useRef<number | null>(null);
 
-            console.log('OnboardingInputView: Fetched Session:', fetchedSession);
-            console.log('OnboardingInputView: Fetched Hints:', fetchedHints);
+    const initializeOnboardingSessionAndHints = async () => {
+        const storedOnboardingId = localStorage.getItem(STORAGE_KEYS.ONBOARDING_ID);
 
-            setSession(fetchedSession);
-            setHints(fetchedHints);
-
-            if (!fetchedSession || fetchedSession.status === 'NEEDS_CLARIFICATION') {
-                setProcessState('needs_input');
-            } else if (fetchedSession.status === 'COMPLETED') {
-                setProcessState('completed');
-                onOnboardingFinished();
+        console.log('OnboardingInputView: Initializing onboarding session and hints');
+        if (authStatus === 'succeeded') {
+            console.log('OnboardingInputView: Auth user found. Checking for existing onboarding...');
+            const existingOnboarding = (await findMyUserOnboarding());
+            if (existingOnboarding) {
+                console.log('OnboardingInputView: Found existing onboarding:', existingOnboarding);
+                setOnboardingSession(existingOnboarding.session)
+                setHints(existingOnboarding.guidance?.hints || []);
             } else {
-                setProcessState('polling_status');
+                console.log('OnboardingInputView: No existing onboarding found. Checking for stored onboardingId...');
+                if (storedOnboardingId) {
+                    console.log('OnboardingInputView: Found stored onboardingId:', storedOnboardingId);
+                    const existingOnboarding = await fetchOnboardingById(storedOnboardingId);
+                    console.log('OnboardingInputView: Fetched onboarding by ID:', existingOnboarding);
+                    setOnboardingSession(existingOnboarding.session)
+                    setHints(existingOnboarding.guidance?.hints || []);
+                } else {
+                    console.log('OnboardingInputView: No stored onboardingId found. Fetching base guidance...');
+                    const guidance = await fetchBaseGuidance();
+                    console.log('OnboardingInputView: Fetched base guidance:', guidance);
+                    setHints(guidance.hints);
+                }
             }
-
-        } catch (err: any) {
-            const fetchError = `Failed to fetch onboarding data: ${err.response?.data?.message || err.message}`;
-            console.error('OnboardingInputView:', fetchError, err);
-            setError(fetchError);
-            setProcessState('error');
+        } else {
+            console.log('OnboardingInputView: No auth user found. Checking for stored onboardingId...');
+            if (storedOnboardingId) {
+                console.log('OnboardingInputView: Found stored onboardingId:', storedOnboardingId);
+                const existingOnboarding = await fetchOnboardingById(storedOnboardingId);
+                console.log('OnboardingInputView: Fetched onboarding by ID:', existingOnboarding);
+                setOnboardingSession(existingOnboarding.session)
+                setHints(existingOnboarding.guidance?.hints || []);
+            } else {
+                console.log('OnboardingInputView: No stored onboardingId found. Fetching base guidance...');
+                const guidance = await fetchBaseGuidance();
+                console.log('OnboardingInputView: Fetched base guidance:', guidance);
+                setHints(guidance.hints);
+            }
         }
+        console.log('OnboardingInputView: Initialized. Final state:', onboardingSession, hints);
     };
 
     useEffect(() => {
-        fetchOnboardingData();
+        if (authStatus === 'loading' || authStatus === 'N/A') return;
+        
+        try {
+            console.log(authStatus);
+            
+            setIsInitializing(true);
+            initializeOnboardingSessionAndHints();
+        } catch (error) {
+            console.error('Failed to initialize onboarding:', error);
+            setError('Failed to initialize onboarding session');
+        } finally {
+            setIsInitializing(false);
+        }
+
         return () => {
             if (pollingIntervalRef.current) {
                 clearInterval(pollingIntervalRef.current);
             }
         };
-    }, []);
+    }, [authStatus]);
+
+    const fetchBaseGuidance = async () => {
+        console.log('OnboardingInputView: Fetching base guidance');
+        const response = await apiClient.get<OnboardingGuidanceDto>('/onboarding/base-guidance');
+        console.log('OnboardingInputView: Fetched base guidance:', response.data);
+        return response.data;
+    }
+
+    const fetchOnboardingById = async (onboardingId: string) => {
+        console.log('OnboardingInputView: Fetching onboarding data by ID:', onboardingId);
+        const response = await apiClient.get<OnboardingDto>(`/onboarding/${onboardingId}`);
+        console.log('OnboardingInputView: Fetched onboarding data:', response.data);
+        return response.data;
+    }
+
+    const findMyUserOnboarding = async () => {
+        const response = await apiClient.get<OnboardingDto>(`/onboarding`);
+        return response.data;
+    }
 
     useEffect(() => {
         if (pollingIntervalRef.current) {
@@ -69,70 +139,55 @@ const OnboardingInputView: React.FC<OnboardingInputViewProps> = ({
             pollingIntervalRef.current = null;
         }
 
-        if (processState === 'polling_status' && session) {
-            console.log(`OnboardingInputView: Starting polling for session ${session.id}, status: ${session.status}`);
-            const poll = async () => {
-                try {
-                    console.log(`OnboardingInputView: Polling status for ${session.id}...`);
-                    const response = await apiClient.get<OnboardingDto>('/onboarding');
-                    const polledData = response.data;
-                    const newSessionData = polledData.session;
-                    const newHintsData = polledData.guidance?.hints || [];
+        const poll = async (onboardingSession: OnboardingSessionDto) => {
+            try {
+                const onboarding = await fetchOnboardingById(onboardingSession.id);
+                const newSession = onboarding.session;
+                const newHints = onboarding.guidance?.hints || [];
 
-                    setHints(newHintsData);
+                setHints(newHints);
 
-                    if (JSON.stringify(newSessionData) !== JSON.stringify(session)) {
-                        console.log('OnboardingInputView: Polling detected session change. New session:', newSessionData);
-                        setSession(newSessionData);
+                if (JSON.stringify(newSession) !== JSON.stringify(onboardingSession)) {
+                    console.log('OnboardingInputView: Polling detected session change. New session:', newSession);
+                    setOnboardingSession(newSession);
 
-                        if (!newSessionData || newSessionData.status === 'NEEDS_CLARIFICATION') {
-                             setProcessState('needs_input');
-                             if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
-                        } else if (newSessionData.status === 'COMPLETED') {
-                             setProcessState('completed');
-                             if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
-                             onOnboardingFinished();
-                        } else {
-                             setProcessState('polling_status');
-                        }
-                    }
-                } catch (err: any) {
-                    const apiErrorMessage = err.response?.data?.message || err.message || 'Failed to poll onboarding status';
-                    setError(`Polling error: ${apiErrorMessage}`);
-                    setProcessState('error');
-                    console.error('OnboardingInputView: Polling error:', err);
-                    if (pollingIntervalRef.current) {
-                        clearInterval(pollingIntervalRef.current);
-                        pollingIntervalRef.current = null;
+                    if (newSession.status === 'COMPLETED') {
+                        if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+                        onOnboardingComplete?.();
                     }
                 }
-            };
-            pollingIntervalRef.current = setInterval(poll, 5000);
-        }
-
-        return () => {
-            if (pollingIntervalRef.current) {
-                clearInterval(pollingIntervalRef.current);
+            } catch (err: any) {
+                const apiErrorMessage = err.response?.data?.message || err.message || 'Failed to poll onboarding status';
+                setError(`Polling error: ${apiErrorMessage}`);
+                console.error('OnboardingInputView: Polling error:', err);
+                if (pollingIntervalRef.current) {
+                    clearInterval(pollingIntervalRef.current);
+                    pollingIntervalRef.current = null;
+                }
             }
         };
-    }, [processState, session, onOnboardingFinished]);
+
+        if (onboardingSession && onboardingSession.status === OnboardingStatus.NEEDS_CLARIFICATION) {
+            pollingIntervalRef.current = window.setInterval(poll, 5000);
+        }
+    }, [onboardingSession?.status])
+
 
     const handleRecordingError = (recorderError: string) => {
         const fullError = `Recording Error: ${recorderError}`;
         setError(fullError);
-        setProcessState('error');
     };
 
     const handleRecordingComplete = async (audioBlob: Blob) => {
-        setProcessState('processing_audio');
+        setIsProcessingAudio(true);
         setError(null);
 
         let currentOnboardingId: string;
         let s3Key: string;
         let uploadUrl: string;
 
-        const currentSessionId = session?.id;
-        const currentEventId = session?.eventId;
+        const currentSessionId = onboardingSession?.id;
+        const currentEventId = onboardingSession?.eventId;
 
         try {
             if (currentSessionId) {
@@ -143,31 +198,39 @@ const OnboardingInputView: React.FC<OnboardingInputViewProps> = ({
                 );
                 s3Key = subsequentUploadResponse.data.s3_key;
                 uploadUrl = subsequentUploadResponse.data.upload_url;
-                 if (!s3Key || !uploadUrl) throw new Error('Invalid response data from subsequent upload URL endpoint.');
+                if (!s3Key || !uploadUrl) throw new Error('Invalid response data from subsequent upload URL endpoint.');
             } else {
                 console.log('No session in state, initiating new session...');
                 const initiatePayload: { event_id?: string } = {};
                 if (currentEventId) {
                     initiatePayload.event_id = currentEventId;
                 }
-                const initiateResponse = await apiClient.post<InitiateOnboardingResponseDto>('/onboarding/initiate', initiatePayload);
-                const {onboarding_id, upload_details} = initiateResponse.data;
-                 if (!onboarding_id || !upload_details?.s3_key || !upload_details?.upload_url) throw new Error('Invalid response data from initiation endpoint.');
-                currentOnboardingId = onboarding_id;
-                s3Key = upload_details.s3_key;
-                uploadUrl = upload_details.upload_url;
+                const initiateResponse = await apiClient.post<OnboardingDto>('/onboarding', initiatePayload);
+                const newOnboardingSession = initiateResponse.data.session;
 
-                // Store onboarding ID for anonymous user
-                if (!session) {
-                    localStorage.setItem(STORAGE_KEYS.ONBOARDING_ID, onboarding_id);
-                }
+                const onboarding_id = newOnboardingSession?.id;
+                if (!onboarding_id) throw new Error('Invalid session data from initiation endpoint.');
+
+                currentOnboardingId = onboarding_id;
+                setOnboardingSession(newOnboardingSession);
+
+                localStorage.setItem(STORAGE_KEYS.ONBOARDING_ID, onboarding_id);
+                console.log('Stored onboarding ID:', onboarding_id);
+
+                console.log(`Initiated session ${onboarding_id}, now getting upload URL...`);
+                const initialUploadResponse = await apiClient.post<PresignedUrlResponseDto>(
+                    `/onboarding/${onboarding_id}/audio-upload-url`
+                );
+                s3Key = initialUploadResponse.data.s3_key;
+                uploadUrl = initialUploadResponse.data.upload_url;
+                if (!s3Key || !uploadUrl) throw new Error('Invalid response data from initial upload URL endpoint.');
             }
 
             console.log(`Uploading to S3 key: ${s3Key}`);
             const uploadResponse = await fetch(uploadUrl, {
                 method: 'PUT',
                 body: audioBlob,
-                headers: {'Content-Type': audioBlob.type || 'audio/webm'}
+                headers: { 'Content-Type': audioBlob.type || 'audio/webm' }
             });
             if (!uploadResponse.ok) {
                 throw new Error(`S3 upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
@@ -177,22 +240,21 @@ const OnboardingInputView: React.FC<OnboardingInputViewProps> = ({
             await apiClient.post(`/onboarding/${currentOnboardingId}/notify-upload`, { s3_key: s3Key });
 
             console.log("Audio processed and notified backend, transitioning to polling state.");
-            setProcessState('polling_status');
         } catch (err: any) {
             let apiErrorMessage = 'An unknown error occurred during audio processing.';
-             if (err instanceof AxiosError) apiErrorMessage = `API Error: ${err.response?.data?.message || err.message}`;
-             else if (err instanceof Error) apiErrorMessage = err.message;
+            if (err instanceof AxiosError) apiErrorMessage = `API Error: ${err.response?.data?.message || err.message}`;
+            else if (err instanceof Error) apiErrorMessage = err.message;
             const fullError = `Audio processing failed: ${apiErrorMessage}`;
             setError(fullError);
-            setProcessState('error');
+        } finally {
+            setIsProcessingAudio(false);
         }
     };
 
-    const showLoading = processState === 'loading';
-    const showInput = processState === 'needs_input';
-    const showProcessing = processState === 'processing_audio' || processState === 'polling_status';
-    const showError = processState === 'error';
-    const showCompleted = processState === 'completed';
+    const showLoading = isInitializing;
+    const showAudioRecorder = !isProcessingAudio && onboardingSession?.status !== OnboardingStatus.COMPLETED;
+    const showError = onboardingSession?.status === OnboardingStatus.FAILED;
+    const showCompleted = onboardingSession?.status === OnboardingStatus.COMPLETED;
 
     return (
         <div style={styles.container}>
@@ -209,7 +271,7 @@ const OnboardingInputView: React.FC<OnboardingInputViewProps> = ({
                 </ul>
             )}
 
-            {showInput && (
+            {showAudioRecorder && (
                 <AudioRecorder
                     isProcessing={false}
                     onRecordingComplete={handleRecordingComplete}
@@ -217,12 +279,18 @@ const OnboardingInputView: React.FC<OnboardingInputViewProps> = ({
                 />
             )}
 
-            {showProcessing && (
-                 <div style={styles.processing}>
-                     <p>Processing your information...</p>
-                     <p>Status: {session?.status || 'Waiting for update...'}</p>
-                 </div>
-             )}
+            {isProcessingAudio && (
+                <div style={styles.processing}>
+                    <p>Processing your information...</p>
+                    <p>Status: {onboardingSession?.status || 'Waiting for update...'}</p>
+                </div>
+            )}
+
+            {showCompleted && (
+                <div style={styles.completed}>
+                    <p>Your profile is completed!</p>
+                </div>
+            )}
 
             {showError && error && (
                 <div style={styles.error}>{error}</div>

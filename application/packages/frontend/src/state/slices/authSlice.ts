@@ -6,7 +6,7 @@ import apiClient from '../../lib/apiClient';
 import {AxiosError} from 'axios';
 
 
-export type AuthStatus = 'not-signed-in' | 'loading' | 'succeeded' | 'failed';
+export type AuthStatus = 'N/A' | 'not-signed-in' | 'loading' | 'succeeded' | 'failed';
 
 interface AuthState {
     user: UserDto | null;
@@ -17,7 +17,7 @@ interface AuthState {
 
 const initialState: AuthState = {
     user: null,
-    status: 'not-signed-in',
+    status: 'N/A',
     error: null,
     isOnboarded: false,
 };
@@ -121,12 +121,15 @@ export const authSlice = createSlice({
                 const userData = action.payload;
                 if (userData) {
                     // User is authenticated and data received
+                    console.log('AuthSlice: checkAuth.fulfilled', userData);
+                    
                     state.status = 'succeeded';
                     state.user = userData;
                     state.isOnboarded = !!userData.profile;
                     state.error = null;
                 } else {
                     // No session found, user is not logged in
+                    console.log('AuthSlice: checkAuth.fulfilled: No session found, user is not logged in');
                     state.status = 'not-signed-in'; // Set to not-signed-in instead of failed
                     state.user = null;
                     state.isOnboarded = false;
