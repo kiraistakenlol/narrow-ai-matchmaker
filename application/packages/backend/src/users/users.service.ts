@@ -77,9 +77,17 @@ export class UserService {
         };
     }
 
-    async findUserWithProfileById(externalId: string): Promise<User | null> {
+    async findUserWithProfileByExternalId(externalId: string): Promise<User | null> {
         const user = await this.userRepository.findOne({
             where: { externalId: externalId },
+            relations: ['profile'],
+        });
+        return user;
+    }
+
+    async findUserWithProfileById(id: string): Promise<User | null> {
+        const user = await this.userRepository.findOne({
+            where: { id: id },
             relations: ['profile'],
         });
         return user;

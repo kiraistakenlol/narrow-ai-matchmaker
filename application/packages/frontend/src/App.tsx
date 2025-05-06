@@ -3,6 +3,7 @@ import { useAuthListener } from './hooks/useAuthListener';
 import HomePage from './pages/HomePage';
 import EventPage from './pages/EventPage';
 import DevPage from './pages/DevPage';
+import UserPage from './pages/UserPage';
 import { useAppDispatch } from './hooks/hooks';
 import { initializeOnboarding } from './state/slices/onboardingSlice';
 import { useEffect } from 'react';
@@ -27,6 +28,9 @@ function App() {
 
                 {/* Developer Playground */}
                 <Route path="/dev" element={<DevPage />} />
+
+                {/* Profile page */}
+                <Route path="/mmt/:userId" element={<UserPage />} />
 
                 {/* Catch-all route: Redirects any unmatched path to Home */}
                 <Route path="*" element={<Navigate to="/" replace />} />

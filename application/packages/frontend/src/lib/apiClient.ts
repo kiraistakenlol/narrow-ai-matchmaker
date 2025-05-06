@@ -4,7 +4,8 @@ import { fetchAuthSession } from 'aws-amplify/auth';
 import {
     OnboardingDto,
     OnboardingGuidanceDto,
-    PresignedUrlResponseDto
+    PresignedUrlResponseDto,
+    ProfileData
 } from '@narrow-ai-matchmaker/common';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
@@ -92,6 +93,12 @@ export const getAudioUploadUrl = async (onboardingId: string): Promise<Presigned
 
 export const notifyUploadComplete = async (onboardingId: string, s3Key: string): Promise<void> => {
     await apiClient.post(`/onboarding/${onboardingId}/notify-upload`, { s3_key: s3Key });
+};
+
+export const fetchUserProfile = async (userId?: string): Promise<ProfileData> => {
+    const endpoint = userId ? `/users/${userId}` : '/users/me';
+    const response = await apiClient.get(endpoint);
+    return response.data.profile;
 };
 
 export default apiClient; 

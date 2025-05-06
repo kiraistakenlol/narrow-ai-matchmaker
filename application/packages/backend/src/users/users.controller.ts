@@ -13,19 +13,19 @@ export class UsersController {
     constructor(
         private readonly usersService: UserService,
         private readonly eventService: EventService,
-    ) {}
+    ) { }
 
     @Get('me')
     @UseGuards(AuthenticatedGuard)
     async getMyProfile(@CurrentUser() currentUser: CognitoIdTokenPayload): Promise<UserDto> {
-        
+
         const userId = currentUser.sub;
         if (!userId) {
             this.logger.error('AuthenticatedGuard passed but no user identifier (sub) found in payload.');
             throw new NotFoundException('User identifier not found after authentication.');
         }
 
-        const userWithProfile = await this.usersService.findUserWithProfileById(userId);
+        const userWithProfile = await this.usersService.findUserWithProfileByExternalId(userId);
 
         if (!userWithProfile) {
             this.logger.error('User data not found.');
@@ -63,5 +63,28 @@ export class UsersController {
         }));
 
         return joinedEventsDto;
+    }
+
+    @Get(':id')
+    async getUserProfile(
+        @Param('id') id: string): Promise<UserDto> {
+        this.logger.log(`Getting profile for user ID: ${id}`);
+
+        const user = await this.usersService.findUserWithProfileById(id);
+
+        if (!user) {
+            this.logger.error(`User with ID ${id} not found.`);
+            throw new NotFoundException(`User not found.`);
+        }
+
+        // Return the user data in DTO format
+        const userDto: UserDto = {
+            id: user.id,
+            email: user.email ?? '',
+            onboardingComplete: user.onboardingComplete,
+            profile: user.profile ? user.profile.data : null,
+        };
+
+        return userDto;
     }
 } 
