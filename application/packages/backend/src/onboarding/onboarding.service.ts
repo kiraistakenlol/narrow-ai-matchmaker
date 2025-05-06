@@ -174,45 +174,6 @@ export class OnboardingService {
         }
     }
 
-    private calculateProfileCompleteness(profile: Profile): number {
-        // Simple implementation - can be enhanced based on requirements
-        if (!profile.data) return 0;
-        
-        const data = profile.data as any;
-        let completeness = 0;
-        
-        if (data.name) completeness += 50;
-        if (data.interests && Array.isArray(data.interests) && data.interests.length > 0) completeness += 50;
-        
-        return completeness;
-    }
-
-    private calculateEventCompleteness(eventParticipation: EventParticipation): number {
-        // Simple implementation - can be enhanced based on requirements
-        if (!eventParticipation.contextData) return 0;
-        
-        const data = eventParticipation.contextData as any;
-        let completeness = 0;
-        
-        if (data.goals && Array.isArray(data.goals) && data.goals.length > 0) completeness += 70;
-        if (data.availability) completeness += 30;
-        
-        return completeness;
-    }
-
-    private determineOnboardingStatus(profileCompleteness: number, eventCompleteness: number): OnboardingStatus {
-        if (profileCompleteness >= 0.9 && eventCompleteness >= 0.9) {
-            return OnboardingStatus.COMPLETED;
-        } else if (profileCompleteness >= 0.7 && eventCompleteness >= 0.7) {
-            return OnboardingStatus.READY_FOR_REVIEW;
-        } else if (profileCompleteness >= 0.5 || eventCompleteness >= 0.5) {
-            return OnboardingStatus.NEEDS_CLARIFICATION;
-        } else {
-            return OnboardingStatus.AWAITING_AUDIO;
-        }
-    }
-
-    // Method to generate a pre-signed URL for subsequent audio uploads
     async requestSubsequentAudioUploadUrl(onboardingId: string): Promise<PresignedUrlResponseDto> {
         this.logger.log(`Requesting subsequent audio upload URL for onboarding session: ${onboardingId}`);
         
@@ -301,5 +262,15 @@ export class OnboardingService {
             this.logger.error(`Failed to find onboarding session ${id}: ${message}`, error instanceof Error ? error.stack : undefined);
             throw new InternalServerErrorException(`Could not retrieve onboarding session ${id}.`);
         }
+    }
+
+    async getById(id: string): Promise<OnboardingSession> {
+        this.logger.log(`Getting onboarding session by ID: ${id}`);
+        const session = await this.findById(id);
+        if (!session) {
+            this.logger.error(`Onboarding session with ID ${id} not found`);
+            throw new NotFoundException(`Onboarding session with ID ${id} not found`);
+        }
+        return session;
     }
 }

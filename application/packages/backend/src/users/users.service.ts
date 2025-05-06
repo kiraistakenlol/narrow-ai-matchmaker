@@ -62,31 +62,6 @@ export class UserService {
         return user;
     }
 
-    async updateUserAuthDetails(userId: string, externalId: string, email?: string): Promise<User> {
-        this.logger.log(`Updating auth details for internal user ID: ${userId}. Setting external ID: ${externalId}`);
-        const user = await this.userRepository.findOneBy({ id: userId });
-        if (!user) {
-            this.logger.error(`User with internal ID ${userId} not found for auth update.`);
-            throw new NotFoundException(`User with internal ID ${userId} not found`);
-        }
-
-        user.externalId = externalId;
-        if (email) {
-            user.email = email;
-            this.logger.log(`Updating email for user ${userId}.`);
-        }
-
-        try {
-             const updatedUser = await this.userRepository.save(user);
-             this.logger.log(`Successfully updated auth details for user ${userId}.`);
-             return updatedUser;
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'Unknown database error';
-            this.logger.error(`Failed to update auth details for user ${userId}: ${message}`, error instanceof Error ? error.stack : undefined);
-            throw new InternalServerErrorException('Could not update user authentication details.');
-        }
-    }
-
     async getUserDtoById(userId: string): Promise<UserDto | null> {
         this.logger.log(`Getting UserDto for internal ID: ${userId}`);
         const user = await this.findById(userId);
@@ -122,5 +97,16 @@ export class UserService {
             this.logger.error(`Failed to save user ${user.id}: ${message}`, error instanceof Error ? error.stack : undefined);
             throw new InternalServerErrorException(`Could not save user ${user.id}.`);
         }
+    }
+
+    async getById(id: string): Promise<User> {
+        this.logger.log(`Getting user by ID: ${id}`);
+        const user = await this.findById(id);
+        if (!user) {
+            this.logger.error(`User with ID ${id} not found.`);
+            throw new NotFoundException(`User with ID ${id} not found`);
+        }
+        this.logger.log(`Successfully retrieved user ${user.id}`);
+        return user;
     }
 } 

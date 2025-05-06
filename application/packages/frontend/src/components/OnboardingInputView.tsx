@@ -3,6 +3,7 @@ import apiClient from '../lib/apiClient';
 import AudioRecorder from './AudioRecorder';
 import {AxiosError} from 'axios';
 import {InitiateOnboardingResponseDto, PresignedUrlResponseDto, OnboardingSessionDto, OnboardingDto} from '@narrow-ai-matchmaker/common';
+import { STORAGE_KEYS } from '../constants/storage';
 
 // Internal component state reflecting the overall process
 type OnboardingProcessState = 'idle' | 'loading' | 'needs_input' | 'processing_audio' | 'polling_status' | 'error' | 'completed';
@@ -155,6 +156,11 @@ const OnboardingInputView: React.FC<OnboardingInputViewProps> = ({
                 currentOnboardingId = onboarding_id;
                 s3Key = upload_details.s3_key;
                 uploadUrl = upload_details.upload_url;
+
+                // Store onboarding ID for anonymous user
+                if (!session) {
+                    localStorage.setItem(STORAGE_KEYS.ONBOARDING_ID, onboarding_id);
+                }
             }
 
             console.log(`Uploading to S3 key: ${s3Key}`);

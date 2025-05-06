@@ -30,5 +30,6 @@ import { ProfileValidationModule } from '../profile-validation/profile-validatio
     ],
     controllers: [OnboardingController],
     providers: [OnboardingService],
+    exports: [OnboardingService]
 })
 export class OnboardingModule {} 

@@ -1,6 +1,6 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginRequestDto as LoginRequestDto } from './dto/login.request.dto';
+import { LoginRequestDto } from '@narrow-ai-matchmaker/common';
 import { UserDto } from '@narrow-ai-matchmaker/common';
 
 @Controller('auth')

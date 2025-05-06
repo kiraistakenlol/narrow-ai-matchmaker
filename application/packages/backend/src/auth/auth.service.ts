@@ -1,11 +1,13 @@
-import { Injectable, Logger, UnauthorizedException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity'; // Assuming User entity location
-import { LoginRequestDto } from './dto/login.request.dto';
+import { LoginRequestDto } from '@narrow-ai-matchmaker/common';
 import { UserDto } from '@narrow-ai-matchmaker/common'; // Corrected import path
 import * as jose from 'jose'; // Import jose
+import { OnboardingService } from '../onboarding/onboarding.service';
+import { UserService } from '../users/users.service';
 
 // Define a type for the expected payload structure (optional but good practice)
 interface CognitoIdTokenPayload extends jose.JWTPayload {
@@ -26,8 +28,8 @@ export class AuthService {
         private readonly configService: ConfigService,
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
-        // @InjectRepository(OnboardingSession)
-        // private readonly onboardingSessionRepository: Repository<OnboardingSession>,
+        private readonly onboardingService: OnboardingService,
+        private readonly userService: UserService,
     ) {
         const region = this.configService.get<string>('cognito.region');
         const userPoolId = this.configService.get<string>('cognito.userPoolId');
@@ -41,100 +43,86 @@ export class AuthService {
         this.logger.log(`AuthService initialized. Issuer: ${this.cognitoIssuer}, Audience: ${this.cognitoAudience}`);
     }
 
-    async login(dto: LoginRequestDto): Promise<UserDto> {
-        this.logger.log(`Login request for token starting with: ${dto.id_token.substring(0, 10)}...`);
+    private async verifyIdToken(idToken: string): Promise<CognitoIdTokenPayload> {
+        this.logger.debug(`Attempting to verify token with issuer: ${this.cognitoIssuer}, audience: ${this.cognitoAudience}`);
 
-        // --- 1. Verify ID Token --- 
-        let verifiedPayload: CognitoIdTokenPayload;
         try {
-            this.logger.debug(`Attempting to verify token with issuer: ${this.cognitoIssuer}, audience: ${this.cognitoAudience}`);
             const { payload } = await jose.jwtVerify(
-                dto.id_token,
-                this.JWKS, // Provide the function to fetch the keys
+                idToken,
+                this.JWKS,
                 {
                     issuer: this.cognitoIssuer,
                     audience: this.cognitoAudience,
-                    algorithms: ['RS256'], // Cognito uses RS256
+                    algorithms: ['RS256'],
                 },
             );
 
             this.logger.debug('Token signature and claims verified successfully.');
 
-            // Check token_use claim
             if (payload.token_use !== 'id') {
                 this.logger.error(`Invalid token_use claim: ${payload.token_use}`);
                 throw new UnauthorizedException('Token is not an ID token');
             }
 
-            // Perform type assertion after checks
-            verifiedPayload = payload as CognitoIdTokenPayload;
-             if (!verifiedPayload.sub || !verifiedPayload.email) {
-                 // This check might be redundant if jose.jwtVerify already ensures payload structure,
-                 // but kept for explicit clarity.
-                 this.logger.error('Verified token payload missing required fields (sub or email).');
+            const verifiedPayload = payload as CognitoIdTokenPayload;
+            if (!verifiedPayload.sub || !verifiedPayload.email) {
+                this.logger.error('Verified token payload missing required fields (sub or email).');
                 throw new UnauthorizedException('Invalid token payload structure');
             }
 
+            return verifiedPayload;
         } catch (error) {
             this.logger.error(`Token verification failed: ${error instanceof Error ? error.message : String(error)}`, error instanceof Error ? error.stack : undefined);
             if (error instanceof UnauthorizedException || error instanceof jose.errors.JWTExpired || error instanceof jose.errors.JWTClaimValidationFailed || error instanceof jose.errors.JWSSignatureVerificationFailed) {
                 throw new UnauthorizedException('Invalid or expired ID token');
             }
-            // Log other jose errors specifically if needed
-            // else if (error instanceof jose.errors.JOSEError) { ... }
             throw new InternalServerErrorException('Token verification process failed');
         }
+    }
 
+    private async findOrCreateUser(externalId: string, email: string, onboardingId?: string): Promise<User> {
+        if (onboardingId) {
+            this.logger.log(`Onboarding ID provided: ${onboardingId}, attempting to link with user`);
+            const onboarding = await this.onboardingService.getById(onboardingId);
+            const user = await this.userService.getById(onboarding.userId);
+
+            if (!user.externalId) {
+                this.logger.log(`Found anonymous user ${user.id} from onboarding session, updating external ID and email`);
+                user.externalId = externalId;
+                user.email = email;
+                return this.userRepository.save(user);
+            } else {
+                this.logger.log(`User ${user.id} already has external ID set, skipping update.`);
+                return user;
+            }
+        }
+
+        const existingUser = await this.userRepository.findOne({ where: { externalId } });
+        if (existingUser) {
+            return existingUser;
+        }
+
+        this.logger.log(`User not found by externalId ${externalId}, creating new user.`);
+        const newUser = this.userRepository.create({ externalId, email });
+        await this.userRepository.save(newUser);
+        this.logger.log(`Created new user with id: ${newUser.id}`);
+        return newUser;
+    }
+
+    async login(dto: LoginRequestDto): Promise<UserDto> {
+        this.logger.log(`Login request for token starting with: ${dto.id_token.substring(0, 10)}...`);
+
+        const verifiedPayload = await this.verifyIdToken(dto.id_token);
         const externalId = verifiedPayload.sub;
         const email = verifiedPayload.email;
 
-        // --- 2. Find or Create User --- 
-        let user: User;
+        const user = await this.findOrCreateUser(externalId, email, dto.onboarding_id);
 
-        try {
-            user = await this.userRepository.findOne({ where: { externalId } });
-
-            if (user) {
-                this.logger.log(`Found existing user by externalId: ${user.id}`);
-                // Optionally update email if it was missing and provided in token
-                if (!user.email && email) {
-                    user.email = email;
-                    await this.userRepository.save(user);
-                    this.logger.log(`Updated email for existing user ${user.id}`);
-                }
-            } else {
-                this.logger.log(`User not found by externalId ${externalId}, creating new user.`);
-                user = this.userRepository.create({ externalId, email });
-                await this.userRepository.save(user);
-                this.logger.log(`Created new user with id: ${user.id}`);
-            }
-        } catch (error) {
-            this.logger.error(`Error during user lookup/creation: ${error instanceof Error ? error.message : String(error)}`, error instanceof Error ? error.stack : undefined);
-            throw new InternalServerErrorException('Failed to process user information');
-        }
-
-        // --- 3. Return User DTO --- 
         this.logger.log(`Login successful for user ${user.id}.`);
-        // Explicitly map to UserDto 
-        const userDto: UserDto = {
+        return {
             id: user.id,
-            email: user.email!, // Non-null assertion okay due to logic above
+            email: user.email!,
             onboardingComplete: user.onboardingComplete,
-        };
-        return userDto;
+        } as UserDto;
     }
-
-    // --- Helper for JWT Verification (Implement using jose or similar) ---
-    // private async verifyCognitoToken(token: string): Promise<any> {
-    //     // 1. Decode header to get kid
-    //     // 2. Get signing key from JWKS client using kid
-    //     // 3. Verify token signature, issuer, audience, expiration using jose.jwtVerify
-    //     // Example:
-    //     // const { payload } = await jose.jwtVerify(token, /* JWKS key function */, {
-    //     //     issuer: this.cognitoIssuer,
-    //     //     audience: this.cognitoAudience
-    //     // });
-    //     // return payload;
-    //     throw new Error('Verification not implemented');
-    // }
 } 

@@ -5,6 +5,7 @@ import { useAppDispatch } from './hooks';
 import { checkAuth, resetAuth } from '../state/slices/authSlice';
 import apiClient from '../lib/apiClient';
 import { UserDto } from '@narrow-ai-matchmaker/common';
+import { STORAGE_KEYS } from '../constants/storage';
 
 export function useAuthListener() {
     const dispatch = useAppDispatch();
@@ -13,10 +14,9 @@ export function useAuthListener() {
         dispatch(checkAuth());
 
         const unsubscribe = Hub.listen('auth', ({ payload }) => {
+            
             switch (payload.event) {
                 case 'signedIn':
-                    // This might happen if the user signs in through a different tab/window
-                    // or via a non-redirect method. Re-checking auth is safe.
                     console.log('Amplify Hub: signedIn event detected.');
                     dispatch(checkAuth());
                     break;
@@ -30,8 +30,11 @@ export function useAuthListener() {
                             if (idToken) {
                                 console.log('useAuthListener: Got idToken, calling POST /auth...');
                                 try {
-                                    // Use id_token as per user's previous edit
-                                    await apiClient.post<UserDto>('/auth', { id_token: idToken });
+                                    const onboardingId = localStorage.getItem(STORAGE_KEYS.ONBOARDING_ID);
+                                    await apiClient.post<UserDto>('/auth', {
+                                            id_token: idToken,
+                                            onboarding_id: onboardingId
+                                        });
                                     console.log('useAuthListener: POST /auth successful.');
                                 } catch (authError) {
                                     console.error('useAuthListener: POST /auth failed.', authError);
@@ -58,7 +61,6 @@ export function useAuthListener() {
                     break;
 
                 default:
-                    // console.log('Amplify Hub event:', payload.event); // Log other events if needed
                     break;
             }
         });

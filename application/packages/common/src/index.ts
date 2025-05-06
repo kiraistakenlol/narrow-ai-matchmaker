@@ -7,6 +7,7 @@ export * from './dto/onboarding/presigned-url-response.dto';
 export * from './dto/onboarding/initiate-onboarding.dto';
 export * from './dto/onboarding/onboarding.dto';
 export * from './dto/api-response.dto';
+export * from './dto/auth/login.request.dto';
 
 export * from './types/profile.types';
 export * from './types/profile-validation.types';
