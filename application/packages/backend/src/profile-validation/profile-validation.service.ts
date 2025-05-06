@@ -47,8 +47,6 @@ export class ProfileValidationService {
         let isComplete = true;
 
         if (!profileData) {
-            this.logger.log('Profile data is null, considering it incomplete.');
-            // If profile is null, all rules effectively fail
             return {
                 isComplete: false,
                 hints: this.validationRules.map(rule => rule.hint)

@@ -7,11 +7,13 @@ export class TestTranscriptionService implements ITranscriptionService {
 
     async transcribeAudio(s3Key: string, languageCode?: string): Promise<string> {
         this.logger.log(`Test transcription for audio: ${s3Key}`);
-        return `Hi, I'm Olivia Parker, founder of HealthTrack, 
-            a health monitoring app that helps users track and analyze their wellness data. 
-            I have a business background and a clear vision for the product but I'm looking 
-            for a technical co-founder who can build and lead our tech stack. 
-            My app idea has received positive feedback from early testers, 
-            but I need a skilled engineer to turn this vision into reality.`;
+        return `Hi there! I'm Alex Rivera, founder of PixelPerfect.
+         We're a brand new design-focused SaaS startup that just 
+         secured initial funding. We've built our MVP and now need 
+         our first talented marketing designer to help us establish 
+         our brand identity and create compelling visual content for our launch.
+          I have a technical background but need someone creative who's 
+          excited about joining a tiny team and wearing multiple hats.
+           Looking for that special someone who wants to be employee #1 and grow with us!`;
     }
 } 

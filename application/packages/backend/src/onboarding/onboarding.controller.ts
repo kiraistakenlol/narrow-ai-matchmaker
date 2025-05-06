@@ -1,8 +1,7 @@
 import { Controller, Post, Body, HttpCode, HttpStatus, ValidationPipe, Param, ParseUUIDPipe, Logger, Get, Query, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { OnboardingService } from './onboarding.service';
 import {
-    InitiateOnboardingRequestDto,
-    InitiateOnboardingResponseDto,
+    CreateOnboardingRequestDto,
     OnboardingSessionDto,
     PresignedUrlResponseDto,
     OnboardingDto,
@@ -36,7 +35,7 @@ export class OnboardingController {
     @HttpCode(HttpStatus.CREATED)
     async create(
         @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
-        dto: InitiateOnboardingRequestDto,
+        dto: CreateOnboardingRequestDto,
         @CurrentUser() currentUser?: CognitoIdTokenPayload
     ): Promise<OnboardingDto> {
         const externalUserId = currentUser?.sub;
@@ -59,37 +58,6 @@ export class OnboardingController {
         return new OnboardingDto(sessionDto, guidance);
     }
 
-    @Get()
-    async findOnboardingSession(
-        @CurrentUser() user: CognitoIdTokenPayload,
-        @Query('event_id', new ParseUUIDPipe({ optional: true })) event_id?: string
-    ): Promise<OnboardingDto | null> {
-        const externalUserId = user.sub;
-        this.logger.log(`Fetching latest onboarding for user ${externalUserId}${event_id ? ` event ${event_id}` : ''}`);
-
-        const session = await this.onboardingService.findLatestUserOnboardingSessionByExternalId(externalUserId, event_id);
-        if (!session) {
-            return null;
-        }
-
-        const profile = await this.profileService.findProfileByUserId(session.userId);
-
-        const validationResult = this.profileValidationService.validateProfile((profile?.data || null));
-
-        return new OnboardingDto(
-            {
-                id: session.id,
-                eventId: session.eventId,
-                status: session.status,
-                createdAt: session.createdAt.toISOString(),
-                updatedAt: session.updatedAt.toISOString(),
-            } as OnboardingSessionDto,
-            {
-                hints: validationResult.hints
-            } as OnboardingGuidanceDto
-        );
-    }
-
     @Post(':onboarding_id/audio-upload-url')
     @HttpCode(HttpStatus.OK)
     async getAudioUploadUrl(
@@ -107,7 +75,9 @@ export class OnboardingController {
         dto: NotifyUploadRequestDto,
     ): Promise<OnboardingStatusResponseDto> {
         this.logger.log(`Notify upload request for onboarding ID: ${onboardingId}`);
-        return this.onboardingService.processAudio(onboardingId, dto.s3_key);
+        const response = await this.onboardingService.processAudio(onboardingId, dto.s3_key);
+        console.log('response.status', response.status);
+        return { status: response.status };
     }
 
     @Get(':onboarding_id')
@@ -140,6 +110,7 @@ export class OnboardingController {
         const validationResult = this.profileValidationService.validateProfile(profileData);
         const guidance = { hints: validationResult.hints };
 
+        this.logger.log(`Onboarding status: ${onboarding.status}`);
         const sessionDto: OnboardingSessionDto = {
             id: onboarding.id,
             eventId: onboarding.eventId,

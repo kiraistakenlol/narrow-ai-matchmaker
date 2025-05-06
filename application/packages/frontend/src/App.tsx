@@ -1,11 +1,20 @@
-import {BrowserRouter as Router, Navigate, Route, Routes,} from 'react-router-dom';
+import { BrowserRouter as Router, Navigate, Route, Routes, } from 'react-router-dom';
 import { useAuthListener } from './hooks/useAuthListener';
 import HomePage from './pages/HomePage';
 import EventPage from './pages/EventPage';
 import DevPage from './pages/DevPage';
+import { useAppDispatch } from './hooks/hooks';
+import { initializeOnboarding } from './state/slices/onboardingSlice';
+import { useEffect } from 'react';
 
 function App() {
     useAuthListener();
+
+    const dispatch = useAppDispatch();
+
+    useEffect(() => {
+        dispatch(initializeOnboarding());
+    }, [dispatch]);
 
     return (
         <Router>

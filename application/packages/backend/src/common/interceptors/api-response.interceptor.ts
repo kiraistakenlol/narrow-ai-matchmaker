@@ -13,7 +13,6 @@ export class ApiResponseInterceptor<T> implements NestInterceptor<T, ApiResponse
             .handle()
             .pipe(
                 map(data => {
-                    console.log('ApiResponseInterceptor: data', data);
                     // Prevent double wrapping if already an ApiResponse
                     if (data instanceof ApiResponse) {
                         // If controller explicitly returned ApiResponse, respect it

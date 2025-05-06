@@ -20,7 +20,6 @@ export class AuthMiddleware implements NestMiddleware {
 
     constructor(
         private readonly jwtService: JwtService,
-        private readonly configService: ConfigService,
     ) {}
 
     async use(req: Request, res: Response, next: NextFunction) {
@@ -32,14 +31,9 @@ export class AuthMiddleware implements NestMiddleware {
                 // Decode and assert the expected type
                 const payload = this.jwtService.decode(token) as CognitoIdTokenPayload;
 
-                this.logger.debug(`Decoded payload: ${JSON.stringify(payload)}`);
-
                 if (payload && typeof payload === 'object' && payload.sub) {
                 // Attach the strongly-typed payload
                     req.user = payload;
-                    
-                    this.logger.warn('!!! DEVELOPMENT MODE: JWT DECODED BUT NOT VALIDATED !!!');
-                    this.logger.verbose(`User (unverified) ${payload.sub} attached from token.`);
                 } else {
                      this.logger.warn('Failed to decode token or decoded payload is invalid/missing sub.');
                 }

@@ -18,7 +18,6 @@ export class UsersController {
     @Get('me')
     @UseGuards(AuthenticatedGuard)
     async getMyProfile(@CurrentUser() currentUser: CognitoIdTokenPayload): Promise<UserDto> {
-        this.logger.log(`Fetching profile for current user: ${currentUser.sub}`);
         
         const userId = currentUser.sub;
         if (!userId) {
@@ -33,7 +32,6 @@ export class UsersController {
             throw new UnauthorizedException('User data not found.');
         }
 
-        this.logger.log(`User with profile found for ID: ${userId}`);
         const userDto: UserDto = {
             id: userWithProfile.id,
             email: userWithProfile.email ?? '',
@@ -48,7 +46,6 @@ export class UsersController {
     @UseGuards(AuthenticatedGuard)
     async listMyJoinedEvents(@CurrentUser() currentUser: CognitoIdTokenPayload): Promise<JoinedEventDto[]> {
         const userId = currentUser.sub;
-        this.logger.log(`Handling request for joined events for user ID: ${userId}`);
 
         const joinedEventsData = await this.eventService.findJoinedEventsByUserId(userId);
 
@@ -65,7 +62,6 @@ export class UsersController {
             contextData: participation.contextData,
         }));
 
-        this.logger.log(`Returning ${joinedEventsDto.length} joined events for user ${userId}`);
         return joinedEventsDto;
     }
 } 

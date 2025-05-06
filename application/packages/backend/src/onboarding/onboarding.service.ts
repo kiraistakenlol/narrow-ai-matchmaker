@@ -51,7 +51,7 @@ export class OnboardingService {
                 eventId: event?.id,
                 userId: user.id,
                 profileId: profile.id,
-                status: OnboardingStatus.AWAITING_AUDIO
+                status: OnboardingStatus.STARTED
             })
         );
         this.logger.log(`Created onboarding session ID: ${onboarding.id} (Event: ${event?.id ?? 'None'})`);
@@ -87,7 +87,7 @@ export class OnboardingService {
             throw new NotFoundException(`Onboarding session ${onboardingId} not found.`);
         }
         
-        let user: User | null = null; // To hold the user entity for update
+        let user: User | null = null;
         
         try {
             this.logger.log(`Starting transcription for onboarding ${onboardingId}, key: ${s3_key}`);
@@ -123,8 +123,6 @@ export class OnboardingService {
                     this.logger.error(`Could not find user ${onboarding.userId} to mark onboarding complete.`);
                     // Decide how to handle - throw error? Log warning? 
                 }
-            } else {
-                onboarding.status = OnboardingStatus.NEEDS_CLARIFICATION;
             }
             
             // Save both in a transaction if your setup supports it easily.

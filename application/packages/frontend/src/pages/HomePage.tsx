@@ -3,12 +3,17 @@ import {useAppDispatch, useAppSelector} from '../hooks/hooks';
 import {selectAuthStatus, selectAuthUser, signOutUser, checkAuth} from '../state/slices/authSlice';
 import SigninOrOnboardView from '../components/SigninOrOnboardView';
 import OnboardingInputView from '../components/OnboardingInputView';
+import { selectFullOnboardingState, selectOnboardingSession } from '../state/slices/onboardingSlice';
+import { OnboardingStatus } from '@narrow-ai-matchmaker/common';
 
 function HomePage() {
     const dispatch = useAppDispatch();
     const user = useAppSelector(selectAuthUser);
     const authStatus = useAppSelector(selectAuthStatus);
 
+    const onboardingSession = useAppSelector(selectOnboardingSession);
+    const { initialStateLoaded } = useAppSelector(selectFullOnboardingState);
+    
     const handleSignOut = () => {
         dispatch(signOutUser());
     };
@@ -22,14 +27,22 @@ function HomePage() {
         return <div style={styles.container}><p>Authenticating...</p></div>;
     }
 
+    if (!initialStateLoaded) {
+        return <div></div>;
+    }
+
     if (!user) {
+        const onboardingCompleted = onboardingSession?.status === OnboardingStatus.COMPLETED;
+        console.log("HomePage: Onboarding completed:", onboardingCompleted);
         return (
             <div style={styles.containerCenter}>
                 <SigninOrOnboardView
                     title="Welcome!"
-                    description="Please sign in or create an account to continue."
+                    description={onboardingCompleted ?
+                         "You've completed onboarding, now it's time to sign up." :
+                          "Please sign in or create an account to continue."}
                     showSignIn={true}
-                    showOnboarding={true}
+                    showOnboarding={!onboardingCompleted}
                     onOnboardingComplete={handleOnboardingComplete}
                 />
                 {authStatus === 'failed' && (
@@ -38,7 +51,6 @@ function HomePage() {
             </div>
         );
     }
-
 
     return (
         <div style={styles.container}>
