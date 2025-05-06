@@ -4,7 +4,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Run Backend (npm run dev)",
+      "name": "B",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
         "run",
@@ -16,7 +16,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Run Frontend (npm run dev)",
+      "name": "F",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
         "run",
@@ -33,7 +33,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Run Docker Compose",
+      "name": "D",
       "runtimeExecutable": "docker-compose",
       "runtimeArgs": [
         "-f",
@@ -48,7 +48,7 @@
   "compounds": [
     {
       "name": "Run Full Stack",
-      "configurations": ["Run Docker Compose", "Run Backend (npm run dev)", "Run Frontend (npm run dev)"]
+      "configurations": ["D", "B", "F"]
     }
   ]
 } 
