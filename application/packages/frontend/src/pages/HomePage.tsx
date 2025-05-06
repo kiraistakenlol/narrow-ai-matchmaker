@@ -5,6 +5,7 @@ import SigninOrOnboardView from '../components/SigninOrOnboardView';
 import OnboardingInputView from '../components/OnboardingInputView';
 import { selectFullOnboardingState, selectOnboardingSession } from '../state/slices/onboardingSlice';
 import { OnboardingStatus } from '@narrow-ai-matchmaker/common';
+import UserProfileView from '../components/UserProfileView';
 
 function HomePage() {
     const dispatch = useAppDispatch();
@@ -67,12 +68,9 @@ function HomePage() {
                 <p style={styles.errorText}>Error: {useAppSelector(state => state.auth.error)}</p>
             )}
 
-            {user && (
+            {user && user.profile && (
                 <div style={{marginTop: '20px'}}>
-                    <h3>User Object:</h3>
-                    <pre style={styles.jsonOutput}>
-                        {JSON.stringify(user, null, 2)}
-                    </pre>
+                    <UserProfileView profileData={user.profile} />
                 </div>
             )}
 
