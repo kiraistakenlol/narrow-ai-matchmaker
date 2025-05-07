@@ -5,7 +5,8 @@ import SigninOrOnboardView from '../components/SigninOrOnboardView';
 import OnboardingInputView from '../components/OnboardingInputView';
 import { selectFullOnboardingState, selectOnboardingSession } from '../state/slices/onboardingSlice';
 import { OnboardingStatus } from '@narrow-ai-matchmaker/common';
-import UserProfileView from '../components/UserProfileView';
+import UserProfileSummaryView from '../components/UserProfileSummaryView';
+import { Link } from 'react-router-dom';
 
 function HomePage() {
     const dispatch = useAppDispatch();
@@ -55,13 +56,11 @@ function HomePage() {
 
     return (
         <div style={styles.container}>
-            <h1 style={styles.title}>Home / Dashboard</h1>
+            <h1 style={styles.title}>Dashboard</h1>
 
-            <div>
-                <p>Welcome, {user.email} (Internal ID: {user.id})</p>
-                <button onClick={handleSignOut} style={styles.signOutButton}>
-                    Sign Out
-                </button>
+            <div style={styles.userInfoContainer}>
+                <span style={styles.userEmail}>{user.email}</span>
+                <Link to="/mmt/me" style={styles.profileLinkAdjacent}>View My Profile</Link>
             </div>
 
             {authStatus === 'failed' && (
@@ -70,7 +69,7 @@ function HomePage() {
 
             {user && user.profile && (
                 <div style={{marginTop: '20px'}}>
-                    <UserProfileView profileData={user.profile} />
+                    <UserProfileSummaryView profileData={user.profile} />
                 </div>
             )}
 
@@ -84,6 +83,10 @@ function HomePage() {
                     </div>
                 </div>
             )}
+
+            <button onClick={handleSignOut} style={{...styles.signOutButton, marginTop: '30px'}}>
+                Sign Out
+            </button>
         </div>
     );
 }
@@ -109,7 +112,6 @@ const styles: { [key: string]: React.CSSProperties } = {
         borderRadius: '4px'
     },
     signOutButton: {
-        marginTop: '15px',
         padding: '8px 15px',
         backgroundColor: '#dc3545',
         color: 'white',
@@ -123,6 +125,29 @@ const styles: { [key: string]: React.CSSProperties } = {
         border: '1px solid #ccc',
         borderRadius: '8px',
         backgroundColor: '#f9f9f9'
+    },
+    userInfoContainer: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '15px',
+        marginBottom: '20px',
+        padding: '10px',
+        backgroundColor: '#f8f9fa',
+        borderRadius: '4px',
+        border: '1px solid #dee2e6'
+    },
+    userEmail: {
+        fontWeight: '500',
+        color: '#343a40'
+    },
+    profileLink: {
+        color: '#007bff',
+        textDecoration: 'none',
+    },
+    profileLinkAdjacent: {
+        color: '#007bff',
+        textDecoration: 'none',
+        fontSize: '0.9em'
     }
 };
 
