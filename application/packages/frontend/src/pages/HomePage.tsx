@@ -84,12 +84,6 @@ function HomePage() {
                     </div>
                 </div>
             )}
-
-            {!!user.onboardingComplete && (
-                <div style={{marginTop: '20px'}}>
-                    <p style={{color: 'green', fontWeight: 'bold'}}>Onboarding Completed!</p>
-                </div>
-            )}
         </div>
     );
 }

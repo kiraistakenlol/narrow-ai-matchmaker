@@ -90,8 +90,6 @@ export const onboardingSlice = createSlice({
                 localStorage.setItem(STORAGE_KEYS.ONBOARDING_ID, action.payload.id);
                 state.loadingStatus = 'succeeded';
                 state.error = null;
-            } else {
-                localStorage.removeItem(STORAGE_KEYS.ONBOARDING_ID);
             }
         },
         setGuidance: (state, action: PayloadAction<OnboardingGuidanceDto | null>) => {
