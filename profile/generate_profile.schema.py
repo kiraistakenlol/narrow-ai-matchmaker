@@ -10,21 +10,14 @@ OUTPUT_SCHEMA_PATH = BASE_DIR / "profile_schema.json"
 # Dictionary mapping schema fields to their corresponding enum files and keys
 FIELD_TO_ENUM_FILE = {
     "visiting_status": {"file": "visiting_status.json"},
-    "org_type": {"file": "organization_types.json"},
     "category": {"file": "role_categories.json", "type": "categories"},
     "sub_category": {"file": "role_categories.json", "type": "sub_categories"},
     "seniority": {"file": "seniority_levels.json"},
     "engagement.type": {"file": "engagement_types.json"},
     "engagement.commitment": {"file": "engagement_commitments.json"},
     "engagement.work_mode": {"file": "engagemen_work_modes.json"},
-    "industries": {"file": "industries_list.json"},
-    "hobbies": {"file": "hobbies_list.json"},
     "goals.looking_for": {"file": "goal_tags.json"},
     "goals.offering": {"file": "goal_tags.json"},
-    "skills.hard.skill": {"file": "skills_hard.json"},
-    "skills.soft.skill": {"file": "skills_soft.json"},
-    "roles.skills.hard.skill": {"file": "skills_hard.json"},
-    "roles.skills.soft.skill": {"file": "skills_soft.json"},
     "skills.hard.level": {"file": "skill_level.json"},
     "skills.soft.level": {"file": "skill_level.json"},
     "roles.skills.hard.level": {"file": "skill_level.json"},
@@ -102,7 +95,7 @@ schema = {
                         "type": "object",
                         "properties": {
                             "skill": {
-                                "enum": add_null_to_enums(load_enum_values("skills.hard.skill"))
+                                "type": ["string", "null"]
                             },
                             "level": {
                                 "enum": add_null_to_enums(load_enum_values("skills.hard.level"))
@@ -118,7 +111,7 @@ schema = {
                         "type": "object",
                         "properties": {
                             "skill": {
-                                "enum": add_null_to_enums(load_enum_values("skills.soft.skill"))
+                                "type": ["string", "null"]
                             },
                             "level": {
                                 "enum": add_null_to_enums(load_enum_values("skills.soft.level"))
@@ -134,11 +127,11 @@ schema = {
         },
         "industries": {
             "type": "array",
-            "items": {"type": "string", "enum": load_enum_values("industries")}
+            "items": {"type": "string"}
         },
         "hobbies": {
             "type": "array",
-            "items": {"type": "string", "enum": load_enum_values("hobbies")}
+            "items": {"type": "string"}
         },
         "roles": {
             "type": "array",
@@ -149,13 +142,13 @@ schema = {
                         "type": "object",
                         "properties": {
                             "org_type": {
-                                "enum": add_null_to_enums(load_enum_values("org_type"))
+                                "type": ["string", "null"]
                             },
                             "name": {"type": ["string", "null"]},
                             "url": {"type": ["string", "null"]},
                             "industries": {
                                 "type": "array",
-                                "items": {"type": "string", "enum": load_enum_values("industries")}
+                                "items": {"type": "string"}
                             }
                         },
                         "required": ["org_type", "name", "url", "industries"],
@@ -196,7 +189,7 @@ schema = {
                                     "type": "object",
                                     "properties": {
                                         "skill": {
-                                            "enum": add_null_to_enums(load_enum_values("roles.skills.hard.skill"))
+                                            "type": ["string", "null"]
                                         },
                                         "level": {
                                             "enum": add_null_to_enums(load_enum_values("roles.skills.hard.level"))
@@ -212,7 +205,7 @@ schema = {
                                     "type": "object",
                                     "properties": {
                                         "skill": {
-                                            "enum": add_null_to_enums(load_enum_values("roles.skills.soft.skill"))
+                                            "type": ["string", "null"]
                                         },
                                         "level": {
                                             "enum": add_null_to_enums(load_enum_values("roles.skills.soft.level"))
@@ -253,9 +246,7 @@ schema = {
         "personal",
         "skills",
         "industries",
-        "hobbies",
         "roles",
-        "event_context",
         "extra_notes"
     ],
     "additionalProperties": False
