@@ -5,6 +5,8 @@ import { TypeOrmModule } from '@nestjs/typeorm'; // Although service uses Inject
 import { EmbeddingModule } from '../embedding/embedding.module';
 import { ProfilesModule } from '../profiles/profiles.module';
 import { MatchesModule } from '../matches/matches.module';
+import { UsersModule } from '../users/users.module';
+import { ProfileValidationModule } from '../profile-validation/profile-validation.module';
 
 @Module({
     // Importing TypeOrmModule here might not be strictly necessary if DataSource is globally available,
@@ -14,6 +16,8 @@ import { MatchesModule } from '../matches/matches.module';
         EmbeddingModule,
         ProfilesModule,
         MatchesModule,
+        UsersModule,
+        ProfileValidationModule,
     ],
     controllers: [DevController],
     providers: [DevService],

@@ -9,6 +9,10 @@ function DevPage() {
 
     // Specific state for re-indexing button
     const [isReindexing, setIsReindexing] = useState(false);
+    
+    // State for text onboarding
+    const [isOnboardingText, setIsOnboardingText] = useState(false);
+    const [onboardingText, setOnboardingText] = useState('');
 
     const handleCleanupDatabase = async () => {
         setIsLoading(true);
@@ -55,6 +59,37 @@ function DevPage() {
         }
     };
 
+    const handleOnboardFromText = async () => {
+        if (!onboardingText.trim()) {
+            setError('Please enter some profile text to onboard.');
+            return;
+        }
+        setIsOnboardingText(true); // Use specific loading state
+        setResult(null);
+        setError(null);
+        try {
+            const response = await apiClient.post<{ 
+                message: string, 
+                userId: string, 
+                profileId: string, 
+                validationStatus: string 
+            }>('/dev/onboard-user-from-text', { text: onboardingText });
+            setResult(`Onboard from Text Success: ${response.data.message} (User: ${response.data.userId}, Profile: ${response.data.profileId}, Status: ${response.data.validationStatus})`);
+            setOnboardingText(''); // Clear text area on success
+        } catch (err) {
+            let errorMessage = 'An unknown error occurred during text onboarding';
+            if (err instanceof AxiosError) {
+                errorMessage = err.response?.data?.error?.message || err.response?.data?.message || err.message;
+            } else if (err instanceof Error) {
+                errorMessage = err.message;
+            }
+            setError(`Onboard from text failed: ${errorMessage}`);
+            console.error('Onboard from text error:', err);
+        } finally {
+            setIsOnboardingText(false); // Clear specific loading state
+        }
+    };
+
     return (
         <div style={styles.container}>
             <h1>Developer Playground</h1>
@@ -76,6 +111,26 @@ function DevPage() {
                     style={styles.button}
                 >
                     {isReindexing ? 'Re-indexing...' : 'Re-index All Profiles'}
+                </button>
+            </div>
+
+            {/* Onboard from Text Section */}
+            <div style={styles.section}>
+                <h2>Onboard Dummy User from Text</h2>
+                <textarea 
+                    value={onboardingText}
+                    onChange={(e) => setOnboardingText(e.target.value)}
+                    placeholder="Enter profile description text here..."
+                    rows={8}
+                    style={styles.textarea}
+                    disabled={isOnboardingText || isLoading || isReindexing}
+                />
+                 <button 
+                    onClick={handleOnboardFromText}
+                    disabled={isOnboardingText || isLoading || isReindexing}
+                    style={styles.button}
+                >
+                    {isOnboardingText ? 'Processing Text...' : 'Onboard User'}
                 </button>
             </div>
 
@@ -102,6 +157,16 @@ const styles: { [key: string]: React.CSSProperties } = {
     message: { marginTop: '15px', padding: '10px', borderRadius: '4px' },
     success: { backgroundColor: '#d4edda', color: '#155724', border: '1px solid #c3e6cb' },
     error: { backgroundColor: '#f8d7da', color: '#721c24', border: '1px solid #f5c6cb' },
+    textarea: { // Style for the textarea
+        width: 'calc(100% - 22px)', // Account for padding/border
+        padding: '10px',
+        marginBottom: '10px',
+        minHeight: '100px',
+        border: '1px solid #ccc',
+        borderRadius: '4px',
+        fontSize: '1rem',
+        display: 'block'
+    }
 };
 
 export default DevPage; 

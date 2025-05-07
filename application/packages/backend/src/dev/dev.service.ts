@@ -4,6 +4,9 @@ import { DataSource } from 'typeorm';
 import { EmbeddingService } from '../embedding/embedding.service';
 import { ProfileService } from '../profiles/profiles.service';
 import { MatchesService } from '../matches/matches.service';
+import { UserService } from '../users/users.service';
+import { ProfileValidationService } from '../profile-validation/profile-validation.service';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class DevService {
@@ -15,6 +18,8 @@ export class DevService {
         private readonly embeddingService: EmbeddingService,
         private readonly profileService: ProfileService,
         private readonly matchesService: MatchesService,
+        private readonly userService: UserService,
+        private readonly profileValidationService: ProfileValidationService,
     ) {}
 
     async cleanupDatabase(): Promise<{ message: string, truncatedTables: string[] }> {
@@ -104,6 +109,65 @@ export class DevService {
             const errorMessage = error instanceof Error ? error.message : String(error);
             this.logger.error(`Re-indexing failed during overall process: ${errorMessage}`, error instanceof Error ? error.stack : undefined);
             throw new Error(`Re-indexing failed: ${errorMessage}`);
+        }
+    }
+
+    async onboardUserFromText(text: string): Promise<{ 
+        message: string, 
+        userId: string, 
+        profileId: string, 
+        validationStatus: string 
+    }> {
+        this.logger.warn(`[DEV] Attempting to onboard new dummy user from text.`);
+        
+        let user: User;
+        try {
+            // Always create a new dummy user
+            user = await this.userService.createUnauthenticatedUser();
+            this.logger.log(`Created new dummy user ${user.id}`);
+
+            // Get or create profile (will always be create for a new user)
+            let profile = await this.profileService.findProfileByUserId(user.id);
+            if (!profile) {
+                profile = await this.profileService.createInitialProfile(user.id);
+            }
+
+            // Process profile update using the provided text
+            this.logger.log(`Processing profile update for user ${user.id} / profile ${profile.id}`);
+            const updatedProfile = await this.profileService.processProfileUpdate(user.id, text);
+
+            // Validate the profile
+            const validationResult = this.profileValidationService.validateProfile(updatedProfile.data);
+            const validationStatus = validationResult.isComplete ? 'Complete' : `Needs Info (${validationResult.hints.join(', ')})`;
+            this.logger.log(`Profile validation status: ${validationStatus}`);
+
+            // Mark user as onboarded
+            user.onboardingComplete = true;
+            await this.userService.save(user);
+            this.logger.log(`Marked user ${user.id} as onboarding complete.`);
+
+            // Inject profile for matching
+            if (updatedProfile?.data?.raw_input && updatedProfile.id) {
+                this.logger.log(`Injecting profile ${updatedProfile.id} for matching.`);
+                this.matchesService.injectProfile(updatedProfile.id, updatedProfile.data.raw_input)
+                    .catch(err => {
+                        this.logger.error(`Error during background profile injection for ${updatedProfile.id}: ${err}`)
+                    });
+            } else {
+                this.logger.warn(`Skipping profile injection for user ${user.id} due to missing raw_input or profile ID.`);
+            }
+
+            return {
+                message: `Successfully processed onboarding from text for new dummy user ${user.id}.`,
+                userId: user.id,
+                profileId: updatedProfile.id,
+                validationStatus: validationStatus
+            };
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            this.logger.error(`Onboarding user from text failed: ${errorMessage}`, error instanceof Error ? error.stack : undefined);
+            throw new Error(`Onboarding user from text failed: ${errorMessage}`);
         }
     }
 } 
