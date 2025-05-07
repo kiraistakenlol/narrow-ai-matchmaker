@@ -117,7 +117,7 @@ const OnboardingInputView: React.FC<OnboardingInputViewProps> = ({
                 <ul style={styles.hints}>
                     {hints.map((hint: string, index: number) => (
                         <li key={index} style={styles.hintItem}>
-                            <span style={{ ...styles.marker, ...styles.uncheckedMarker }}></span>
+                            <span style={styles.marker}></span>
                             <span style={styles.hintText}>{hint}</span>
                         </li>
                     ))}
@@ -180,20 +180,12 @@ const styles: { [key: string]: React.CSSProperties } = {
         borderBottom: '1px solid #eee',
     },
     marker: {
-        display: 'inline-flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        width: '18px',
-        height: '18px',
+        display: 'inline-block',
+        width: '8px',
+        height: '8px',
         borderRadius: '50%',
-        border: '2px solid #ddd',
+        backgroundColor: '#adb5bd',
         flexShrink: 0,
-        fontSize: '10px',
-        fontWeight: 'bold',
-        color: '#555',
-    },
-    uncheckedMarker: {
-        backgroundColor: '#fff',
     },
     hintText: {
         color: '#333',
