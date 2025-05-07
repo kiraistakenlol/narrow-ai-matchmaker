@@ -7,6 +7,9 @@ function DevPage() {
     const [result, setResult] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
+    // Specific state for re-indexing button
+    const [isReindexing, setIsReindexing] = useState(false);
+
     const handleCleanupDatabase = async () => {
         setIsLoading(true);
         setResult(null);
@@ -29,6 +32,29 @@ function DevPage() {
         }
     };
 
+    const handleReindexProfiles = async () => {
+        setIsReindexing(true); // Use specific loading state
+        setResult(null);
+        setError(null);
+        try {
+            const response = await apiClient.post<
+                { message: string, profilesReindexed: number, errorsEncountered: number }
+            >('/dev/reindex-all-profiles');
+            setResult(`Re-indexing Success: ${response.data.message}`);
+        } catch (err) {
+            let errorMessage = 'An unknown error occurred during re-indexing';
+            if (err instanceof AxiosError) {
+                errorMessage = err.response?.data?.error?.message || err.response?.data?.message || err.message;
+            } else if (err instanceof Error) {
+                errorMessage = err.message;
+            }
+            setError(`Re-indexing failed: ${errorMessage}`);
+            console.error('Re-index profiles error:', err);
+        } finally {
+            setIsReindexing(false); // Clear specific loading state
+        }
+    };
+
     return (
         <div style={styles.container}>
             <h1>Developer Playground</h1>
@@ -41,6 +67,15 @@ function DevPage() {
                     style={styles.button}
                 >
                     {isLoading ? 'Cleaning up...' : 'Cleanup Database (Truncate Tables)'}
+                </button>
+
+                {/* Re-index Button */}
+                <button 
+                    onClick={handleReindexProfiles}
+                    disabled={isReindexing || isLoading} // Disable if other long operation is running
+                    style={styles.button}
+                >
+                    {isReindexing ? 'Re-indexing...' : 'Re-index All Profiles'}
                 </button>
             </div>
 

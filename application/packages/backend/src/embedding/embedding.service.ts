@@ -251,4 +251,42 @@ export class EmbeddingService implements OnModuleInit {
             throw new InternalServerErrorException('Could not perform similarity search.');
         }
     }
+
+    async deleteAllPointsFromCollection(collectionName: string): Promise<{ operationStatus: string, pointsDeleted: number | string } > {
+        this.logger.warn(`Attempting to delete ALL points from Qdrant collection: ${collectionName}`);
+        const collectionExists = await this.ensureCollectionExists(collectionName);
+        if (!collectionExists) {
+            const msg = `Qdrant collection '${collectionName}' does not exist or is not ready. Cannot delete points.`;
+            this.logger.error(msg);
+            // Depending on desired strictness, could throw an error or return a specific status
+            return { operationStatus: 'failed_collection_not_ready', pointsDeleted: 0 }; 
+        }
+
+        try {
+            // To delete all points, we can use a filter that effectively matches everything, 
+            // or if the client supports a more direct "clear collection" that keeps the schema, that'd be better.
+            // The Qdrant documentation suggests deleting points with a filter that matches all, 
+            // or deleting and recreating the collection if schema persistence isn't an issue.
+            // For now, let's use a filter that matches all points by omitting specific conditions.
+            // A more robust way might be to scroll through all IDs and delete by batches if "delete all" isn't direct.
+            // However, an empty filter for `delete` usually means "delete all points".
+            
+            // Simpler approach: Delete and recreate the collection. This ensures it's clean and has the right schema.
+            // This is often safer than trying to construct a filter that truly matches all possible points.
+            this.logger.log(`Deleting collection '${collectionName}' to clear all points.`);
+            await this.qdrantClient.deleteCollection(collectionName);
+            this.logger.log(`Collection '${collectionName}' deleted. Recreating...`);
+            await this.ensureCollectionExists(collectionName); // This will recreate it with the correct schema
+            
+            this.logger.log(`Successfully cleared all points from collection '${collectionName}' by delete and recreate.`);
+            return { operationStatus: 'completed', pointsDeleted: 'all (collection recreated)' };
+
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error deleting points';
+            const errorStack = error instanceof Error ? error.stack : undefined;
+            this.logger.error(`Failed to delete all points from collection ${collectionName}: ${errorMessage}`, errorStack);
+            // throw new InternalServerErrorException(`Could not delete points from ${collectionName}.`);
+            return { operationStatus: 'error', pointsDeleted: 0 };
+        }
+    }
 } 

@@ -136,4 +136,17 @@ export class ProfileService {
   
         return this.save(profile);
     }
+
+    async findAllWithData(): Promise<Profile[]> {
+        this.logger.log(`Finding all profiles with their data.`);
+        try {
+            const profiles = await this.profileRepository.find();
+            this.logger.log(`Found ${profiles.length} profiles.`);
+            return profiles;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown database error';
+            this.logger.error(`Failed to find all profiles: ${message}`, error instanceof Error ? error.stack : undefined);
+            throw new InternalServerErrorException('Could not retrieve all profiles.');
+        }
+    }
 }

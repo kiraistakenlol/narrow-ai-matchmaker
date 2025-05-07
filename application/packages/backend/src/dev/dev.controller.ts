@@ -14,5 +14,13 @@ export class DevController {
         return this.devService.cleanupDatabase(); 
     }
 
+    @Post('reindex-all-profiles')
+    @HttpCode(HttpStatus.OK)
+    async reindexAllProfiles(): Promise<{ message: string, profilesReindexed: number, errorsEncountered: number }> {
+        this.logger.warn('[DEV] Received request to re-index all profiles.');
+        // The ApiResponseInterceptor will wrap this response
+        return this.devService.reindexAllProfiles();
+    }
+
     // Add other dev endpoints here later (e.g., for seeding data)
 } 
