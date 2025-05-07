@@ -135,7 +135,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
             {/* Only show button if not processing */} 
             {!isProcessing && (
                  <StartOnboardingButton
-                    text={recordingState === 'recording' ? "Stop Recording" : "Start Recording"}
+                    text={recordingState === 'recording' ? "Stop Recording" : "Record introduction"}
                     disabled={isButtonDisabled}
                     onClick={recordingState === 'recording' ? handleStopRecording : handleStartRecording}
                 />

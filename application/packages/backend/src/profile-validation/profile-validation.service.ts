@@ -10,14 +10,18 @@ export class ProfileValidationService {
         {
             path: 'personal.name',
             checkType: 'existsAndNotEmptyString',
-            hint: 'your name' // User requested hint
+            hint: 'name',
+        },
+        {
+            path: 'personal.visiting_status',
+            checkType: 'existsAndNotEmptyString',
+            hint: 'living or visiting Argentina?',
         },
         {
             path: 'roles',
             checkType: 'arrayNotEmpty',
-            hint: 'project you\'re working on'
+            hint: 'what are you working on?',
         }
-        // Add more rules here
     ];
 
     /**
@@ -55,7 +59,7 @@ export class ProfileValidationService {
 
         for (const rule of this.validationRules) {
             const value = this.getValueByPath(profileData, rule.path);
-            let rulePassed = false;
+        let rulePassed = false;
 
             switch (rule.checkType) {
                 case 'existsAndNotEmptyString':

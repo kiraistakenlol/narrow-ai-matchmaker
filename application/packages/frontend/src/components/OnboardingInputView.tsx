@@ -51,7 +51,7 @@ const OnboardingInputView: React.FC<OnboardingInputViewProps> = ({
                 pollingIntervalRef.current = window.setInterval(() => {
                     console.log('Polling for updates on onboarding ID:', onboardingSession.id);
                     dispatch(fetchOnboardingData(onboardingSession.id));
-                }, 500);
+                }, 2000);
             } else {
                 console.log('Onboarding COMPLETED, stopping polling');
                 if (pollingIntervalRef.current) {
@@ -154,7 +154,7 @@ const OnboardingInputView: React.FC<OnboardingInputViewProps> = ({
                     {hints.map((hint: string, index: number) => (
                         <li key={index} style={styles.hintItem}>
                             <span style={{ ...styles.marker, ...styles.uncheckedMarker }}></span>
-                            <span>{hint}</span>
+                            <span style={styles.hintText}>{hint}</span>
                         </li>
                     ))}
                 </ul>
@@ -189,40 +189,46 @@ const styles: { [key: string]: React.CSSProperties } = {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '15px',
-        width: '100%'
+        gap: '10px',
+        width: '100%',
+        padding: '20px',
     },
     hints: {
         listStyleType: 'none',
-        padding: 0,
+        padding: '0',
         margin: '0 auto 15px auto',
         textAlign: 'left',
         width: '100%',
-        maxWidth: '400px'
+        maxWidth: '450px',
     },
     hintItem: {
         display: 'flex',
         alignItems: 'center',
-        gap: '10px',
-        marginBottom: '10px',
-        color: '#333',
-        fontSize: '16px',
-        lineHeight: '1.5'
+        gap: '8px',
+        marginBottom: '8px',
+        padding: '10px',
+        borderBottom: '1px solid #eee',
     },
     marker: {
         display: 'inline-flex',
         justifyContent: 'center',
         alignItems: 'center',
-        width: '10px',
-        height: '10px',
+        width: '18px',
+        height: '18px',
         borderRadius: '50%',
-        border: '2px solid #ccc',
+        border: '2px solid #ddd',
         flexShrink: 0,
-        fontSize: '12px',
-        fontWeight: 'bold'
+        fontSize: '10px',
+        fontWeight: 'bold',
+        color: '#555',
     },
     uncheckedMarker: {
-        backgroundColor: '#fff'
+        backgroundColor: '#fff',
+    },
+    hintText: {
+        color: '#333',
+        fontSize: '16px',
+        lineHeight: '1.5',
     },
     error: {
         color: '#f44336',
