@@ -11,6 +11,7 @@ import { Event } from '@backend/events/entities/event.entity';
 import { ProfileValidationService } from '../profile-validation/profile-validation.service';
 import { User } from '@backend/users/entities/user.entity';
 import { ITranscriptionService } from '../transcription/transcription.interface';
+import { MatchesService } from '../matches/matches.service';
 
 @Injectable()
 export class OnboardingService {
@@ -26,6 +27,7 @@ export class OnboardingService {
         @Inject('ITranscriptionService')
         private readonly transcriptionService: ITranscriptionService,
         private readonly profileValidationService: ProfileValidationService,
+        private readonly matchesService: MatchesService,
     ) {}
 
     async create(eventId?: string, externalUserId?: string): Promise<OnboardingSession> {
@@ -117,14 +119,12 @@ export class OnboardingService {
             // Determine the new status based on validation
             if (validationResult.isComplete) {
                 onboarding.status = OnboardingStatus.COMPLETED;
-                // Fetch the user to update their onboarding status
                 user = await this.userService.findById(onboarding.userId);
                 if (user) {
                     user.onboardingComplete = true;
-                    // Note: We save the user later in a single transaction if possible, or separately
+                    // Profile injection will happen after user and session are saved
                 } else {
                     this.logger.error(`Could not find user ${onboarding.userId} to mark onboarding complete.`);
-                    // Decide how to handle - throw error? Log warning? 
                 }
             } else {
                 onboarding.status = OnboardingStatus.NEEDS_MORE_INFO;
@@ -133,9 +133,23 @@ export class OnboardingService {
             // For simplicity here, save them sequentially.
             await this.onboardingSessionRepository.save(onboarding);
             if (user && user.onboardingComplete) {
-                 // Save the user ONLY if the onboardingComplete flag was set to true
                 await this.userService.save(user);
                 this.logger.log(`Marked user ${user.id} onboarding as complete.`);
+
+                // Inject profile for matching after successful completion and save
+                if (updatedProfile?.data?.raw_input && updatedProfile.id) { // Ensure raw_input and profile ID exist
+                    this.logger.log(`User ${user.id} completed onboarding. Injecting profile ${updatedProfile.id} for matching.`);
+                    // Intentionally not awaiting, or wrapping in a try-catch that doesn't rethrow,
+                    // to prevent matching injection failure from breaking the onboarding flow.
+                    this.matchesService.injectProfile(updatedProfile.id, updatedProfile.data.raw_input)
+                        .catch(err => {
+                            // Log error from injectProfile if any, but don't fail onboarding
+                            const injectErrorMsg = err instanceof Error ? err.message : 'Unknown error during injectProfile call';
+                            this.logger.error(`Error injecting profile ${updatedProfile.id} for matching after onboarding: ${injectErrorMsg}`, err instanceof Error ? err.stack : undefined);
+                        });
+                } else {
+                    this.logger.warn(`Skipping profile injection for user ${user.id} due to missing raw_input or profile ID after onboarding.`);
+                }
             }
             
             this.logger.log(`Updated session ${onboardingId} status to ${onboarding.status}`);

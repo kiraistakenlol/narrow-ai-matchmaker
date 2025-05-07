@@ -17,6 +17,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { DevModule } from './dev/dev.module';
 import { ProfileValidationModule } from './profile-validation/profile-validation.module';
 import { MatchesModule } from './matches/matches.module';
+import { EmbeddingModule } from './embedding/embedding.module';
 
 @Module({
     imports: [
@@ -66,6 +67,7 @@ import { MatchesModule } from './matches/matches.module';
         DevModule,
         ProfileValidationModule,
         MatchesModule,
+        EmbeddingModule,
     ],
     controllers: [HealthController],
     providers: [],

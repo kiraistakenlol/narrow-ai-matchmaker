@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { OnboardingSession } from './entities/onboarding-session.entity';
 import { OnboardingController } from './onboarding.controller';
@@ -12,6 +12,8 @@ import { EventParticipation } from '@backend/events/entities/event-participation
 import { AudioStorageModule } from '@backend/audio-storage/audio-storage.module';
 import { TranscriptionModule } from '@backend/transcription/transcription.module';
 import { ProfileValidationModule } from '../profile-validation/profile-validation.module';
+import { AuthModule } from '../auth/auth.module';
+import { MatchesModule } from '../matches/matches.module';
 
 @Module({
     imports: [
@@ -27,6 +29,8 @@ import { ProfileValidationModule } from '../profile-validation/profile-validatio
         AudioStorageModule,
         TranscriptionModule,
         ProfileValidationModule,
+        forwardRef(() => AuthModule),
+        MatchesModule,
     ],
     controllers: [OnboardingController],
     providers: [OnboardingService],

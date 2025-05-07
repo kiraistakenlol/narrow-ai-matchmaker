@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { AuthController } from './auth.controller';
@@ -11,7 +11,7 @@ import { UsersModule } from '../users/users.module';
   imports: [
     ConfigModule, // To allow AuthService to access config
     TypeOrmModule.forFeature([User]), // To allow AuthService to inject UserRepository
-    OnboardingModule,
+    forwardRef(() => OnboardingModule), // Use forwardRef
     UsersModule
   ],
   controllers: [AuthController],

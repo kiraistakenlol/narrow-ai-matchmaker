@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { UserService } from './users.service';
@@ -10,7 +10,7 @@ import { MatchesModule } from '../matches/matches.module';
   imports: [
     TypeOrmModule.forFeature([User]),
     EventsModule,
-    MatchesModule,
+    forwardRef(() => MatchesModule),
   ],
   providers: [UserService],
   exports: [UserService],

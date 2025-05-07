@@ -55,6 +55,21 @@ You will be provided with the "currentProfile" and "complementaryUpdates" JSON o
 Respond ONLY with the merged JSON object. Do not include any other text, explanations, or markdown formatting.
 `;
 
+    private readonly matchReasonPrompt = `
+You are an insightful assistant skilled at identifying potential connections between professional profiles. 
+Your task is to analyze two profiles provided below (Profile A and Profile B) and generate a concise, compelling reason (1-2 sentences maximum) why these two individuals might be a good match for collaboration, networking, or shared interests. 
+
+Focus on:
+- Shared professional interests, industries, or fields.
+- Complementary skills or experiences.
+- Aligned goals or stated objectives if apparent.
+- Relevant hobbies or extra-curricular activities if they create a strong connection point.
+
+Avoid generic statements. Be specific if the data allows. If no strong connection is apparent, state that they have diverse backgrounds but could connect on general professional grounds.
+
+Respond ONLY with the reason string. Do not include any other text, explanations, or markdown formatting.
+`;
+
     constructor(
         @Inject(ILlmService)
         private readonly llmService: ILlmService,
@@ -118,6 +133,49 @@ MERGED PROFILE (JSON):
             const message = error instanceof Error ? error.message : 'Unknown LLM error during profile merging';
             this.logger.error(`Failed to merge profile data: ${message}`, error instanceof Error ? error.stack : undefined);
             throw new InternalServerErrorException('Could not merge profile data using LLM.');
+        }
+    }
+
+    async generateMatchReason(myProfileData: ProfileData, matchedProfileData: ProfileData): Promise<string> {
+        this.logger.log(`Generating match reason between two profiles.`);
+
+        // Helper to extract key info for the prompt to keep it concise
+        const extractKeyInfo = (profile: ProfileData) => {
+            if (!profile) return "Profile data not available.";
+            return JSON.stringify({
+                name: profile.personal?.name,
+                headline: profile.personal?.headline,
+                roles: profile.roles?.map(r => ({ title: r.title, organization: r.organization?.name, active: r.active })).slice(0,2), // Current or recent roles
+                skills: {
+                    hard: profile.skills?.hard?.slice(0, 3).map(s => s.skill), // Top 3 hard skills
+                    soft: profile.skills?.soft?.slice(0, 2).map(s => s.skill), // Top 2 soft skills
+                },
+                industries: profile.industries?.slice(0, 3), // Top 3 industries
+                hobbies: profile.hobbies?.slice(0, 2), // Top 2 hobbies
+                extra_notes_snippet: profile.extra_notes?.substring(0, 100) // Snippet of notes
+            }, null, 2);
+        }
+
+        const userPrompt = `
+PROFILE A (My Profile):
+${extractKeyInfo(myProfileData)}
+
+PROFILE B (Matched Profile):
+${extractKeyInfo(matchedProfileData)}
+
+REASON FOR MATCH (1-2 sentences):
+`;
+
+        try {
+            const reason = await this.llmService.generateResponse(userPrompt, this.matchReasonPrompt);
+            this.logger.log('Successfully generated match reason.');
+            // Basic cleaning of the reason, LLMs might add quotes or newlines
+            return reason.trim().replace(/^"|"$/g, ''); 
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown LLM error during match reason generation';
+            this.logger.error(`Failed to generate match reason: ${message}`, error instanceof Error ? error.stack : undefined);
+            // Return a fallback reason in case of error
+            return "These profiles have potential for a connection based on their professional backgrounds."; 
         }
     }
 } 

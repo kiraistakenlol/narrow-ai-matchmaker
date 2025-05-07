@@ -50,6 +50,23 @@ export class ProfileService {
         }
     }
 
+    async findProfileById(profileId: string): Promise<Profile | null> {
+        this.logger.log(`Finding profile by ID: ${profileId}`);
+        try {
+            const profile = await this.profileRepository.findOneBy({ id: profileId });
+            if (profile) {
+                this.logger.log(`Found profile with ID ${profileId}`);
+            } else {
+                this.logger.log(`No profile found with ID ${profileId}`);
+            }
+            return profile;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Unknown database error';
+            this.logger.error(`Failed to find profile with ID ${profileId}: ${message}`, error instanceof Error ? error.stack : undefined);
+            throw new InternalServerErrorException('Could not retrieve profile by ID.');
+        }
+    }
+    
     async findProfileByUserId(userId: string): Promise<Profile | null> {
         this.logger.log(`Finding profile for user: ${userId}`);
         try {
