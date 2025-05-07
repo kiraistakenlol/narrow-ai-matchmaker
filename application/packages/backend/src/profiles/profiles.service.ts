@@ -114,7 +114,7 @@ export class ProfileService {
         );
         
         // Update profile with extracted data
-        profile.data = extractedData;
+        profile.data = extractedData; // todo merge instead of overwrite
         
         // Log any suggested new enum values for potential schema updates
         if (Object.keys(suggestedNewEnumValues).length > 0) {

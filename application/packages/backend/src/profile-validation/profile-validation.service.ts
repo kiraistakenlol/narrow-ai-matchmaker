@@ -49,17 +49,20 @@ export class ProfileValidationService {
     validateProfile(profileData: ProfileData | null): ProfileValidationResult {
         const failedHints: string[] = [];
         let isComplete = true;
+        let passedRulesCount = 0;
+        const totalRules = this.validationRules.length;
 
         if (!profileData) {
             return {
                 isComplete: false,
-                hints: this.validationRules.map(rule => rule.hint)
+                hints: this.validationRules.map(rule => rule.hint),
+                completenessScore: 0
             };
         }
 
         for (const rule of this.validationRules) {
             const value = this.getValueByPath(profileData, rule.path);
-        let rulePassed = false;
+            let rulePassed = false;
 
             switch (rule.checkType) {
                 case 'existsAndNotEmptyString':
@@ -71,22 +74,26 @@ export class ProfileValidationService {
                 // Add more check types here
                 default:
                     this.logger.warn(`Unknown validation checkType: ${rule.checkType} for path: ${rule.path}`);
-                    // Treat unknown checks as passed to avoid blocking for unknown reasons
                     rulePassed = true; 
                     break;
             }
 
-            if (!rulePassed) {
+            if (rulePassed) {
+                passedRulesCount++;
+            } else {
                 this.logger.debug(`Validation failed for rule path: ${rule.path}, check: ${rule.checkType}, value: ${JSON.stringify(value)}`);
                 failedHints.push(rule.hint);
                 isComplete = false;
             }
         }
 
-        this.logger.log(`Profile validation result: isComplete=${isComplete}, failedHints=${failedHints.length}`);
+        const completenessScore = totalRules > 0 ? passedRulesCount / totalRules : 1;
+
+        this.logger.log(`Profile validation result: isComplete=${isComplete}, failedHints=${failedHints.length}, completenessScore=${completenessScore}`);
         return {
             isComplete,
-            hints: failedHints
+            hints: failedHints,
+            completenessScore
         };
     }
 } 

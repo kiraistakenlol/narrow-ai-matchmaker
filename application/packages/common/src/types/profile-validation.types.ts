@@ -27,4 +27,6 @@ export interface ProfileValidationResult {
     isComplete: boolean;
     /** A list of user-friendly hints for the rules that failed. */
     hints: string[];
+    /** The score of the profile completeness. */
+    completenessScore: number;
 } 

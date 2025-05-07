@@ -7,6 +7,11 @@ export class TestTranscriptionService implements ITranscriptionService {
 
     async transcribeAudio(s3Key: string, languageCode?: string): Promise<string> {
         this.logger.log(`Test transcription for audio: ${s3Key}`);
-        return `My name is Alex Martinez. I'm currently living in Buenos Aires, Argentina, and I'm deeply involved in advancing AI-driven solutions for automated linguistic analysis and cross-cultural communication platforms. My primary focus is on developing NLP models that can understand and generate nuanced human language`;
+        return `My name is Alex Martinez. I'm currently living in Buenos Aires, Argentina, 
+        and I'm deeply involved in advancing AI-driven solutions for automated 
+        linguistic analysis and cross-cultural communication platforms.
+         My primary focus is on developing NLP models that can understand and generate 
+         nuanced human language. My current focus is project for connecting event participants, called Titanic.
+          I've been living in Argentina for 6 months`;
     }
 } 

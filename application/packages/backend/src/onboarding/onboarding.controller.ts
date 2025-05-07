@@ -64,7 +64,7 @@ export class OnboardingController {
         @Param('onboarding_id', ParseUUIDPipe) onboardingId: string,
     ): Promise<PresignedUrlResponseDto> {
         this.logger.log(`Request for subsequent audio upload URL for onboarding ID: ${onboardingId}`);
-        return this.onboardingService.requestSubsequentAudioUploadUrl(onboardingId);
+        return this.onboardingService.getAudioUploadUrl(onboardingId);
     }
 
     @Post(':onboarding_id/notify-upload')

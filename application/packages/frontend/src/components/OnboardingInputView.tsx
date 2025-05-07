@@ -30,50 +30,13 @@ const OnboardingInputView: React.FC<OnboardingInputViewProps> = ({
 
     const [error, setError] = useState<string | null>(null);
 
-    const pollingIntervalRef = useRef<number | null>(null);
-
-
-
     useEffect(() => {
-        console.log('useEffect triggered with status:', onboardingSession?.status);
-        
-        if (pollingIntervalRef.current) {
-            console.log('Clearing existing polling interval');
-            clearInterval(pollingIntervalRef.current);
-            pollingIntervalRef.current = null;
+        console.log('useEffect for completion check triggered with status:', onboardingSession?.status);
+        if (onboardingSession?.status === OnboardingStatus.COMPLETED) {
+            console.log('Onboarding COMPLETED, calling onOnboardingComplete callback');
+            onOnboardingComplete?.();
         }
-
-        if (onboardingSession) {
-            console.log('Onboarding session exists, status:', onboardingSession.status);
-            
-            if (onboardingSession.status !== OnboardingStatus.COMPLETED) {
-                console.log('Starting polling interval for onboarding ID:', onboardingSession.id);
-                pollingIntervalRef.current = window.setInterval(() => {
-                    console.log('Polling for updates on onboarding ID:', onboardingSession.id);
-                    dispatch(fetchOnboardingData(onboardingSession.id));
-                }, 2000);
-            } else {
-                console.log('Onboarding COMPLETED, stopping polling');
-                if (pollingIntervalRef.current) {
-                    clearInterval(pollingIntervalRef.current);
-                    pollingIntervalRef.current = null;
-                }
-                
-                console.log('Calling onOnboardingComplete callback');
-                onOnboardingComplete?.();
-            }
-        } else {
-            console.log('No onboarding session available');
-        }
-        
-        return () => {
-            if (pollingIntervalRef.current) {
-                console.log('Cleanup: clearing polling interval');
-                clearInterval(pollingIntervalRef.current);
-                pollingIntervalRef.current = null;
-            }
-        };
-    }, [onboardingSession?.status, dispatch, onOnboardingComplete])
+    }, [onboardingSession?.status, onOnboardingComplete]);
 
 
     const handleRecordingError = (recorderError: string) => {
@@ -90,7 +53,7 @@ const OnboardingInputView: React.FC<OnboardingInputViewProps> = ({
         let uploadUrl: string;
 
         const currentEventId = onboardingSession?.eventId;
-
+ 
         try {
             if (onboardingSession) {
                 console.log('Session in state, using existing session...');
@@ -137,6 +100,7 @@ const OnboardingInputView: React.FC<OnboardingInputViewProps> = ({
 
     const onboardingFailed = onboardingSession?.status === OnboardingStatus.FAILED;
     const onboardingCompleted = onboardingSession?.status === OnboardingStatus.COMPLETED;
+    const onboardingNeedsMoreInfo = onboardingSession?.status === OnboardingStatus.NEEDS_MORE_INFO;
 
     if (!initialStateLoaded) {
         return (
@@ -158,6 +122,12 @@ const OnboardingInputView: React.FC<OnboardingInputViewProps> = ({
                         </li>
                     ))}
                 </ul>
+            )}
+
+            {onboardingNeedsMoreInfo && (
+                <div style={styles.needsMoreInfo}>
+                    <p>Thanks! Please provide a bit more detail based on the updated hints above and record your message again.</p>
+                </div>
             )}
 
             {!isProcessingAudio ?
@@ -237,6 +207,23 @@ const styles: { [key: string]: React.CSSProperties } = {
         maxWidth: '400px'
     },
     processing: {
+        marginTop: '15px',
+        padding: '10px',
+        color: '#333',
+        textAlign: 'center'
+    },
+    needsMoreInfo: {
+        marginTop: '15px',
+        padding: '10px 15px',
+        color: '#333',
+        textAlign: 'center',
+        backgroundColor: '#e3f2fd',
+        border: '1px solid #bbdefb',
+        borderRadius: '4px',
+        maxWidth: '450px',
+        width: '100%',
+    },
+    completed: {
         marginTop: '15px',
         padding: '10px',
         color: '#333',

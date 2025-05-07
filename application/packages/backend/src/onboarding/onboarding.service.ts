@@ -99,7 +99,10 @@ export class OnboardingService {
             
             // Validate the updated profile data
             const validationResult = this.profileValidationService.validateProfile(updatedProfile.data);
-            this.logger.log(`Profile validation for user ${onboarding.userId}: isComplete=${validationResult.isComplete}, hints=${validationResult.hints.join(' | ')}`);
+            this.logger.log(`Profile validation for user ${onboarding.userId}: 
+                score=${validationResult.completenessScore}, 
+                isComplete=${validationResult.isComplete}, 
+                hints=${validationResult.hints.join(' | ')}`);
             
             // Process event participation only if eventId exists
             if (onboarding.eventId) {
@@ -123,8 +126,9 @@ export class OnboardingService {
                     this.logger.error(`Could not find user ${onboarding.userId} to mark onboarding complete.`);
                     // Decide how to handle - throw error? Log warning? 
                 }
+            } else {
+                onboarding.status = OnboardingStatus.NEEDS_MORE_INFO;
             }
-            
             // Save both in a transaction if your setup supports it easily.
             // For simplicity here, save them sequentially.
             await this.onboardingSessionRepository.save(onboarding);
@@ -161,7 +165,7 @@ export class OnboardingService {
         }
     }
 
-    async requestSubsequentAudioUploadUrl(onboardingId: string): Promise<PresignedUrlResponseDto> {
+    async getAudioUploadUrl(onboardingId: string): Promise<PresignedUrlResponseDto> {
         this.logger.log(`Requesting subsequent audio upload URL for onboarding session: ${onboardingId}`);
         
         // Verify the session exists

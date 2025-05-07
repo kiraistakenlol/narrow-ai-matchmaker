@@ -1,8 +1,8 @@
-import {createAsyncThunk, createSlice, PayloadAction} from '@reduxjs/toolkit';
-import type {RootState, AppDispatch} from '../store';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import type { RootState, AppDispatch } from '../store';
 import { fetchOnboardingById, fetchBaseGuidance } from '../../lib/apiClient';
-import {STORAGE_KEYS} from '../../constants/storage';
-import {AxiosError} from 'axios';
+import { STORAGE_KEYS } from '../../constants/storage';
+import { AxiosError } from 'axios';
 import { OnboardingGuidanceDto, OnboardingDto, OnboardingSessionDto } from '@narrow-ai-matchmaker/common';
 
 
@@ -35,7 +35,7 @@ export const fetchOnboardingData = createAsyncThunk<
 
     try {
         const response = await fetchOnboardingById(onboardingId);
-        return response; 
+        return response;
     } catch (error) {
         if (error instanceof AxiosError) {
             const backendMessage = error.response?.data?.message;
@@ -49,17 +49,22 @@ export const fetchOnboardingData = createAsyncThunk<
 });
 
 export const initializeOnboarding = createAsyncThunk<
-    void, 
-    void, 
+    void,
+    void,
     { dispatch: AppDispatch; rejectValue: string }
 >('onboarding/initialize', async (_, { dispatch, rejectWithValue }) => {
     const storedOnboardingId = localStorage.getItem(STORAGE_KEYS.ONBOARDING_ID);
     try {
         if (storedOnboardingId) {
-            const onboarding = await fetchOnboardingById(storedOnboardingId);
-            dispatch(setSession(onboarding.session));
-            dispatch(setGuidance(onboarding.guidance));
-            
+            try {
+                const onboarding = await fetchOnboardingById(storedOnboardingId);
+                dispatch(setSession(onboarding.session));
+                dispatch(setGuidance(onboarding.guidance));
+            } catch (error) {
+                const guidance = await fetchBaseGuidance();
+                dispatch(setGuidance(guidance));
+                return;
+            }
         } else {
             dispatch(setSession(null));
             const guidance = await fetchBaseGuidance();
@@ -140,7 +145,7 @@ export const onboardingSlice = createSlice({
                 state.error = null;
             })
             .addCase(initializeOnboarding.fulfilled, (state) => {
-                state.loadingStatus = 'succeeded'; 
+                state.loadingStatus = 'succeeded';
                 state.error = null;
                 state.initialStateLoaded = true;
             })
