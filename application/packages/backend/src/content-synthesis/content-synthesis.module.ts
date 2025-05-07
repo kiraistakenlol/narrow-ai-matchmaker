@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ContentExtractionService } from './content-extraction.service';
+import { ContentSynthesisService } from './content-synthesis.service';
 import { LlmModule } from '@backend/llm/llm.module';
 import { ConfigModule } from '@nestjs/config';
 
@@ -8,7 +8,7 @@ import { ConfigModule } from '@nestjs/config';
     LlmModule,
     ConfigModule,
   ],
-  providers: [ContentExtractionService],
-  exports: [ContentExtractionService],
+  providers: [ContentSynthesisService],
+  exports: [ContentSynthesisService],
 })
-export class ContentExtractionModule {} 
+export class ContentSynthesisModule {}

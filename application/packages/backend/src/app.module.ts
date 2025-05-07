@@ -10,7 +10,7 @@ import { EventsModule } from './events/events.module';
 import { configuration, configValidationSchema } from './config';
 import { TranscriptionModule } from './transcription/transcription.module';
 import { LlmModule } from './llm/llm.module';
-import { ContentExtractionModule } from './content-extraction/content-extraction.module';
+import { ContentSynthesisModule } from '@backend/content-synthesis/content-synthesis.module';
 import { AuthModule } from './auth/auth.module';
 import { AuthMiddleware } from './common/middleware/auth.middleware';
 import { JwtModule } from '@nestjs/jwt';
@@ -60,7 +60,7 @@ import { ProfileValidationModule } from './profile-validation/profile-validation
         ProfilesModule,
         EventsModule,
         OnboardingModule,
-        ContentExtractionModule,
+        ContentSynthesisModule,
         AuthModule,
         DevModule,
         ProfileValidationModule,

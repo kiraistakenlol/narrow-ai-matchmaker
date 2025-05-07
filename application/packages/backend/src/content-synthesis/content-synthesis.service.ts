@@ -1,10 +1,11 @@
-import { Injectable, Logger, InternalServerErrorException, Inject } from '@nestjs/common';
-import { ProfileData } from '@narrow-ai-matchmaker/common';
+import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
 import { ILlmService } from '@backend/llm/llm.interface';
+import { Inject } from '@nestjs/common';
+import { ProfileData } from '@narrow-ai-matchmaker/common';
 
 @Injectable()
-export class ContentSynthesy {
-    private readonly logger = new Logger(ContentSynthesy.name);
+export class ContentSynthesisService {
+    private readonly logger = new Logger(ContentSynthesisService.name);
 
     private readonly prompt = `
 You are a data extraction assistant. Your task is to extract structured information from text and format it according to a provided JSON schema.
@@ -65,10 +66,7 @@ Respond ONLY with the merged JSON object. Do not include any other text, explana
      * @param schema The JSON schema for the desired output structure.
      * @returns The extracted structured data with any suggested new enum values.
      */
-    async extractStructuredDataFromText<T>(transcriptText: string, schema: object): Promise<{
-        extractedData: T;
-        suggestedNewEnumValues: Record<string, string>;
-    }> {
+    async extractStructuredDataFromText<T>(transcriptText: string, schema: object): Promise<{ extractedData: T }> {
         this.logger.log(`Extracting structured data from text transcript.`);
         try {
             const userPrompt = `

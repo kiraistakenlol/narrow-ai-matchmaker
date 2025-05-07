@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Profile } from './entities/profile.entity';
 import { ProfileData } from '@narrow-ai-matchmaker/common';
-import { ContentExtractionService } from '@backend/content-extraction/content-extraction.service';
+import { ContentSynthesisService } from '@backend/content-synthesis/content-synthesis.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -33,7 +33,7 @@ export class ProfileService {
     constructor(
         @InjectRepository(Profile)
         private profileRepository: Repository<Profile>,
-        private readonly contentExtractionService: ContentExtractionService,
+        private readonly contentSynthesisService: ContentSynthesisService,
     ) {
         // Load the profile schema from the JSON file
         try {
@@ -108,19 +108,15 @@ export class ProfileService {
         }
         
         // Extract profile data from text transcript using the profile schema
-        const { extractedData, suggestedNewEnumValues } = await this.contentExtractionService.extractStructuredDataFromText<ProfileData>(
+        const { extractedData } = await this.contentSynthesisService.extractStructuredDataFromText<ProfileData>(
             profile.data?.raw_input ? `${profile.data.raw_input}; ${transcriptText}` : transcriptText,
             this.profileSchema
         );
         
         // Update profile with extracted data
-        profile.data = extractedData; // todo merge instead of overwrite
-        
-        // Log any suggested new enum values for potential schema updates
-        if (Object.keys(suggestedNewEnumValues).length > 0) {
-            this.logger.log(`Suggested new enum values: ${JSON.stringify(suggestedNewEnumValues)}`);
-        }
-        
+        const mergedProfile = await this.contentSynthesisService.mergeProfileData(profile.data, extractedData);
+        profile.data = mergedProfile;
+  
         return this.save(profile);
     }
 }

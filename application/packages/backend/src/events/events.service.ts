@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DeepPartial } from 'typeorm';
 import { Event } from './entities/event.entity';
 import { EventParticipation } from './entities/event-participation.entity';
-import { ContentExtractionService } from '../content-extraction/content-extraction.service';
+import { ContentSynthesisService } from '@backend/content-synthesis/content-synthesis.service';
 
 @Injectable()
 export class EventService {
@@ -14,7 +14,7 @@ export class EventService {
         private eventRepository: Repository<Event>,
         @InjectRepository(EventParticipation)
         private eventParticipationRepository: Repository<EventParticipation>,
-        private readonly contentExtractionService: ContentExtractionService,
+        private readonly contentExtractionService: ContentSynthesisService,
     ) {}
 
     async findEventById(id: string): Promise<Event | null> {

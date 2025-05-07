@@ -6,7 +6,7 @@ import { OnboardingService } from './onboarding.service';
 import { UsersModule } from '@backend/users/users.module';
 import { ProfilesModule } from '@backend/profiles/profiles.module';
 import { EventsModule } from '@backend/events/events.module';
-import { ContentExtractionModule } from '@backend/content-extraction/content-extraction.module';
+import { ContentSynthesisModule } from '@backend/content-synthesis/content-synthesis.module';
 import { Profile } from '@backend/profiles/entities/profile.entity';
 import { EventParticipation } from '@backend/events/entities/event-participation.entity';
 import { AudioStorageModule } from '@backend/audio-storage/audio-storage.module';
@@ -23,7 +23,7 @@ import { ProfileValidationModule } from '../profile-validation/profile-validatio
         UsersModule,
         ProfilesModule,
         EventsModule,
-        ContentExtractionModule,
+        ContentSynthesisModule,
         AudioStorageModule,
         TranscriptionModule,
         ProfileValidationModule,
