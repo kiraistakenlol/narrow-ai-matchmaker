@@ -1,10 +1,11 @@
 import { Controller, Get, UseGuards, Req, NotFoundException, Logger, Param, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { UserService } from './users.service';
-import { UserDto, JoinedEventDto } from '@narrow-ai-matchmaker/common';
+import { UserDto, JoinedEventDto, MatchDto } from '@narrow-ai-matchmaker/common';
 import { AuthenticatedGuard } from '../auth/guards/authenticated.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { CognitoIdTokenPayload } from '../common/types/auth.types';
 import { EventService } from '../events/events.service';
+import { MatchesService } from '../matches/matches.service';
 
 @Controller('users')
 export class UsersController {
@@ -13,6 +14,7 @@ export class UsersController {
     constructor(
         private readonly usersService: UserService,
         private readonly eventService: EventService,
+        private readonly matchesService: MatchesService,
     ) { }
 
     @Get('me')
@@ -63,6 +65,25 @@ export class UsersController {
         }));
 
         return joinedEventsDto;
+    }
+
+    @Get('me/matches')
+    @UseGuards(AuthenticatedGuard)
+    async getMyMatches(@CurrentUser() currentUser: CognitoIdTokenPayload): Promise<MatchDto[]> {
+        this.logger.log(`User ${currentUser.sub} requested their top matches.`);
+        const userId = currentUser.sub;
+        if (!userId) {
+            this.logger.error('AuthenticatedGuard passed but no user identifier (sub) found in payload.');
+            throw new NotFoundException('User identifier not found after authentication.');
+        }
+
+        const user = await this.usersService.findUserWithProfileByExternalId(userId);
+        if (!user) {
+            this.logger.error(`User with external ID ${userId} not found.`);
+            throw new NotFoundException('User not found.');
+        }
+        const matches = await this.matchesService.findTopMatches(user.id);
+        return matches;
     }
 
     @Get(':id')

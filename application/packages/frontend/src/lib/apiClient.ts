@@ -5,7 +5,8 @@ import {
     OnboardingDto,
     OnboardingGuidanceDto,
     PresignedUrlResponseDto,
-    ProfileData
+    ProfileData,
+    MatchDto,
 } from '@narrow-ai-matchmaker/common';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
@@ -98,7 +99,20 @@ export const notifyUploadComplete = async (onboardingId: string, s3Key: string):
 export const fetchUserProfile = async (userId?: string): Promise<ProfileData> => {
     const endpoint = userId ? `/users/${userId}` : '/users/me';
     const response = await apiClient.get(endpoint);
-    return response.data.profile;
+    const userDto = response.data;
+    if (!userDto.profile) {
+        console.warn(`No profile data found for user via DTO from ${endpoint}`);
+        return { 
+            raw_input: null, personal: { name: null, headline: null, visiting_status: null }, 
+            skills: { hard: [], soft: [] }, industries: [], hobbies: [], roles: [], extra_notes: null 
+        } as ProfileData;
+    }
+    return userDto.profile;
+};
+
+export const fetchMyMatches = async (): Promise<MatchDto[]> => {
+    const response = await apiClient.get<MatchDto[]>('/users/me/matches');
+    return response.data;
 };
 
 export default apiClient; 

@@ -11,3 +11,4 @@ export * from './dto/auth/login.request.dto.js';
 
 export * from './types/profile.types.js';
 export * from './types/profile-validation.types.js';
+export * from './dto/matches/match.dto.js';

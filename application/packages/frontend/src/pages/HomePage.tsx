@@ -1,12 +1,13 @@
-import React, {} from 'react';
-import {useAppDispatch, useAppSelector} from '../hooks/hooks';
-import {selectAuthStatus, selectAuthUser, signOutUser, checkAuth} from '../state/slices/authSlice';
+import React, { } from 'react';
+import { useAppDispatch, useAppSelector } from '../hooks/hooks';
+import { selectAuthStatus, selectAuthUser, signOutUser, checkAuth } from '../state/slices/authSlice';
 import SigninOrOnboardView from '../components/SigninOrOnboardView';
 import OnboardingInputView from '../components/OnboardingInputView';
 import { selectFullOnboardingState, selectOnboardingSession } from '../state/slices/onboardingSlice';
 import { OnboardingStatus } from '@narrow-ai-matchmaker/common';
 import UserProfileSummaryView from '../components/UserProfileSummaryView';
 import { Link } from 'react-router-dom';
+import MatchesDisplay from '../components/MatchesDisplay';
 
 function HomePage() {
     const dispatch = useAppDispatch();
@@ -15,7 +16,7 @@ function HomePage() {
 
     const onboardingSession = useAppSelector(selectOnboardingSession);
     const { initialStateLoaded } = useAppSelector(selectFullOnboardingState);
-    
+
     const handleSignOut = () => {
         dispatch(signOutUser());
     };
@@ -41,8 +42,8 @@ function HomePage() {
                 <SigninOrOnboardView
                     title="Welcome!"
                     description={onboardingCompleted ?
-                         "You've completed onboarding, now it's time to sign up." :
-                          "Please sign in or create an account to continue."}
+                        "You've completed onboarding, now it's time to sign up." :
+                        "Please sign in or create an account to continue."}
                     showSignIn={true}
                     showOnboarding={!onboardingCompleted}
                     onOnboardingComplete={handleOnboardingComplete}
@@ -68,13 +69,13 @@ function HomePage() {
             )}
 
             {user && user.profile && (
-                <div style={{marginTop: '20px'}}>
+                <div style={{ marginTop: '20px' }}>
                     <UserProfileSummaryView profileData={user.profile} />
                 </div>
             )}
 
             {!user.onboardingComplete && (
-                <div style={{marginTop: '20px'}}>
+                <div style={{ marginTop: '20px' }}>
                     <h3>Onboarding</h3>
                     <div style={styles.onboardingPrompt}>
                         <OnboardingInputView
@@ -84,7 +85,10 @@ function HomePage() {
                 </div>
             )}
 
-            <button onClick={handleSignOut} style={{...styles.signOutButton, marginTop: '30px'}}>
+            {/* Display Matches */}
+            {user && <MatchesDisplay />}
+            
+            <button onClick={handleSignOut} style={{ ...styles.signOutButton, marginTop: '30px' }}>
                 Sign Out
             </button>
         </div>
@@ -92,7 +96,7 @@ function HomePage() {
 }
 
 const styles: { [key: string]: React.CSSProperties } = {
-    container: {padding: '20px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto'},
+    container: { padding: '20px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto' },
     containerCenter: {
         display: 'flex',
         flexDirection: 'column',
@@ -102,8 +106,8 @@ const styles: { [key: string]: React.CSSProperties } = {
         padding: '20px',
         fontFamily: 'sans-serif'
     },
-    title: {marginBottom: '10px'},
-    errorText: {color: 'red', marginTop: '10px'},
+    title: { marginBottom: '10px' },
+    errorText: { color: 'red', marginTop: '10px' },
     jsonOutput: {
         backgroundColor: '#eee',
         padding: '10px',
