@@ -4,7 +4,7 @@
   "description": "Backend API service (NestJS)",
   "main": "./dist/main.js",
   "scripts": {
-    "build": "nest build",
+    "build": "npm run build --prefix ../common && nest build",
     "start": "node ./dist/main.js",
     "dev": "nest start --watch",
     "debug": "nest start --debug --watch",
