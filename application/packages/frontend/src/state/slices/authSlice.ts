@@ -8,7 +8,7 @@ import {AxiosError} from 'axios';
 
 export type AuthStatus = 'N/A' | 'not-signed-in' | 'loading' | 'succeeded' | 'failed';
 
-interface AuthState {
+export interface AuthState {
     user: UserDto | null;
     status: AuthStatus;
     error: string | null;

@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Vite
+/dist
+/dist-ssr
+
+# TS Build Artifacts
+*.tsbuildinfo
+dist/types/
+
+# Custom - ignore generated declaration files in src
+# src/**/*.d.ts # No longer needed if declarationDir is set

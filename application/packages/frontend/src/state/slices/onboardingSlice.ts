@@ -8,7 +8,7 @@ import { OnboardingGuidanceDto, OnboardingDto, OnboardingSessionDto } from '@nar
 
 export type OnboardingSliceStateLoadingStatus = 'idle' | 'loading' | 'succeeded' | 'failed' | 'no-id-found';
 
-interface OnboardingState {
+export interface OnboardingState {
     initialStateLoaded: boolean
     session: OnboardingSessionDto | null;
     guidance: OnboardingGuidanceDto | null;

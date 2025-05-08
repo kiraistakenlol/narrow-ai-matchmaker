@@ -2,7 +2,11 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "module": "commonjs",
+    "composite": true,
     "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": false,
+    "declarationDir": "./dist/types",
     "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
@@ -22,11 +26,14 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "paths": {
-      "@narrow-ai-matchmaker/common": ["../common/src"],
-      "@narrow-ai-matchmaker/common/*": ["../common/src/*"],
+      "@narrow-ai-matchmaker/common": ["../common/dist"],
+      "@narrow-ai-matchmaker/common/*": ["../common/dist/*"],
       "@backend/*": ["./src/*"]
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    { "path": "../common" }
+  ]
 } 

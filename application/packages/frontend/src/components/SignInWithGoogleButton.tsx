@@ -1,6 +1,6 @@
 import React from 'react';
-import {signInWithGoogle, resetAuth} from "../state/slices/authSlice.ts";
-import {useAppDispatch} from "../hooks/hooks.ts";
+import {signInWithGoogle, resetAuth} from "../state/slices/authSlice";
+import {useAppDispatch} from "../hooks/hooks";
 import { fetchAuthSession, signOut } from 'aws-amplify/auth';
 
 interface SignInWithGoogleButtonProps {

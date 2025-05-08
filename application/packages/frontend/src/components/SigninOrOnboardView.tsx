@@ -1,7 +1,6 @@
 import React from 'react';
-import OnboardingInputView from './OnboardingInputView.tsx';
+import OnboardingInputView from './OnboardingInputView';
 import SignInWithGoogleButton from './SignInWithGoogleButton';
-
 
 interface ContainerProps {
     title: string;
