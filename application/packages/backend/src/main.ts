@@ -12,10 +12,8 @@ async function bootstrap() {
     });
     const configService = app.get(ConfigService);
 
-    // Vercel provides the PORT environment variable.
-    const port = parseInt(process.env.PORT || configService.get<string>('app.port') || "3001", 10);
-    // For Vercel, listen on 0.0.0.0. Fallback to configured host for local dev.
-    const host = process.env.VERCEL ? '0.0.0.0' : configService.get<string>('app.host') || '0.0.0.0';
+    const port = configService.get<number>('app.port') || 3001;
+    const host = configService.get<string>('app.host') || '0.0.0.0';
 
     app.enableCors({
         origin: '*',
@@ -30,6 +28,6 @@ async function bootstrap() {
     // app.use(bodyParser.raw({ type: '*/*', limit: '50mb' })); // REMOVE THIS LINE
 
     await app.listen(port, host);
-    Logger.log(`🚀 Application is running on port: ${port} (host: ${host}) - VERCEL_ENV: ${process.env.VERCEL_ENV}`);
+    Logger.log(`🚀 Application is running on: http://${host}:${port}/api/v1`);
 }
 bootstrap(); 
