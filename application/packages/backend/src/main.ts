@@ -11,8 +11,11 @@ async function bootstrap() {
         // rawBody: true, // Consider if this NestFactory option is still needed without the explicit parser
     });
     const configService = app.get(ConfigService);
-    const port = configService.get<number>('app.port'); // Ensure config key matches configuration.ts
-    const host = configService.get<string>('app.host'); // Ensure config key matches configuration.ts
+
+    // Vercel provides the PORT environment variable.
+    const port = parseInt(process.env.PORT || configService.get<string>('app.port') || "3001", 10);
+    // For Vercel, listen on 0.0.0.0. Fallback to configured host for local dev.
+    const host = process.env.VERCEL ? '0.0.0.0' : configService.get<string>('app.host') || '0.0.0.0';
 
     app.enableCors({
         origin: '*',
@@ -26,7 +29,7 @@ async function bootstrap() {
 
     // app.use(bodyParser.raw({ type: '*/*', limit: '50mb' })); // REMOVE THIS LINE
 
-    await app.listen(port, host); // Listen on specified host
-    Logger.log(`🚀 Application is running on: http://${host}:${port}/api/v1`);
+    await app.listen(port, host);
+    Logger.log(`🚀 Application is running on port: ${port} (host: ${host}) - VERCEL_ENV: ${process.env.VERCEL_ENV}`);
 }
 bootstrap(); 
