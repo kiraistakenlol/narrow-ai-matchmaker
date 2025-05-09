@@ -11,8 +11,7 @@ resource "aws_s3_bucket_cors_configuration" "audio_bucket_cors" {
   cors_rule {
     allowed_headers = ["*"]
     allowed_methods = ["PUT", "POST", "GET", "HEAD"]
-    # IMPORTANT: Update origins for production
-    allowed_origins = ["http://localhost:*", "http://127.0.0.1:*"]
+    allowed_origins = ["http://localhost:5173", "https://narrow-ai-matchmaker-web-app.vercel.app"]
     expose_headers  = ["ETag"]
     max_age_seconds = 3000
   }
@@ -79,6 +78,12 @@ resource "aws_cognito_identity_provider" "google" {
     email    = "email"
     username = "sub" # Map Google's sub to Cognito username
   }
+
+  lifecycle {
+    ignore_changes = [
+      provider_details,
+    ]
+  }
 }
 
 resource "aws_cognito_user_pool_client" "web_frontend" {
@@ -94,8 +99,14 @@ resource "aws_cognito_user_pool_client" "web_frontend" {
   allowed_oauth_scopes                 = ["email", "openid", "profile"]
 
   # URLs where Cognito can redirect after login/logout
-  callback_urls = ["${var.frontend_url}/auth/callback"]
-  logout_urls   = ["${var.frontend_url}/"]
+  callback_urls = [
+    "http://localhost:5173/auth/callback",
+    "https://narrow-ai-matchmaker-web-app.vercel.app/auth/callback"
+  ]
+  logout_urls   = [
+    "http://localhost:5173/",
+    "https://narrow-ai-matchmaker-web-app.vercel.app/"
+  ]
 
   # Prevent client secret generation for public clients like web apps
   generate_secret = false
