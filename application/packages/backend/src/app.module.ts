@@ -53,9 +53,9 @@ import { RequestLoggerMiddleware } from './common/middleware/request-logger.midd
                     entities: [],
                     synchronize: false,
                     autoLoadEntities: true,
-                    ssl: {
+                    ssl: configService.get<boolean>('database.sslEnabled') ? {
                         rejectUnauthorized: false
-                    }
+                    } : false
                 };
             },
         }),

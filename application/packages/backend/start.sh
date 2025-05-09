@@ -24,7 +24,15 @@ done
 echo "Qdrant is ready!"
 
 # Start the backend
-(cd /app/backend && NODE_PATH=/app/backend/node_modules node packages/backend/dist/src/main.js) &
+(cd /app/backend && NODE_PATH=/app/backend/node_modules PORT=3000 node packages/backend/dist/src/main.js) &
+
+# Wait for backend to be ready
+echo "Waiting for backend to be ready..."
+until curl -s http://localhost:3000/health > /dev/null; do
+    echo "Waiting for backend..."
+    sleep 1
+done
+echo "Backend is ready!"
 
 # Test Nginx configuration
 nginx -t

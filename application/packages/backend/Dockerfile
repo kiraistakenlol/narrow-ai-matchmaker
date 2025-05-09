@@ -20,7 +20,6 @@ COPY --from=builder /app/packages/backend/dist ./packages/backend/dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages/backend/package.json ./packages/backend/
 COPY --from=builder /app/packages/common/package.json ./packages/common/
-COPY --from=builder /app/packages/backend/src/profiles/schema ./packages/backend/dist/src/profiles/schema
 
 # Stage 3: Qdrant source (qdrant)
 FROM qdrant/qdrant:latest AS qdrant

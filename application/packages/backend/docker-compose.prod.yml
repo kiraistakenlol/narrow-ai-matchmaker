@@ -21,7 +21,7 @@ services:
       - DB_USERNAME=postgres
       - DB_PASSWORD=postgres
       - DB_DATABASE=narrow_ai_matchmaker_db
-      - DB_SSL=false
+      - DB_SSL_ENABLED=false
 
       # Audio Storage
       - AWS_S3_BUCKET_AUDIO=narrow-ai-matchmaker-audio

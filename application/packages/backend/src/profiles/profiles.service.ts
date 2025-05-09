@@ -37,7 +37,7 @@ export class ProfileService {
     ) {
         // Load the profile schema from the JSON file
         try {
-            const schemaPath = path.join(__dirname, 'schema', 'profile_schema.json');
+            const schemaPath = path.join(__dirname, '..', '..', 'resources', 'profile_schema.json');
             const schemaContent = fs.readFileSync(schemaPath, 'utf8');
             this.profileSchema = JSON.parse(schemaContent);
             this.logger.log('Profile schema loaded successfully');

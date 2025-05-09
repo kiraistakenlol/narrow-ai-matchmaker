@@ -1,0 +1,40 @@
+sequenceDiagram
+    actor User
+    participant Browser
+    participant Frontend
+    participant Backend
+    participant Cognito
+    participant Google
+
+    User->>Browser: Click Login
+    Browser->>Frontend: Navigate to login
+    Frontend->>Browser: Redirect to Cognito
+    Browser->>Cognito: Open login page
+    Cognito->>Browser: Show login options
+    User->>Browser: Select Google
+    Browser->>Cognito: Initiate Google auth
+    Cognito->>Browser: Redirect to Google
+    Browser->>Google: Open Google login
+    Google->>Browser: Show login form
+    User->>Browser: Enter credentials
+    Browser->>Google: Submit credentials
+    Google->>Browser: Return auth code
+    Browser->>Cognito: Pass auth code
+    Cognito->>Google: Verify auth code
+    Google->>Cognito: Confirm verification
+    Cognito->>Browser: Redirect to VITE_COGNITO_REDIRECT_SIGNIN with tokens
+    Browser->>Frontend: Pass tokens
+    Frontend->>Backend: API calls with tokens
+    Backend->>Cognito: Validate token
+    Cognito->>Backend: Token valid
+    Backend->>Frontend: Return data
+    Frontend->>Browser: Update UI
+
+    Note over User,Browser: User is now authenticated
+
+    User->>Browser: Click Logout
+    Browser->>Frontend: Initiate logout
+    Frontend->>Browser: Redirect to Cognito logout
+    Browser->>Cognito: Logout request
+    Cognito->>Browser: Redirect to VITE_COGNITO_REDIRECT_SIGNOUT
+    Browser->>Frontend: Show homepage 
