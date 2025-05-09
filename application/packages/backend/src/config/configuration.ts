@@ -10,6 +10,7 @@ export default () => ({
         username: process.env.DB_USERNAME,
         password: process.env.DB_PASSWORD,
         database: process.env.DB_DATABASE,
+        ssl: process.env.DB_SSL,
     },
     audioStorage: {
         s3Bucket: process.env.AWS_S3_BUCKET_AUDIO,

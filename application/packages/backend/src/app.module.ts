@@ -18,6 +18,7 @@ import { DevModule } from './dev/dev.module';
 import { ProfileValidationModule } from './profile-validation/profile-validation.module';
 import { MatchesModule } from './matches/matches.module';
 import { EmbeddingModule } from './embedding/embedding.module';
+import { RequestLoggerMiddleware } from './common/middleware/request-logger.middleware';
 
 @Module({
     imports: [
@@ -52,6 +53,9 @@ import { EmbeddingModule } from './embedding/embedding.module';
                     entities: [],
                     synchronize: false,
                     autoLoadEntities: true,
+                    ssl: configService.get<string>('database.ssl') === 'true' ? {
+                        rejectUnauthorized: false
+                    } : false
                 };
             },
         }),
@@ -74,6 +78,8 @@ import { EmbeddingModule } from './embedding/embedding.module';
 })
 export class AppModule implements NestModule {
     configure(consumer: MiddlewareConsumer) {
+        consumer.apply(RequestLoggerMiddleware).forRoutes('*');
+
         consumer
             .apply(AuthMiddleware)
             .forRoutes('*');

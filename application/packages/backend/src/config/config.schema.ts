@@ -12,6 +12,7 @@ export const configValidationSchema = Joi.object({
     DB_USERNAME: Joi.string().required(),
     DB_PASSWORD: Joi.string().required(),
     DB_DATABASE: Joi.string().required(),
+    DB_SSL: Joi.string().valid('true', 'false').default('false'),
 
     // Audio Storage (S3 Only)
     AWS_S3_BUCKET_AUDIO: Joi.string().required(),

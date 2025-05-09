@@ -1,0 +1,427 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "raw_input": {
+      "type": "string",
+      "description": "User's free text or voice transcript"
+    },
+    "personal": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "headline": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "visiting_status": {
+          "enum": [
+            "TEMPORARY_VISITOR",
+            "LONG_TERM_RESIDENT",
+            "LOCAL",
+            null
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "headline",
+        "visiting_status"
+      ],
+      "additionalProperties": false
+    },
+    "skills": {
+      "type": "object",
+      "properties": {
+        "hard": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "skill": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "level": {
+                "enum": [
+                  "BEGINNER",
+                  "INTERMEDIATE",
+                  "ADVANCED",
+                  "EXPERT",
+                  "FAMILIAR",
+                  null
+                ]
+              }
+            },
+            "required": [
+              "skill",
+              "level"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "soft": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "skill": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "level": {
+                "enum": [
+                  "BEGINNER",
+                  "INTERMEDIATE",
+                  "ADVANCED",
+                  "EXPERT",
+                  "FAMILIAR",
+                  null
+                ]
+              }
+            },
+            "required": [
+              "skill",
+              "level"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "hard",
+        "soft"
+      ],
+      "additionalProperties": false
+    },
+    "industries": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hobbies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "organization": {
+            "type": "object",
+            "properties": {
+              "org_type": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "url": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "industries": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "org_type",
+              "name",
+              "url",
+              "industries"
+            ],
+            "additionalProperties": false
+          },
+          "category": {
+            "enum": [
+              "LEADERSHIP",
+              "MANAGEMENT",
+              "ENGINEERING",
+              "SCIENCE",
+              "DESIGN",
+              "INVESTMENT_FINANCE",
+              "SALES_MARKETING_COMMUNITY",
+              "MEDIA_WRITING",
+              "SUPPORT_OPERATIONS",
+              "LEGAL_HR",
+              "STUDENT",
+              null
+            ]
+          },
+          "sub_category": {
+            "enum": [
+              "ACADEMIC_RESEARCHER",
+              "ACCOUNT_MANAGER",
+              "ADMINISTRATIVE",
+              "AI_ML_ENGINEER",
+              "ANGEL_INVESTOR",
+              "BACKEND_DEVELOPER",
+              "BLOCKCHAIN_ARCHITECT",
+              "BLOCKCHAIN_CORE_DEVELOPER",
+              "BUSINESS_DEVELOPMENT",
+              "CELL_BIOLOGY_SCIENTIST",
+              "CEO",
+              "COFOUNDER",
+              "COMMUNITY_MANAGER",
+              "CONSULTANT",
+              "CONTENT_STRATEGIST",
+              "COO",
+              "CTO",
+              "DATA_ANALYST",
+              "DATA_ENGINEER",
+              "DATA_SCIENTIST",
+              "DEFI_ENGINEER",
+              "DEVELOPER_RELATIONS",
+              "DEVOPS_ENGINEER",
+              "DIGITAL_MARKETER",
+              "ENGINEERING_MANAGER",
+              "EVENT_MARKETING",
+              "FINANCIAL_ANALYST",
+              "FOUNDER",
+              "FRONTEND_DEVELOPER",
+              "FULLSTACK_DEVELOPER",
+              "GRAPHIC_DESIGNER",
+              "GROWTH_HACKER",
+              "HR_RECRUITER",
+              "JOURNALIST",
+              "LEGAL_COUNSEL",
+              "MARKETING_MANAGER",
+              "MOBILE_DEVELOPER_ANDROID",
+              "MOBILE_DEVELOPER_IOS",
+              "MOTION_DESIGNER",
+              "NFT_DEVELOPER",
+              "OPERATIONS_MANAGER",
+              "OTHER_C_LEVEL",
+              "PARTNERSHIPS_MANAGER",
+              "POSTDOC",
+              "PRODUCT_DESIGNER",
+              "PRODUCT_MANAGER",
+              "PRODUCT_MARKETING_MANAGER",
+              "PRODUCT_OWNER",
+              "PROFESSOR_LECTURER",
+              "PROJECT_MANAGER",
+              "PROTOCOL_ENGINEER",
+              "QA_ENGINEER",
+              "SALES_REPRESENTATIVE",
+              "SCIENTIST",
+              "SECURITY_ENGINEER",
+              "SITE_RELIABILITY_ENGINEER",
+              "SMART_CONTRACT_ENGINEER",
+              "STRATEGY_CONSULTANT",
+              "SUPPORT_ENGINEER",
+              "TECHNICAL_PRODUCT_MANAGER",
+              "TECHNICAL_SUPPORT",
+              "TECHNICAL_WRITER",
+              "TRADER_CRYPTO",
+              "USER_RESEARCHER",
+              "UX_UI_DESIGNER",
+              "VENTURE_CAPITALIST",
+              "WEB3_FRONTEND_DEVELOPER",
+              null
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "seniority": {
+            "enum": [
+              "INTERN",
+              "JUNIOR",
+              "MID_LEVEL",
+              "SENIOR",
+              "STAFF",
+              "PRINCIPAL",
+              "LEAD",
+              "MANAGER",
+              "DIRECTOR",
+              "VP",
+              "C_LEVEL",
+              "FOUNDER",
+              null
+            ]
+          },
+          "engagement": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "enum": [
+                  "EMPLOYMENT",
+                  "CONTRACT",
+                  "VOLUNTEER",
+                  "ADVISORY",
+                  "INTERNSHIP",
+                  "FOUNDER_COFOUNDER",
+                  "SELF_EMPLOYED",
+                  null
+                ]
+              },
+              "commitment": {
+                "enum": [
+                  "FULL_TIME",
+                  "PART_TIME",
+                  "CONTRACT_SHORT_TERM",
+                  "CONTRACT_LONG_TERM",
+                  "ADVISORY",
+                  "INTERNSHIP",
+                  "VOLUNTEER",
+                  "PROJECT_BASED",
+                  "AD_HOC",
+                  null
+                ]
+              },
+              "work_mode": {
+                "enum": [
+                  "ON_SITE",
+                  "REMOTE",
+                  "HYBRID",
+                  "REMOTE_FIRST",
+                  "OFFICE_FIRST",
+                  null
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "commitment",
+              "work_mode"
+            ],
+            "additionalProperties": false
+          },
+          "skills": {
+            "type": "object",
+            "properties": {
+              "hard": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "skill": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "level": {
+                      "enum": [
+                        "BEGINNER",
+                        "INTERMEDIATE",
+                        "ADVANCED",
+                        "EXPERT",
+                        "FAMILIAR",
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "skill",
+                    "level"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "soft": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "skill": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "level": {
+                      "enum": [
+                        "BEGINNER",
+                        "INTERMEDIATE",
+                        "ADVANCED",
+                        "EXPERT",
+                        "FAMILIAR",
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "skill",
+                    "level"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "hard",
+              "soft"
+            ],
+            "additionalProperties": false
+          },
+          "highlights": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "organization",
+          "category",
+          "sub_category",
+          "title",
+          "seniority",
+          "engagement",
+          "skills",
+          "highlights",
+          "active"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "extra_notes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "raw_input",
+    "personal",
+    "skills",
+    "industries",
+    "roles",
+    "extra_notes"
+  ],
+  "additionalProperties": false
+}

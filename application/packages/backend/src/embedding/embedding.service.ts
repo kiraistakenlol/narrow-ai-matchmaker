@@ -26,15 +26,18 @@ export class EmbeddingService implements OnModuleInit {
     private readonly collectionName = 'profiles'; // Hardcoded as per plan
 
     constructor(private readonly configService: ConfigService) {
-        this.qdrantClient = new QdrantClient({ 
-            url: this.configService.get<string>('qdrant.url') || 'http://localhost:6333' 
-        });
-        
-        const openAiApiKey = this.configService.get<string>('openai.apiKey');
-        if (!openAiApiKey) {
-            this.logger.warn('OPENAI_API_KEY is not configured. Embedding generation will fail.');
-            // Depending on strictness, you might throw an error here
+        const qdrantUrl = this.configService.get<string>('QDRANT_URL');
+        if (!qdrantUrl) {
+            throw new Error('QDRANT_URL environment variable is not configured');
         }
+        
+        this.qdrantClient = new QdrantClient({ url: qdrantUrl });
+        
+        const openAiApiKey = this.configService.get<string>('OPENAI_API_KEY');
+        if (!openAiApiKey) {
+            throw new Error('OPENAI_API_KEY environment variable is not configured');
+        }
+        
         this.openaiClient = new OpenAI({
             apiKey: openAiApiKey,
         });

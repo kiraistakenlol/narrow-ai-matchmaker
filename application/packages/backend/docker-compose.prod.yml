@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: packages/backend/Dockerfile
+    ports:
+      - "3000:80"
+    volumes:
+      - qdrant_data:/app/qdrant/storage
+    environment:
+      # Application
+      - NODE_ENV=production
+      - APP_HOST=0.0.0.0
+      - APP_PORT=3000
+
+      # Database
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - DB_DATABASE=narrow_ai_matchmaker_db
+      - DB_SSL=false
+
+      # Audio Storage
+      - AWS_S3_BUCKET_AUDIO=narrow-ai-matchmaker-audio
+
+      # Transcription Service
+      - TRANSCRIPTION_PROVIDER=aws
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=AKIAW7UDMRKW6RYKE7T5
+      - AWS_SECRET_ACCESS_KEY=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
+      - AWS_TRANSCRIBE_OUTPUT_BUCKET=narrow-ai-matchmaker-audio-transcribe-result
+
+      # LLM Provider
+      - LLM_PROVIDER=grok
+      - ANTHROPIC_API_KEY=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
+      - OPENAI_API_KEY=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
+      - GROK_API_KEY=xai-ldEWJUMIOtKLpj6FU8lL0NFndYmUyNNYhDNYtU3FmFgLIAJjd1EoYI46YzLuPPyuklc8Dqw3O8grJBw6
+      - GROK_MODEL_NAME=grok-3-beta
+
+      # Cognito
+      - COGNITO_USER_POOL_ID=us-east-1_tVogU0bWH
+      - COGNITO_CLIENT_ID=2q87i5og3ot6q69ea28at0hrso
+      - COGNITO_REGION=us-east-1
+
+      # Qdrant
+      - QDRANT_URL=http://localhost:6333
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: narrow_ai_matchmaker_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  qdrant_data:
