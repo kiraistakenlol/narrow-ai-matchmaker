@@ -26,7 +26,7 @@ import { RequestLoggerMiddleware } from './common/middleware/request-logger.midd
             isGlobal: true,
             envFilePath: [
                 `.env.${process.env.NODE_ENV || 'development'}`,
-                '.env' 
+                '.env'
             ],
             load: [configuration],
             validationSchema: configValidationSchema,
@@ -53,9 +53,9 @@ import { RequestLoggerMiddleware } from './common/middleware/request-logger.midd
                     entities: [],
                     synchronize: false,
                     autoLoadEntities: true,
-                    ssl: configService.get<string>('database.ssl') === 'true' ? {
+                    ssl: {
                         rejectUnauthorized: false
-                    } : false
+                    }
                 };
             },
         }),

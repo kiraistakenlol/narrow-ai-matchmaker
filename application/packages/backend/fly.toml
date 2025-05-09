@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for narrow-ai-titanic-backend on 2025-05-08T19:33:42-03:00
+# fly.toml app configuration file generated for narrow-ai-titanic-backend on 2025-05-09T10:15:59-03:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -8,6 +8,7 @@ primary_region = 'eze'
 
 [build]
   dockerfile = 'Dockerfile'
+  context = '../../'
 
 [env]
   PORT = '3000'
