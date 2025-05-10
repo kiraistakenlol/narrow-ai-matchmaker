@@ -4,20 +4,52 @@ A platform leveraging AI and LLMs to facilitate connections between people based
 
 ## Documentation
 
-*   [Technical Overview](technical_overview.md): High-level technical design.
-*   [Notes & TODOs](NOTES.md): Miscellaneous ideas and tasks.
+### Deployment
+- [Backend Deployment](docs/deployment/backend.md): Fly.io deployment, Docker setup, and secrets management
+- [Frontend Deployment](docs/deployment/frontend.md): Vercel deployment and configuration
+- [Infrastructure](docs/deployment/infrastructure.md): AWS services and external integrations
+
+### Architecture
+- [System Overview](docs/architecture/overview.md): High-level system architecture and component interactions
 
 ## Setup
 
-1.  **Environment Variables:** Core application configuration might use a root `.env` file.
-    *   See specific component READMEs (like the Test Data Generator) for component-specific `.env` requirements.
-    *   **Important:** Ensure relevant `.env` files are added to your `.gitignore` file.
+1. **Environment Variables**
+   - Core application configuration uses root `.env` files
+   - Component-specific `.env` requirements in respective READMEs
+   - **Important:** Ensure `.env` files are in `.gitignore`
 
-## Project Idea and Roadmap
+## Project Structure
 
-### 1. Brainstorming & Broad Vision
+```
+.
+├── application/           # Main application code
+│   ├── packages/         # Monorepo packages
+│   │   ├── backend/     # NestJS backend
+│   │   ├── frontend/    # React frontend
+│   │   └── common/      # Shared code
+│   └── database/        # Database migrations
+├── docs/                 # Documentation
+│   ├── deployment/      # Deployment guides
+│   ├── architecture/    # Architecture docs
+│   └── development/     # Development guides
+└── infra/               # Infrastructure as Code
+    └── terraform/       # Terraform configurations
+```
 
-This section serves as a repository for all ideas related to the platform, without commitment to immediate implementation.
+## Development
+
+1. **Backend**
+   ```bash
+   # From application directory
+   ./start-backend.sh
+   ```
+
+2. **Frontend**
+   ```bash
+   # From application/packages/frontend
+   npm run dev
+   ```
 
 #### Core Concept
 A unified platform designed to connect individuals based on diverse needs and goals, moving beyond rigid forms by leveraging AI/LLM analysis of free-form user input (text, audio).
